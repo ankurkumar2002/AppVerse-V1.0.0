@@ -1,0 +1,73 @@
+# IntelliJ IDEA
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code
+.vscode/
+
+# Maven Wrapper
+.mvn/
+!**/src/main/**/mvnw
+!**/src/main/**/mvnw.cmd
+!**/src/main/**/.mvn/wrapper/
+
+# Build directories
+/target/
+!**/src/main/**/target/
+!**/src/test/**/target/
+
+# Compiled Java class files
+*.class
+
+# Log files
+*.log
+
+# Maven build output
+*.war
+*.jar
+
+# Application-specific build
+build/
+
+# Eclipse IDE
+.classpath
+.project
+.settings/
+
+# Spring Boot application configurations
+*.properties
+*.yml
+
+# Files for temporary files generated during test runs
+*.swp
+*.swo
+
+# Keycloak
+*.keycloak/
+
+# MongoDB local data
+data/
+*.sock
+
+# MySQL data
+mysql.sock
+*.sql
+*.dump
+
+# Docker files
+.docker/
+
+# Environment files
+.env
+
+# Operating System files
+.DS_Store
+Thumbs.db
+
+# Node.js and npm
+node_modules/
+
+# Maven Wrapper jar files
+**/.mvn/wrapper/maven-wrapper.jar
