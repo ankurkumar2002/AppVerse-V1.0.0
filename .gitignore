@@ -57,7 +57,7 @@ mysql.sock
 *.dump
 
 # Docker files
-.docker/
+# .docker/
 
 # Environment files
 .env
