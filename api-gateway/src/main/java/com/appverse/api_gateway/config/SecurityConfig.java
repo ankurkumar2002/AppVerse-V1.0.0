@@ -21,6 +21,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers("/api/developers/**").authenticated()// Logic: allow all requests to developer service
                 .requestMatchers("/api/apps/**").authenticated() // Logic: allow all requests to application service
+                .requestMatchers("/api/v1/users/**").authenticated()
                 .anyRequest().permitAll() // Logic: require authentication for any request
             )
             // Configure OAuth2 Resource Server with JWT support using defaults

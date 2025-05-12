@@ -111,6 +111,16 @@
 
 	<build>
 		<plugins>
+		<plugin>
+  <groupId>org.flywaydb</groupId>
+  <artifactId>flyway-maven-plugin</artifactId>
+  <version>10.20.1</version>
+  <configuration>
+    <url>jdbc:mysql://localhost:3307/developer_service</url>
+    <user>root</user>
+    <password>ankur</password>
+  </configuration>
+</plugin>
 			            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>

@@ -16,6 +16,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener; // Ne
 
 import com.appverse.developer_service.enums.DeveloperStatus;
 import com.appverse.developer_service.enums.DeveloperType;
+import com.appverse.developer_service.enums.Role;
 
 import java.time.Instant;
 
@@ -46,9 +47,6 @@ public class Developer {
     @Column(nullable = false, length = 150)
     private String name; // Platform-specific display name (can default from Keycloak initially)
 
-    // Email: Store if needed for quick lookups/display within this service,
-    // but Keycloak is the source of truth for authentication/primary email.
-    // Keep it unique if you store it.
     @NotBlank(message = "Email cannot be blank")
     @Email(message = "Invalid email format")
     @Size(max = 255)
@@ -61,7 +59,7 @@ public class Developer {
 
     @Size(max = 150)
     @Column(length = 150)
-    private String companyName; // Optional
+    private String companyName;
 
     @Column(columnDefinition = "TEXT")
     private String bio;
@@ -76,19 +74,22 @@ public class Developer {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 30)
-    @Builder.Default // Set a default value using builder
-    private DeveloperStatus status = DeveloperStatus.PENDING_VERIFICATION; // Sensible default
+    @Builder.Default
+    private DeveloperStatus status = DeveloperStatus.PENDING_VERIFICATION;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private DeveloperType developerType = DeveloperType.INDIVIDUAL; // Sensible default
+    private DeveloperType developerType = DeveloperType.INDIVIDUAL;
 
     @Column(nullable = false)
     @Builder.Default
     private boolean isVerified = false;
 
-    // Timestamps (managed by Spring Data JPA Auditing)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private Role role; // Add role here to differentiate between USER, DEVELOPER, and ADMIN
+
     @CreatedDate
     @Column(nullable = false, updatable = false)
     private Instant createdAt;
@@ -97,6 +98,4 @@ public class Developer {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    // Constructor often used by builder might need adjustment if using @Builder.Default
-    // Or ensure fields are set post-build if defaults aren't applied how you expect.
 }

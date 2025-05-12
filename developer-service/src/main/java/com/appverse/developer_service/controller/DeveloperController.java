@@ -24,7 +24,7 @@ public class DeveloperController {
     private final DeveloperService developerService;
 
     @PostMapping
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<MessageResponse> create(
             @Valid @RequestBody DeveloperRequest request
     ) {
@@ -37,7 +37,7 @@ public class DeveloperController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<MessageResponse> update(
             @PathVariable String id,
             @Valid @RequestBody DeveloperRequest request) {
@@ -45,20 +45,20 @@ public class DeveloperController {
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         developerService.deleteDeveloper(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<DeveloperResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(developerService.getDeveloperById(id));
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<List<DeveloperResponse>> getAll() {
         return ResponseEntity.ok(developerService.getAll());
     }

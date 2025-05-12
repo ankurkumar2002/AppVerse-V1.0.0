@@ -41,4 +41,18 @@ public class Routes {
                 })
                 .build(); // The .build() call was misplaced inside the filter lambda.
     }
+
+     @Bean
+    public RouterFunction<ServerResponse> userServiceRoute() {
+        return GatewayRouterFunctions.route("user-service")
+                .route(RequestPredicates.path("/api/v1/users/**"), HandlerFunctions.http("http://localhost:8082"))
+                .filter((request, next) -> {
+                    // Log the request URI before forwarding
+                    logger.info("Forwarding request for {} to user-service (http://localhost:8082)", request.uri());
+                    // CRITICAL: You must call next.handle(request) and return its result
+                    // for the request to be forwarded.
+                    return next.handle(request);
+                })
+                .build(); // The .build() call was misplaced inside the filter lambda.
+    }
 }

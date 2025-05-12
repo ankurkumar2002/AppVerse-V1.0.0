@@ -5,6 +5,7 @@ import java.time.Instant; // Use correct timestamp type
 
 import com.appverse.developer_service.enums.DeveloperStatus;
 import com.appverse.developer_service.enums.DeveloperType;
+import com.appverse.developer_service.enums.Role;
 
 /**
  * DTO representing the Developer profile data returned by the API.
@@ -18,6 +19,7 @@ public record DeveloperResponse(
     String bio,
     String logoUrl,
     String location,
+    Role role,
     DeveloperStatus status, // Expose status
     DeveloperType developerType, // Expose type
     boolean isVerified, // Expose verification status
