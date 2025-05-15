@@ -22,6 +22,10 @@ public class SecurityConfig {
                 .requestMatchers("/api/developers/**").authenticated()// Logic: allow all requests to developer service
                 .requestMatchers("/api/apps/**").authenticated() // Logic: allow all requests to application service
                 .requestMatchers("/api/v1/users/**").authenticated()
+                .requestMatchers("/api/v1/carts/**").authenticated() // Logic: require authentication for cart service
+                .requestMatchers("/api/v1/orders/**").authenticated() // Logic: require authentication for order service
+                .requestMatchers("/api/v1/payments/**").authenticated() // Logic: require authentication for payment service
+                .requestMatchers("/api/v1/subscriptions/**").authenticated() // Logic: require authentication for subscription service
                 .anyRequest().permitAll() // Logic: require authentication for any request
             )
             // Configure OAuth2 Resource Server with JWT support using defaults

@@ -43,12 +43,81 @@ public class Routes {
     }
 
      @Bean
+    public RouterFunction<ServerResponse> categoryServiceRoute() {
+        return GatewayRouterFunctions.route("application-service")
+                .route(RequestPredicates.path("/api/categories/**"), HandlerFunctions.http("http://localhost:8080"))
+                .filter((request, next) -> {
+                    // Log the request URI before forwarding
+                    logger.info("Forwarding request for {} to category-service (http://localhost:8080)", request.uri());
+                    // CRITICAL: You must call next.handle(request) and return its result
+                    // for the request to be forwarded.
+                    return next.handle(request);
+                })
+                .build(); // The .build() call was misplaced inside the filter lambda.
+    }
+
+     @Bean
     public RouterFunction<ServerResponse> userServiceRoute() {
         return GatewayRouterFunctions.route("user-service")
                 .route(RequestPredicates.path("/api/v1/users/**"), HandlerFunctions.http("http://localhost:8082"))
                 .filter((request, next) -> {
                     // Log the request URI before forwarding
                     logger.info("Forwarding request for {} to user-service (http://localhost:8082)", request.uri());
+                    // CRITICAL: You must call next.handle(request) and return its result
+                    // for the request to be forwarded.
+                    return next.handle(request);
+                })
+                .build(); // The .build() call was misplaced inside the filter lambda.
+    }
+
+     @Bean
+    public RouterFunction<ServerResponse> cartServiceRoute() {
+        return GatewayRouterFunctions.route("user-service")
+                .route(RequestPredicates.path("/api/v1/carts/**"), HandlerFunctions.http("http://localhost:8083"))
+                .filter((request, next) -> {
+                    // Log the request URI before forwarding
+                    logger.info("Forwarding request for {} to cart-service (http://localhost:8083)", request.uri());
+                    // CRITICAL: You must call next.handle(request) and return its result
+                    // for the request to be forwarded.
+                    return next.handle(request);
+                })
+                .build(); // The .build() call was misplaced inside the filter lambda.
+    }
+        @Bean
+    public RouterFunction<ServerResponse> orderServiceRoute() {
+        return GatewayRouterFunctions.route("order-service")
+                .route(RequestPredicates.path("/api/v1/orders/**"), HandlerFunctions.http("http://localhost:8084"))
+                .filter((request, next) -> {
+                    // Log the request URI before forwarding
+                    logger.info("Forwarding request for {} to order-service (http://localhost:8084)", request.uri());
+                    // CRITICAL: You must call next.handle(request) and return its result
+                    // for the request to be forwarded.
+                    return next.handle(request);
+                })
+                .build(); // The .build() call was misplaced inside the filter lambda.
+    }
+
+        @Bean
+    public RouterFunction<ServerResponse> paymentServiceRoute() {
+        return GatewayRouterFunctions.route("payment-service")
+                .route(RequestPredicates.path("/api/v1/payments/**"), HandlerFunctions.http("http://localhost:8085"))
+                .filter((request, next) -> {
+                    // Log the request URI before forwarding
+                    logger.info("Forwarding request for {} to payment-service (http://localhost:8085)", request.uri());
+                    // CRITICAL: You must call next.handle(request) and return its result
+                    // for the request to be forwarded.
+                    return next.handle(request);
+                })
+                .build(); // The .build() call was misplaced inside the filter lambda.
+    }
+
+            @Bean
+    public RouterFunction<ServerResponse> subscriptionServiceRoute() {
+        return GatewayRouterFunctions.route("subscription-service")
+                .route(RequestPredicates.path("/api/v1/subscriptions/**"), HandlerFunctions.http("http://localhost:8086"))
+                .filter((request, next) -> {
+                    // Log the request URI before forwarding
+                    logger.info("Forwarding request for {} to subscription-service (http://localhost:8086)", request.uri());
                     // CRITICAL: You must call next.handle(request) and return its result
                     // for the request to be forwarded.
                     return next.handle(request);

@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.hibernate.validator.constraints.URL;
 
+import com.appverse.app_service.enums.MonetizationType;
 import com.appverse.app_service.model.Screenshot;
 
 import jakarta.validation.Valid;
@@ -30,6 +31,8 @@ public record UpdateApplicationRequest(
     @NotBlank String developerId,
     List<@NotBlank String> tags,
     @NotBlank String status,
-    Instant publishedAt
+    Instant publishedAt,
+    MonetizationType monetizationType, // Allow updating this (might be nullable if not always updated)
+    List<String> associatedSubscriptionPlanIds // Allow updating this
 
 ) {}
