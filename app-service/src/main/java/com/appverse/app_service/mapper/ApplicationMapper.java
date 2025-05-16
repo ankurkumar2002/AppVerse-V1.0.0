@@ -26,7 +26,6 @@ public interface ApplicationMapper {
 
 ApplicationResponse toResponse(Application application);
 
-
     List<ApplicationResponse> toResponseList(List<Application> applications);
 
     Application toEntity(ApplicationRequest request);

@@ -6,6 +6,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.observation.annotation.Observed;
+
 @FeignClient(name = "order-service", url = "${feign.client.order-service.url}")
 public interface OrderServiceClient {
 
@@ -24,5 +28,16 @@ public interface OrderServiceClient {
 
 
     @PostMapping("/api/v1/orders/internal/payment-update") // Matches OrderController endpoint
+    @CircuitBreaker(name = "orderServiceClient", fallbackMethod = "updateOrderStatusFallback")
+    @Retry(name = "orderServiceClient") // Uncomment if you want to add retry logic
+    @Observed(name = "paymentService.UpdateOrderStatus", contextualName = "Update Order Status")
     ResponseEntity<OrderServiceResponse> updateOrderStatus(@RequestBody PaymentUpdateDtoForOrderService paymentUpdate);
+
+    // Fallback method for updateOrderStatus
+    default ResponseEntity<OrderServiceResponse> updateOrderStatusFallback(
+            PaymentUpdateDtoForOrderService paymentUpdate, Throwable throwable) {
+        // Log the error and return a default response
+        System.out.println("Fallback for updateOrderStatus: " + throwable.getMessage());
+        return ResponseEntity.ok(new OrderServiceResponse(paymentUpdate.orderId(), "FAILED"));
+    }
 }

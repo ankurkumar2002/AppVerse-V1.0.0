@@ -18,7 +18,7 @@ import java.net.URI;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/admin/subscription-plans") // Admin-specific path
+@RequestMapping("/api/v1/subscription-plans") // Admin-specific path
 @RequiredArgsConstructor
 @Slf4j
 // @PreAuthorize("hasRole('ADMIN')") // Secure all methods in this controller for ADMIN role
@@ -27,7 +27,7 @@ public class SubscriptionPlanController {
     private final SubscriptionService subscriptionService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubscriptionPlanResponse> createPlan(@Valid @RequestBody SubscriptionPlanRequest request) {
         log.info("Admin request to create subscription plan: {}", request.name());
         SubscriptionPlanResponse createdPlan = subscriptionService.createPlan(request);
@@ -41,7 +41,7 @@ public class SubscriptionPlanController {
     }
 
     @PutMapping("/{planId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<SubscriptionPlanResponse> updatePlan(
             @PathVariable String planId,
             @Valid @RequestBody SubscriptionPlanRequest request) {
@@ -52,7 +52,7 @@ public class SubscriptionPlanController {
     }
 
     @GetMapping("/{planId}")
-    @PreAuthorize("hasRole('ADMIN') or isAuthenticated()") // Allow authenticated users to view plan details
+    // @PreAuthorize("hasRole('ADMIN') or isAuthenticated()") // Allow authenticated users to view plan details
     public ResponseEntity<SubscriptionPlanResponse> getPlanById(@PathVariable String planId) {
         log.info("Request to get subscription plan by ID: {}", planId);
         SubscriptionPlanResponse plan = subscriptionService.getPlanById(planId);
@@ -60,7 +60,7 @@ public class SubscriptionPlanController {
     }
 
     @GetMapping
-    @PreAuthorize("hasRole('ADMIN') or isAuthenticated()") // Allow authenticated users to list plans
+    // @PreAuthorize("hasRole('ADMIN') or isAuthenticated()") // Allow authenticated users to list plans
     public ResponseEntity<List<SubscriptionPlanResponse>> getAllPlans(
             @RequestParam(defaultValue = "true") boolean activeOnly) {
         log.info("Request to get all subscription plans. Active only: {}", activeOnly);
@@ -69,7 +69,7 @@ public class SubscriptionPlanController {
     }
 
     @PostMapping("/{planId}/activate")
-    @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> activatePlan(@PathVariable String planId) {
         log.info("Admin request to activate subscription plan ID: {}", planId);
         subscriptionService.activatePlan(planId);
@@ -78,7 +78,7 @@ public class SubscriptionPlanController {
     }
 
     @PostMapping("/{planId}/deactivate")
-    @PreAuthorize("hasRole('ADMIN')")
+    // @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deactivatePlan(@PathVariable String planId) {
         log.info("Admin request to deactivate subscription plan ID: {}", planId);
         subscriptionService.deactivatePlan(planId);

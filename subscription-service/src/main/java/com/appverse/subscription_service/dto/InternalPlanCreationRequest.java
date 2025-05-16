@@ -45,5 +45,7 @@ public record InternalPlanCreationRequest(
     String applicationId, // ID of the application this plan belongs to (from app-service)
 
     @NotBlank(message = "Developer ID cannot be blank")
-    String developerId    // ID of the developer who owns this plan
+    String developerId,    // ID of the developer who owns this plan
+
+    String gatewayPlanPriceId
 ) {}

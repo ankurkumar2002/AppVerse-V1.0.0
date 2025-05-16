@@ -6,4 +6,5 @@ public enum PaymentGatewayType {
     // ADYEN,     // Example for future
     INTERNAL_CREDIT, // If you implement a wallet/credit system
     MANUAL           // For manual/offline payments recorded by an admin
+, MOCK
 }

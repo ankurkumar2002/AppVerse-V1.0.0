@@ -17,8 +17,10 @@ import java.util.List;
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
+
 public interface DeveloperMapper {
 
+    
     DeveloperResponse toResponse(Developer developer);
 
     List<DeveloperResponse> toResponseList(List<Developer> developers);
