@@ -3,8 +3,8 @@ package com.appverse.subscription_service.services.serviceImpl;
 
 import com.appverse.subscription_service.client.PaymentServiceClient;
 import com.appverse.subscription_service.dto.*;
-import com.appverse.subscription_service.enums.*; // Import all your enums
-import com.appverse.subscription_service.exception.*; // Your custom exceptions
+import com.appverse.subscription_service.enums.*;
+import com.appverse.subscription_service.exception.*;
 import com.appverse.subscription_service.mapper.SubscriptionMapper;
 import com.appverse.subscription_service.model.SubscriptionPlan;
 import com.appverse.subscription_service.model.UserSubscription;
@@ -12,13 +12,18 @@ import com.appverse.subscription_service.repository.SubscriptionPlanRepository;
 import com.appverse.subscription_service.repository.UserSubscriptionRepository;
 import com.appverse.subscription_service.services.SubscriptionService;
 
-import feign.FeignException; // Added for catching Feign specific errors
+// Import event payloads (assuming they are created in this package or sub-package)
+import com.appverse.subscription_service.event.payload.*;
+
+
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity; // Added for Feign response
+import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate; // <<< KAFKA IMPORT
+import org.springframework.kafka.support.SendResult;   // <<< KAFKA IMPORT
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-// import org.springframework.scheduling.annotation.Scheduled; // For renewal job
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -26,9 +31,9 @@ import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
-import java.util.Map; // Added for PaymentServiceClient.InitiatePaymentPayload
+import java.util.Map;
 import java.util.Optional;
-import java.util.UUID; // Added for mocking or if needed
+import java.util.concurrent.CompletableFuture; // <<< KAFKA IMPORT
 import java.util.stream.Collectors;
 
 @Service
@@ -40,7 +45,22 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     private final UserSubscriptionRepository userSubscriptionRepository;
     private final PaymentServiceClient paymentServiceClient;
     private final SubscriptionMapper subscriptionMapper;
-    // private final SubscriptionEventService eventService; // If you implement event auditing
+    private final KafkaTemplate<String, Object> kafkaTemplate; // <<< KAFKA INJECTION
+
+    private static final String SUBSCRIPTION_EVENTS_TOPIC = "subscription-events"; // <<< KAFKA TOPIC
+
+    // Helper method for Kafka logging
+    private void logKafkaSendOutcome(String eventName, String topic, String key, SendResult<String, Object> result, Throwable ex) {
+        if (ex == null) {
+            log.info("Successfully sent {} to topic {} for key {}: offset {}, partition {}",
+                    eventName, topic, key,
+                    result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
+        } else {
+            log.error("Failed to send {} to topic {} for key {}: {}",
+                    eventName, topic, key, ex.getMessage(), ex);
+        }
+    }
+
 
     // --- Plan Management ---
     @Override
@@ -51,9 +71,24 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new DuplicateResourceException("Subscription plan with name '" + request.name() + "' already exists.");
         }
         SubscriptionPlan plan = subscriptionMapper.toSubscriptionPlan(request);
-        plan.setStatus(SubscriptionPlanStatus.ACTIVE); // Default new plans to active
+        plan.setStatus(SubscriptionPlanStatus.ACTIVE);
         SubscriptionPlan savedPlan = planRepository.save(plan);
         log.info("SubscriptionPlan {} created with ID: {}", savedPlan.getName(), savedPlan.getId());
+
+        // --- KAFKA EVENT ---
+        PlanCreatedPayload payload = new PlanCreatedPayload(
+                savedPlan.getId(), savedPlan.getName(), savedPlan.getDescription(),
+                savedPlan.getPrice(), savedPlan.getCurrency(), savedPlan.getBillingInterval(),
+                savedPlan.getBillingIntervalCount(), savedPlan.getTrialPeriodDays(),
+                savedPlan.getStatus(), savedPlan.getApplicationId(), savedPlan.getDeveloperId(),
+                savedPlan.getCreatedAt() != null ? savedPlan.getCreatedAt() : Instant.now() // Ensure createdAt is non-null
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), payload);
+        future.whenComplete((result, ex) -> logKafkaSendOutcome("PlanCreatedEvent", SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), result, ex));
+        log.debug("Asynchronously published PlanCreatedEvent for Plan ID: {}.", savedPlan.getId());
+        // --- END KAFKA EVENT ---
+
         return subscriptionMapper.toSubscriptionPlanResponse(savedPlan);
     }
 
@@ -64,60 +99,30 @@ public class SubscriptionServiceImpl implements SubscriptionService {
         SubscriptionPlan existingPlan = planRepository.findById(planId)
                 .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
 
-        if (!existingPlan.getName().equals(request.name()) && planRepository.existsByName(request.name())) {
+        if (request.name() != null && !existingPlan.getName().equals(request.name()) && planRepository.existsByName(request.name())) {
             throw new DuplicateResourceException("Subscription plan with name '" + request.name() + "' already exists.");
         }
         subscriptionMapper.updateSubscriptionPlanFromRequest(request, existingPlan);
         SubscriptionPlan updatedPlan = planRepository.save(existingPlan);
         log.info("SubscriptionPlan {} updated.", updatedPlan.getId());
+
+        // --- KAFKA EVENT ---
+        PlanUpdatedPayload payload = new PlanUpdatedPayload(
+                updatedPlan.getId(), updatedPlan.getName(), updatedPlan.getDescription(),
+                updatedPlan.getPrice(), updatedPlan.getCurrency(), updatedPlan.getBillingInterval(),
+                updatedPlan.getBillingIntervalCount(), updatedPlan.getTrialPeriodDays(),
+                updatedPlan.getStatus(), updatedPlan.getApplicationId(), updatedPlan.getDeveloperId(),
+                updatedPlan.getUpdatedAt() != null ? updatedPlan.getUpdatedAt() : Instant.now() // Ensure updatedAt is non-null
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, updatedPlan.getId(), payload);
+        future.whenComplete((result, ex) -> logKafkaSendOutcome("PlanUpdatedEvent", SUBSCRIPTION_EVENTS_TOPIC, updatedPlan.getId(), result, ex));
+        log.debug("Asynchronously published PlanUpdatedEvent for Plan ID: {}.", updatedPlan.getId());
+        // --- END KAFKA EVENT ---
+
         return subscriptionMapper.toSubscriptionPlanResponse(updatedPlan);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public SubscriptionPlanResponse getPlanById(String planId) {
-        log.debug("Fetching plan by ID: {}", planId);
-        return planRepository.findById(planId)
-                .map(subscriptionMapper::toSubscriptionPlanResponse)
-                .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<SubscriptionPlanResponse> getAllPlans(boolean activeOnly) {
-        log.debug("Fetching all plans. Active only: {}", activeOnly);
-        List<SubscriptionPlan> plans;
-        if (activeOnly) {
-            plans = planRepository.findByStatus(SubscriptionPlanStatus.ACTIVE);
-        } else {
-            plans = planRepository.findAll();
-        }
-        return plans.stream()
-                .map(subscriptionMapper::toSubscriptionPlanResponse)
-                .collect(Collectors.toList());
-    }
-    @Override
-    @Transactional
-    public void deactivatePlan(String planId) {
-        log.info("Admin deactivating plan ID: {}", planId);
-        SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
-        plan.setStatus(SubscriptionPlanStatus.INACTIVE);
-        planRepository.save(plan);
-        log.info("SubscriptionPlan {} deactivated.", planId);
-    }
-
-    @Override
-    @Transactional
-    public void activatePlan(String planId) {
-        log.info("Admin activating plan ID: {}", planId);
-        SubscriptionPlan plan = planRepository.findById(planId)
-                .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
-        plan.setStatus(SubscriptionPlanStatus.ACTIVE);
-        planRepository.save(plan);
-        log.info("SubscriptionPlan {} activated.", planId);
-    }
-
+    
     @Override
     @Transactional
     public SubscriptionPlanResponse createDeveloperPlan(InternalPlanCreationRequest request) {
@@ -145,14 +150,77 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 .applicationId(request.applicationId())
                 .developerId(request.developerId())
                 .status(SubscriptionPlanStatus.ACTIVE)
+                // .createdAt(Instant.now()) // Assuming @PrePersist handles this in entity
+                // .updatedAt(Instant.now()) // Assuming @PrePersist/@PreUpdate handles this
                 .build();
 
         SubscriptionPlan savedPlan = planRepository.save(plan);
         log.info("Developer-defined SubscriptionPlan '{}' created with ID {} for app {} by dev {}",
                  savedPlan.getName(), savedPlan.getId(), savedPlan.getApplicationId(), savedPlan.getDeveloperId());
+        
+        // --- KAFKA EVENT (same as regular plan creation for now) ---
+        PlanCreatedPayload payload = new PlanCreatedPayload(
+                savedPlan.getId(), savedPlan.getName(), savedPlan.getDescription(),
+                savedPlan.getPrice(), savedPlan.getCurrency(), savedPlan.getBillingInterval(),
+                savedPlan.getBillingIntervalCount(), savedPlan.getTrialPeriodDays(),
+                savedPlan.getStatus(), savedPlan.getApplicationId(), savedPlan.getDeveloperId(),
+                savedPlan.getCreatedAt() != null ? savedPlan.getCreatedAt() : Instant.now()
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), payload);
+        future.whenComplete((result, ex) -> logKafkaSendOutcome("PlanCreatedEvent (Developer)", SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), result, ex));
+        log.debug("Asynchronously published PlanCreatedEvent for Developer Plan ID: {}.", savedPlan.getId());
+        // --- END KAFKA EVENT ---
+
         return subscriptionMapper.toSubscriptionPlanResponse(savedPlan);
     }
 
+
+    @Override
+    @Transactional
+    public void deactivatePlan(String planId) {
+        log.info("Admin deactivating plan ID: {}", planId);
+        SubscriptionPlan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
+        plan.setStatus(SubscriptionPlanStatus.INACTIVE);
+        SubscriptionPlan savedPlan = planRepository.save(plan); // Save to get potential updatedAt timestamp
+        log.info("SubscriptionPlan {} deactivated.", planId);
+
+        // --- KAFKA EVENT ---
+        PlanDeactivatedPayload payload = new PlanDeactivatedPayload(
+                savedPlan.getId(),
+                savedPlan.getName(),
+                savedPlan.getUpdatedAt() != null ? savedPlan.getUpdatedAt() : Instant.now()
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), payload);
+        future.whenComplete((result, ex) -> logKafkaSendOutcome("PlanDeactivatedEvent", SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), result, ex));
+        log.debug("Asynchronously published PlanDeactivatedEvent for Plan ID: {}.", savedPlan.getId());
+        // --- END KAFKA EVENT ---
+    }
+
+    @Override
+    @Transactional
+    public void activatePlan(String planId) {
+        log.info("Admin activating plan ID: {}", planId);
+        SubscriptionPlan plan = planRepository.findById(planId)
+                .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
+        plan.setStatus(SubscriptionPlanStatus.ACTIVE);
+        SubscriptionPlan savedPlan = planRepository.save(plan);
+        log.info("SubscriptionPlan {} activated.", planId);
+
+        // --- KAFKA EVENT ---
+        PlanActivatedPayload payload = new PlanActivatedPayload(
+                savedPlan.getId(),
+                savedPlan.getName(),
+                savedPlan.getUpdatedAt() != null ? savedPlan.getUpdatedAt() : Instant.now()
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), payload);
+        future.whenComplete((result, ex) -> logKafkaSendOutcome("PlanActivatedEvent", SUBSCRIPTION_EVENTS_TOPIC, savedPlan.getId(), result, ex));
+        log.debug("Asynchronously published PlanActivatedEvent for Plan ID: {}.", savedPlan.getId());
+        // --- END KAFKA EVENT ---
+    }
 
     // --- User Subscription Management ---
     @Override
@@ -162,129 +230,126 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         SubscriptionPlan plan = planRepository.findByIdAndStatus(request.subscriptionPlanId(), SubscriptionPlanStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Active SubscriptionPlan not found or invalid: " + request.subscriptionPlanId()));
-        log.info("Fetched active plan successfully: Plan ID {}, Name: {}, Trial Days: {}, Billing Interval: {}",
-            plan.getId(), plan.getName(), plan.getTrialPeriodDays(), plan.getBillingInterval());
 
+        // ... (existing logic for checking conflicts) ...
         Optional<UserSubscription> existingActiveSub = userSubscriptionRepository
             .findByUserIdAndSubscriptionPlanIdAndStatusIn(userId, plan.getId(),
                 List.of(UserSubscriptionStatus.ACTIVE, UserSubscriptionStatus.TRIALING, UserSubscriptionStatus.PAST_DUE, UserSubscriptionStatus.PENDING_INITIAL_PAYMENT, UserSubscriptionStatus.INCOMPLETE));
-        log.info("Checked for existing conflicting subscription for user {} and plan {}. Present: {}", userId, plan.getId(), existingActiveSub.isPresent());
-
         if (existingActiveSub.isPresent()) {
             log.warn("User {} already has an active, trialing, pending, or past_due subscription (ID: {}) to plan {}.",
                      userId, existingActiveSub.get().getId(), plan.getId());
             throw new SubscriptionActionNotAllowedException("User already has an active, trialing, pending, or past_due subscription to this plan.");
         }
 
+
         Instant now = Instant.now();
         UserSubscription newSubscription = UserSubscription.builder()
                 .userId(userId)
                 .subscriptionPlanId(plan.getId())
-                .startDate(now)
-                .currentPeriodStartDate(now)
+                .startDate(now) // Tentative, might be overwritten by trial logic or activation
+                .currentPeriodStartDate(now) // Tentative
                 .autoRenew(true)
                 .build();
-        log.info("Built new UserSubscription object (before status/dates). ID (pre-persist): {}. For Plan ID: {}", newSubscription.getId(), plan.getId());
 
-        try {
         int trialDays = (plan.getTrialPeriodDays() != null) ? plan.getTrialPeriodDays() : 0;
-        log.debug("Effective trial days for plan {}: {}", plan.getId(), trialDays);
-
         if (trialDays > 0) {
-            log.debug("Setting status to TRIALING for new subscription");
             newSubscription.setStatus(UserSubscriptionStatus.TRIALING);
-            log.debug("Calculating trial end date. now: {}, trialDays: {}", now, trialDays);
             newSubscription.setTrialEndDate(now.plus(trialDays, ChronoUnit.DAYS));
-            log.debug("Trial end date set to: {}", newSubscription.getTrialEndDate());
-            newSubscription.setCurrentPeriodEndDate(newSubscription.getTrialEndDate()); // First "bill" due after trial
-            log.info("User {} starting trial for plan {}. Trial ends: {}. Current period ends: {}",
-                     userId, plan.getId(), newSubscription.getTrialEndDate(), newSubscription.getCurrentPeriodEndDate());
+            newSubscription.setCurrentPeriodEndDate(newSubscription.getTrialEndDate());
         } else {
-            log.debug("Setting status to PENDING_INITIAL_PAYMENT for new subscription");
             newSubscription.setStatus(UserSubscriptionStatus.PENDING_INITIAL_PAYMENT);
-            log.debug("Calculating next billing date. now: {}, plan billing interval: {}, count: {}",
-                      now, plan.getBillingInterval(), plan.getBillingIntervalCount());
             newSubscription.setCurrentPeriodEndDate(calculateNextBillingDate(now, plan));
-            log.info("User {} starting subscription (no trial) for plan {}. Status: PENDING_INITIAL_PAYMENT. Next billing (current period end): {}",
-                     userId, plan.getId(), newSubscription.getCurrentPeriodEndDate());
         }
-        // ID for newSubscription will be set by its @PrePersist
+        // ID for newSubscription will be set by its @PrePersist if applicable, or after save.
+        // Make sure createdAt is set by @PrePersist or here.
+        // newSubscription.setCreatedAt(now); // If not handled by @PrePersist
 
         UserSubscription savedSubscription = userSubscriptionRepository.save(newSubscription);
         log.info("Saved initial UserSubscription with ID: {} and status: {}", savedSubscription.getId(), savedSubscription.getStatus());
-        // eventService.recordEvent(savedSubscription.getId(), SubscriptionEventType.CREATED, "Subscription initiated.", "USER");
 
-        // If not a trial or trial requires payment, initiate payment
+        // --- KAFKA EVENT: SubscriptionInitiated ---
+        SubscriptionInitiatedPayload initiatedPayload = new SubscriptionInitiatedPayload(
+                savedSubscription.getId(),
+                savedSubscription.getUserId(),
+                savedSubscription.getSubscriptionPlanId(),
+                plan.getName(), // Plan name for convenience
+                savedSubscription.getStatus(),
+                savedSubscription.getStartDate(),
+                savedSubscription.getTrialEndDate(),
+                savedSubscription.getCurrentPeriodEndDate(),
+                savedSubscription.isAutoRenew(),
+                savedSubscription.getCreatedAt() != null ? savedSubscription.getCreatedAt() : now
+        );
+        CompletableFuture<SendResult<String, Object>> initiatedFuture =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), initiatedPayload);
+        initiatedFuture.whenComplete((res, e) -> logKafkaSendOutcome("SubscriptionInitiatedEvent", SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), res, e));
+        log.debug("Asynchronously published SubscriptionInitiatedEvent for Subscription ID: {}.", savedSubscription.getId());
+        // --- END KAFKA EVENT ---
+
         if (savedSubscription.getStatus() == UserSubscriptionStatus.PENDING_INITIAL_PAYMENT && plan.getPrice().compareTo(BigDecimal.ZERO) > 0) {
             log.info("Attempting to initiate initial payment for subscription ID: {}. Plan Price: {}", savedSubscription.getId(), plan.getPrice());
             try {
-                PaymentServiceClient.InitiatePaymentPayload payload = new PaymentServiceClient.InitiatePaymentPayload(
-                        userId,
-                        savedSubscription.getId(),
-                        PaymentReferenceType.SUBSCRIPTION_INITIAL,
-                        plan.getPrice(),
-                        plan.getCurrency(),
-                        PaymentGatewayType.STRIPE, // Or determine dynamically
-                        "Initial payment for " + plan.getName(),
-                        request.paymentMethodToken(),
-                        null, // customerId - payment service might create/find this
-                        request.storedPaymentMethodId(),
+                // ... (payment initiation logic) ...
+                PaymentServiceClient.InitiatePaymentPayload paymentPayload = new PaymentServiceClient.InitiatePaymentPayload(
+                        userId, savedSubscription.getId(), PaymentReferenceType.SUBSCRIPTION_INITIAL,
+                        plan.getPrice(), plan.getCurrency(), PaymentGatewayType.STRIPE,
+                        "Initial payment for " + plan.getName(), request.paymentMethodToken(),
+                        null, request.storedPaymentMethodId(),
                         Map.of("subscription_plan_id", plan.getId(), "internal_user_subscription_id", savedSubscription.getId())
                 );
-                log.debug("Calling PaymentService with payload: {}", payload);
-                ResponseEntity<PaymentServiceClient.PaymentServiceResponse> paymentResponse = paymentServiceClient.initiatePayment(payload);
-                log.info("Received response from PaymentService for sub ID {}: Status Code {}", savedSubscription.getId(), paymentResponse.getStatusCode());
+                ResponseEntity<PaymentServiceClient.PaymentServiceResponse> paymentResponse = paymentServiceClient.initiatePayment(paymentPayload);
 
                 if (paymentResponse.getStatusCode().is2xxSuccessful() && paymentResponse.getBody() != null) {
                     PaymentServiceClient.PaymentServiceResponse psResponse = paymentResponse.getBody();
-                    log.info("Payment initiation successful for subscription {}. PaymentService Tx ID: {}, Gateway Status: {}",
-                             savedSubscription.getId(), psResponse.id(), psResponse.status());
-
                     if ("SUCCEEDED".equalsIgnoreCase(psResponse.status())) {
-                        // If payment service confirms immediate success (e.g. from mocked flow)
-                        String StoredPaymentMethodIdForSubscription = request.storedPaymentMethodId() != null ? request.storedPaymentMethodId() : "new_card_via_" + psResponse.id(); // Placeholder
-                        processInitialPaymentOutcome(savedSubscription.getId(), psResponse.id(), true, StoredPaymentMethodIdForSubscription);
-                        // Update the local 'savedSubscription' variable with the outcome
-                        savedSubscription = userSubscriptionRepository.findById(savedSubscription.getId()).orElse(savedSubscription);
+                        String storedPaymentMethodIdForSubscription = request.storedPaymentMethodId() != null ? request.storedPaymentMethodId() : "new_card_via_" + psResponse.id();
+                        processInitialPaymentOutcome(savedSubscription.getId(), psResponse.id(), true, storedPaymentMethodIdForSubscription);
+                        final UserSubscription refreshedSubscription = userSubscriptionRepository.findById(savedSubscription.getId()).orElse(savedSubscription); // Refresh
                     } else if ("REQUIRES_ACTION".equalsIgnoreCase(psResponse.status()) || "PENDING_GATEWAY_ACTION".equalsIgnoreCase(psResponse.status())) {
-                        log.info("Subscription {} requires further payment action from user.", savedSubscription.getId());
-                        savedSubscription.setStatus(UserSubscriptionStatus.INCOMPLETE); // Update status
-                        userSubscriptionRepository.save(savedSubscription); // Save this status change
-                        // The UserSubscriptionResponse DTO might need to carry the clientSecret from psResponse.clientSecret()
+                        log.info("Subscription {} requires further payment action from user. Client Secret: {}", savedSubscription.getId(), psResponse.clientSecret());
+                        savedSubscription.setStatus(UserSubscriptionStatus.INCOMPLETE);
+                        userSubscriptionRepository.save(savedSubscription);
+                        // --- KAFKA EVENT: SubscriptionRequiresPaymentAction ---
+                        SubscriptionRequiresPaymentActionPayload requiresActionPayload = new SubscriptionRequiresPaymentActionPayload(
+                                savedSubscription.getId(), savedSubscription.getUserId(), savedSubscription.getSubscriptionPlanId(),
+                                psResponse.clientSecret(), "Payment requires further user action.", Instant.now()
+                        );
+                        CompletableFuture<SendResult<String, Object>> requiresActionFuture =
+                                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), requiresActionPayload);
+                        requiresActionFuture.whenComplete((r, ex) -> logKafkaSendOutcome("SubscriptionRequiresPaymentActionEvent", SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), r, ex));
+                        log.debug("Asynchronously published SubscriptionRequiresPaymentActionEvent for Sub ID: {}.", savedSubscription.getId());
+                        // --- END KAFKA EVENT ---
                     } else {
-                         log.warn("Initial payment for subscription {} initiated but not immediately successful or requiring action. Gateway Status: {}. Waiting for webhook.",
+                         log.warn("Initial payment for subscription {} initiated but not SUCCEEDED or REQUIRES_ACTION. Gateway Status: {}.",
                                   savedSubscription.getId(), psResponse.status());
-                         // Remains PENDING_INITIAL_PAYMENT or similar, relying on webhook from PaymentService.
+                         // No specific event here, relies on webhook for other statuses. The SubscriptionInitiatedEvent is already sent.
                     }
                 } else {
-                    log.error("Failed to initiate payment for subscription {}. PaymentService response status: {}",
-                              savedSubscription.getId(), paymentResponse.getStatusCode());
-                    // Keep status as PENDING_INITIAL_PAYMENT, admin/system might need to review or user retry.
-                    throw new PaymentProcessingException("Failed to initiate payment for subscription with PaymentService.");
+                    log.error("Failed to initiate payment for subscription {}. PaymentService response status: {}", savedSubscription.getId(), paymentResponse.getStatusCode());
+                    // This will likely throw PaymentProcessingException later, no event here unless we change status.
+                    // If it results in a failed state for the subscription, processInitialPaymentOutcome(false) should be called.
+                    // For now, an exception is thrown.
+                    throw new PaymentProcessingException("Failed to initiate payment for subscription with PaymentService. Status: " + paymentResponse.getStatusCode());
                 }
             } catch (FeignException fe) {
-                log.error("FeignException during initial payment initiation for subscription {}: Status {}, Response: {}",
-                          savedSubscription.getId(), fe.status(), fe.contentUTF8(), fe);
+                log.error("FeignException during initial payment initiation for subscription {}: Status {}, Response: {}", savedSubscription.getId(), fe.status(), fe.contentUTF8(), fe);
                 throw new PaymentProcessingException("Communication error with PaymentService during payment initiation: " + fe.getMessage(), fe);
             } catch (Exception e) {
                 log.error("Unexpected error during initial payment initiation for subscription {}: {}", savedSubscription.getId(), e.getMessage(), e);
+                // If this error means the subscription should fail, we might need to call processInitialPaymentOutcome(false)
+                // or set a specific failed status and send an event. For now, it throws.
                 throw new PaymentProcessingException("Unexpected error initiating payment: " + e.getMessage(), e);
             }
         } else if (savedSubscription.getStatus() == UserSubscriptionStatus.TRIALING) {
             log.info("Subscription {} started in TRIALING state.", savedSubscription.getId());
-            // eventService.recordEvent(savedSubscription.getId(), SubscriptionEventType.TRIAL_STARTED, "Trial period started.", "SYSTEM");
+            // The SubscriptionInitiatedEvent with status TRIALING covers this.
         } else if (plan.getPrice().compareTo(BigDecimal.ZERO) == 0) { // Free plan
             log.info("Activating free subscription {} for plan {}", savedSubscription.getId(), plan.getId());
-            activateSubscription(savedSubscription, null, null); // No payment, no stored method
-            // Update the local 'savedSubscription' variable
-            savedSubscription = userSubscriptionRepository.findById(savedSubscription.getId()).orElse(savedSubscription);
+            activateSubscription(savedSubscription, null, null);
+            final UserSubscription refreshedSubscription = userSubscriptionRepository.findById(savedSubscription.getId()).orElse(savedSubscription); // Refresh after activation
+            // The SubscriptionActivatedEvent will be sent by activateSubscription or its wrapper logic.
         }
-
         return subscriptionMapper.toUserSubscriptionResponse(savedSubscription);
-        } catch (Throwable t) {
-    log.error("CRITICAL UNHANDLED EXCEPTION in SubscriptionServiceImpl.createUserSubscription for user {}: {}", userId, t.getMessage(), t); // THIS WILL PRINT THE STACK TRACE
-    throw new RuntimeException("Critical error during subscription creation: " + t.getMessage(), t);
-}
     }
 
 
@@ -293,6 +358,8 @@ public class SubscriptionServiceImpl implements SubscriptionService {
     public void processInitialPaymentOutcome(String userSubscriptionId, String paymentTransactionId, boolean paymentSuccessful, String storedPaymentMethodIdUsed) {
         UserSubscription subscription = userSubscriptionRepository.findById(userSubscriptionId)
                 .orElseThrow(() -> new ResourceNotFoundException("UserSubscription not found: " + userSubscriptionId));
+        SubscriptionPlan plan = planRepository.findById(subscription.getSubscriptionPlanId())
+            .orElseThrow(() -> new IllegalStateException("Plan not found for sub: " + userSubscriptionId)); // Should not happen
 
         log.info("Processing initial payment outcome for subscription {}. Successful: {}. Payment Tx ID: {}",
                  userSubscriptionId, paymentSuccessful, paymentTransactionId);
@@ -305,36 +372,68 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         if (paymentSuccessful) {
             activateSubscription(subscription, paymentTransactionId, storedPaymentMethodIdUsed);
+            // 'subscription' object is updated by activateSubscription and saved within its transaction context (or this one).
+            // --- KAFKA EVENT: SubscriptionActivated ---
+            SubscriptionActivatedPayload activatedPayload = new SubscriptionActivatedPayload(
+                    subscription.getId(), subscription.getUserId(), subscription.getSubscriptionPlanId(),
+                    plan.getName(), subscription.getStartDate(), subscription.getCurrentPeriodStartDate(),
+                    subscription.getCurrentPeriodEndDate(), subscription.getLastSuccessfulPaymentId(),
+                    subscription.getStoredPaymentMethodId(),
+                    subscription.getUpdatedAt() != null ? subscription.getUpdatedAt() : Instant.now() // Or just Instant.now()
+            );
+            CompletableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), activatedPayload);
+            future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionActivatedEvent", SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), r, e));
+            log.debug("Asynchronously published SubscriptionActivatedEvent for Sub ID: {}.", subscription.getId());
+            // --- END KAFKA EVENT ---
         } else {
             subscription.setStatus(UserSubscriptionStatus.EXPIRED); // Or a specific "initial_payment_failed" status
             subscription.setEndDate(Instant.now());
+            // subscription.setUpdatedAt(Instant.now()); // If entity has this field
+            userSubscriptionRepository.save(subscription); // Explicit save as status changed without full activation flow
             log.warn("Initial payment FAILED for subscription {}.", userSubscriptionId);
-            // eventService.recordEvent(subscription.getId(), SubscriptionEventType.RENEWAL_FAILED, "Initial payment failed. Payment Tx: " + paymentTransactionId, "PAYMENT_GATEWAY");
+
+            // --- KAFKA EVENT: SubscriptionInitialPaymentFailed ---
+            SubscriptionInitialPaymentFailedPayload failurePayload = new SubscriptionInitialPaymentFailedPayload(
+                    subscription.getId(), subscription.getUserId(), subscription.getSubscriptionPlanId(),
+                    paymentTransactionId, "Initial payment processing failed.",
+                    subscription.getUpdatedAt() != null ? subscription.getUpdatedAt() : Instant.now() // Or just Instant.now()
+            );
+            CompletableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), failurePayload);
+            future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionInitialPaymentFailedEvent", SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), r, e));
+            log.debug("Asynchronously published SubscriptionInitialPaymentFailedEvent for Sub ID: {}.", subscription.getId());
+            // --- END KAFKA EVENT ---
         }
-        userSubscriptionRepository.save(subscription);
+        // userSubscriptionRepository.save(subscription); // Done by activateSubscription or above if failed
     }
 
+    // Private method, called within a @Transactional context
     private void activateSubscription(UserSubscription subscription, String paymentTransactionId, String storedPaymentMethodIdUsed) {
         SubscriptionPlan plan = planRepository.findById(subscription.getSubscriptionPlanId())
-            .orElseThrow(() -> new IllegalStateException("Plan not found during activation for sub: " + subscription.getId())); // Should not happen if sub was created properly
+            .orElseThrow(() -> new IllegalStateException("Plan not found during activation for sub: " + subscription.getId()));
 
         subscription.setStatus(UserSubscriptionStatus.ACTIVE);
-        // If it was a trial ending, startDate might already be set.
-        // If direct to active, startDate is now.
-        if(subscription.getStartDate() == null || subscription.getStatus() == UserSubscriptionStatus.PENDING_INITIAL_PAYMENT) { // Check if was PENDING_INITIAL_PAYMENT before activate
-            subscription.setStartDate(Instant.now());
+        Instant activationTime = Instant.now();
+        if(subscription.getStartDate() == null || subscription.getStatus() == UserSubscriptionStatus.PENDING_INITIAL_PAYMENT) {
+            subscription.setStartDate(activationTime);
         }
-        subscription.setCurrentPeriodStartDate(Instant.now()); // Start of the first paid period (or after trial)
-        subscription.setCurrentPeriodEndDate(calculateNextBillingDate(Instant.now(), plan));
+        subscription.setCurrentPeriodStartDate(activationTime);
+        subscription.setCurrentPeriodEndDate(calculateNextBillingDate(activationTime, plan));
         if (paymentTransactionId != null) {
             subscription.setLastSuccessfulPaymentId(paymentTransactionId);
         }
         if (storedPaymentMethodIdUsed != null) {
             subscription.setStoredPaymentMethodId(storedPaymentMethodIdUsed);
         }
-        subscription.setTrialEndDate(null); // Clear trial end if moving to active
-        log.info("Subscription {} ACTIVATED. Plan: {}. Next billing date: {}", subscription.getId(), plan.getName(), subscription.getCurrentPeriodEndDate());
-        // eventService.recordEvent(subscription.getId(), SubscriptionEventType.ACTIVATED, "Subscription activated. Payment Tx: " + paymentTransactionId, "SYSTEM_OR_GATEWAY");
+        subscription.setTrialEndDate(null);
+        // subscription.setUpdatedAt(activationTime); // If entity manages this field
+        // The save will happen by the transactional context of the calling public method.
+        // Or if this method were @Transactional(propagation = Propagation.REQUIRES_NEW), it would save itself.
+        // For simplicity, assume calling method's transaction handles the save.
+        // If this private method does a save: userSubscriptionRepository.save(subscription);
+        log.info("Subscription {} properties set for ACTIVATION. Plan: {}. Next billing date: {}", subscription.getId(), plan.getName(), subscription.getCurrentPeriodEndDate());
+        // Event sending is handled by the public callers of this method after it completes.
     }
 
 
@@ -348,19 +447,44 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         log.info("Processing renewal payment outcome for subscription {}. Successful: {}. Payment Tx ID: {}",
                  userSubscriptionId, paymentSuccessful, paymentTransactionId);
+        Instant eventTimestamp = Instant.now();
 
         if (paymentSuccessful) {
             subscription.setStatus(UserSubscriptionStatus.ACTIVE);
             subscription.setLastSuccessfulPaymentId(paymentTransactionId);
             subscription.setCurrentPeriodStartDate(subscription.getCurrentPeriodEndDate()); // Old end date is new start
             subscription.setCurrentPeriodEndDate(calculateNextBillingDate(subscription.getCurrentPeriodStartDate(), plan));
+            // subscription.setUpdatedAt(eventTimestamp);
             log.info("Subscription {} RENEWED successfully. Next billing date: {}", userSubscriptionId, subscription.getCurrentPeriodEndDate());
-            // eventService.recordEvent(subscription.getId(), SubscriptionEventType.RENEWAL_SUCCESSFUL, "Payment Tx: " + paymentTransactionId, "SYSTEM_OR_GATEWAY");
+
+            // --- KAFKA EVENT: SubscriptionRenewalSuccessful ---
+            SubscriptionRenewalSuccessfulPayload successPayload = new SubscriptionRenewalSuccessfulPayload(
+                    subscription.getId(), subscription.getUserId(), subscription.getSubscriptionPlanId(),
+                    subscription.getCurrentPeriodStartDate(), subscription.getCurrentPeriodEndDate(),
+                    subscription.getLastSuccessfulPaymentId(),
+                    eventTimestamp
+            );
+            CompletableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), successPayload);
+            future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionRenewalSuccessfulEvent", SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), r, e));
+            log.debug("Asynchronously published SubscriptionRenewalSuccessfulEvent for Sub ID: {}.", subscription.getId());
+            // --- END KAFKA EVENT ---
         } else {
             subscription.setStatus(UserSubscriptionStatus.PAST_DUE);
+            // subscription.setUpdatedAt(eventTimestamp);
             log.warn("Renewal payment FAILED for subscription {}. Status set to PAST_DUE.", userSubscriptionId);
-            // TODO: Implement dunning logic (retry attempts, notifications to user)
-            // eventService.recordEvent(subscription.getId(), SubscriptionEventType.RENEWAL_FAILED, "Payment Tx: " + paymentTransactionId, "SYSTEM_OR_GATEWAY");
+
+            // --- KAFKA EVENT: SubscriptionRenewalFailed ---
+            SubscriptionRenewalFailedPayload failurePayload = new SubscriptionRenewalFailedPayload(
+                    subscription.getId(), subscription.getUserId(), subscription.getSubscriptionPlanId(),
+                    paymentTransactionId, "Renewal payment processing failed.",
+                    eventTimestamp
+            );
+            CompletableFuture<SendResult<String, Object>> future =
+                    kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), failurePayload);
+            future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionRenewalFailedEvent", SUBSCRIPTION_EVENTS_TOPIC, subscription.getId(), r, e));
+            log.debug("Asynchronously published SubscriptionRenewalFailedEvent for Sub ID: {}.", subscription.getId());
+            // --- END KAFKA EVENT ---
         }
         userSubscriptionRepository.save(subscription);
     }
@@ -377,25 +501,33 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             log.warn("Subscription {} already cancelled or expired. No action taken.", subscriptionId);
             return subscriptionMapper.toUserSubscriptionResponse(subscription);
         }
-
+        Instant cancellationTime = Instant.now();
         subscription.setStatus(UserSubscriptionStatus.CANCELLED);
         subscription.setAutoRenew(false);
-        subscription.setCancelledAt(Instant.now());
+        subscription.setCancelledAt(cancellationTime);
         subscription.setCancellationReason(reason);
-        // The subscription remains active until currentPeriodEndDate
-        log.info("User {} cancelled subscription {}. It will remain usable until {} and then expire.",
-                 userId, subscriptionId, subscription.getCurrentPeriodEndDate());
-
-        // TODO: If using gateway-managed subscriptions (e.g. Stripe Subscriptions),
-        // call the gateway API to set cancel_at_period_end=true or similar.
+        // subscription.setUpdatedAt(cancellationTime);
 
         UserSubscription savedSubscription = userSubscriptionRepository.save(subscription);
-        // eventService.recordEvent(savedSubscription.getId(), SubscriptionEventType.CANCELLED_BY_USER, reason, "USER");
+        log.info("User {} cancelled subscription {}. It will remain usable until {} and then expire.",
+                 userId, subscriptionId, savedSubscription.getCurrentPeriodEndDate());
+
+        // --- KAFKA EVENT: SubscriptionCancelledByUser ---
+        SubscriptionCancelledByUserPayload payload = new SubscriptionCancelledByUserPayload(
+                savedSubscription.getId(), savedSubscription.getUserId(), savedSubscription.getSubscriptionPlanId(),
+                savedSubscription.getCancellationReason(), savedSubscription.getCancelledAt(),
+                savedSubscription.getCurrentPeriodEndDate()
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), payload);
+        future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionCancelledByUserEvent", SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), r, e));
+        log.debug("Asynchronously published SubscriptionCancelledByUserEvent for Sub ID: {}.", savedSubscription.getId());
+        // --- END KAFKA EVENT ---
+
         return subscriptionMapper.toUserSubscriptionResponse(savedSubscription);
     }
 
 
-    // @Scheduled(cron = "0 0 1 * * ?") // Example: Run daily at 1 AM
     @Override
     @Transactional
     public void processScheduledRenewals() {
@@ -408,15 +540,28 @@ public class SubscriptionServiceImpl implements SubscriptionService {
 
         for (UserSubscription sub : subscriptionsToRenew) {
             SubscriptionPlan plan = planRepository.findById(sub.getSubscriptionPlanId()).orElse(null);
+            Instant eventTimestamp = Instant.now();
+
             if (plan == null || plan.getStatus() != SubscriptionPlanStatus.ACTIVE) {
                 log.warn("Subscription {} (User: {}) links to an inactive/missing plan {}. Cancelling subscription.",
                          sub.getId(), sub.getUserId(), sub.getSubscriptionPlanId());
-                sub.setStatus(UserSubscriptionStatus.SYSTEM_CANCELLED); // Or EXPIRED
-                sub.setCancellationReason("Associated plan is no longer active or available.");
+                String reason = "Associated plan is no longer active or available.";
+                sub.setStatus(UserSubscriptionStatus.SYSTEM_CANCELLED);
+                sub.setCancellationReason(reason);
                 sub.setAutoRenew(false);
-                sub.setEndDate(sub.getCurrentPeriodEndDate()); // Ends now or at period end
+                sub.setEndDate(sub.getCurrentPeriodEndDate());
+                // sub.setUpdatedAt(eventTimestamp);
                 userSubscriptionRepository.save(sub);
-                // eventService.recordEvent(sub.getId(), SubscriptionEventType.CANCELLED_BY_SYSTEM, "Plan inactive.", "SYSTEM");
+
+                // --- KAFKA EVENT: SubscriptionSystemCancelled ---
+                SubscriptionSystemCancelledPayload payload = new SubscriptionSystemCancelledPayload(
+                        sub.getId(), sub.getUserId(), sub.getSubscriptionPlanId(), reason, eventTimestamp
+                );
+                CompletableFuture<SendResult<String, Object>> future =
+                        kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, sub.getId(), payload);
+                future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionSystemCancelledEvent", SUBSCRIPTION_EVENTS_TOPIC, sub.getId(), r, e));
+                log.debug("Asynchronously published SubscriptionSystemCancelledEvent for Sub ID: {}.", sub.getId());
+                // --- END KAFKA EVENT ---
                 continue;
             }
 
@@ -424,56 +569,148 @@ public class SubscriptionServiceImpl implements SubscriptionService {
                 log.warn("Subscription {} (User: {}) has no stored payment method for renewal. Moving to PAST_DUE.",
                          sub.getId(), sub.getUserId());
                 sub.setStatus(UserSubscriptionStatus.PAST_DUE);
+                // sub.setUpdatedAt(eventTimestamp);
                 userSubscriptionRepository.save(sub);
-                // eventService.recordEvent(sub.getId(), SubscriptionEventType.RENEWAL_FAILED, "No stored payment method.", "SYSTEM");
+
+                // --- KAFKA EVENT: SubscriptionRenewalFailed (No Payment Method) ---
+                SubscriptionRenewalFailedPayload failurePayload = new SubscriptionRenewalFailedPayload(
+                        sub.getId(), sub.getUserId(), sub.getSubscriptionPlanId(),
+                        null, "No stored payment method for renewal.", eventTimestamp
+                );
+                CompletableFuture<SendResult<String, Object>> future =
+                        kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, sub.getId(), failurePayload);
+                future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionRenewalFailedEvent", SUBSCRIPTION_EVENTS_TOPIC, sub.getId(), r, e));
+                log.debug("Asynchronously published SubscriptionRenewalFailedEvent (No PM) for Sub ID: {}.", sub.getId());
+                // --- END KAFKA EVENT ---
                 continue;
             }
 
             log.info("Attempting renewal for subscription {}. Plan: {}, Amount: {}", sub.getId(), plan.getName(), plan.getPrice());
             try {
-                PaymentServiceClient.InitiatePaymentPayload payload = new PaymentServiceClient.InitiatePaymentPayload(
-                        sub.getUserId(),
-                        sub.getId(),
-                        PaymentReferenceType.SUBSCRIPTION_RENEWAL,
-                        plan.getPrice(),
-                        plan.getCurrency(),
-                        PaymentGatewayType.STRIPE, // Or determine from UserSubscription or Plan
-                        "Renewal for " + plan.getName(),
-                        null,
-                        null,
-                        sub.getStoredPaymentMethodId(),
+                // ... (payment initiation logic for renewal) ...
+                PaymentServiceClient.InitiatePaymentPayload paymentPayload = new PaymentServiceClient.InitiatePaymentPayload(
+                        sub.getUserId(), sub.getId(), PaymentReferenceType.SUBSCRIPTION_RENEWAL,
+                        plan.getPrice(), plan.getCurrency(), PaymentGatewayType.STRIPE,
+                        "Renewal for " + plan.getName(), null, null, sub.getStoredPaymentMethodId(),
                         Map.of("subscription_plan_id", plan.getId(), "renewal_attempt_at", now.toString())
                 );
-                ResponseEntity<PaymentServiceClient.PaymentServiceResponse> paymentResponse = paymentServiceClient.initiatePayment(payload);
+                ResponseEntity<PaymentServiceClient.PaymentServiceResponse> paymentResponse = paymentServiceClient.initiatePayment(paymentPayload);
 
                 if (paymentResponse.getStatusCode().is2xxSuccessful() && paymentResponse.getBody() != null) {
                     PaymentServiceClient.PaymentServiceResponse psResponse = paymentResponse.getBody();
                     if ("SUCCEEDED".equalsIgnoreCase(psResponse.status())) {
-                        log.info("Mocked renewal payment SUCCEEDED for subscription {} via PaymentService. Payment Tx: {}", sub.getId(), psResponse.id());
-                        processRenewalPaymentOutcome(sub.getId(), psResponse.id(), true);
+                        processRenewalPaymentOutcome(sub.getId(), psResponse.id(), true); // This sends SubscriptionRenewalSuccessfulEvent
                     } else {
-                        log.warn("Mocked renewal for sub {} via PaymentService didn't succeed immediately. Status: {}. Assuming webhook will follow or dunning needed.",
+                        log.warn("Mocked renewal for sub {} via PaymentService didn't succeed immediately. Status: {}. Assuming webhook or dunning.",
                                  sub.getId(), psResponse.status());
-                        // If not SUCCEEDED, it might be PENDING_ACTION. Don't immediately mark as FAILED.
-                        // Actual handling depends on payment service's synchronous response vs. webhook for renewals.
-                        // For now, if not explicit success, we'll assume it failed for this mock scheduler.
                         if (!List.of("REQUIRES_ACTION", "PENDING_GATEWAY_ACTION", "PROCESSING").contains(psResponse.status().toUpperCase())) {
-                             processRenewalPaymentOutcome(sub.getId(), psResponse.id(), false);
+                             processRenewalPaymentOutcome(sub.getId(), psResponse.id(), false); // This sends SubscriptionRenewalFailedEvent
                         }
+                        // If REQUIRES_ACTION, a different event or handling might be needed (e.g., SubscriptionRequiresPaymentActionPayload)
+                        // For now, rely on processRenewalPaymentOutcome to handle the direct failure.
                     }
                 } else {
                     log.error("Renewal payment initiation failed for subscription {}. PaymentService Response Status: {}",
                               sub.getId(), paymentResponse.getStatusCode());
-                    processRenewalPaymentOutcome(sub.getId(), null, false);
+                    processRenewalPaymentOutcome(sub.getId(), null, false); // This sends SubscriptionRenewalFailedEvent
                 }
             } catch (Exception e) {
                 log.error("Error during renewal payment for subscription {}: {}", sub.getId(), e.getMessage(), e);
-                processRenewalPaymentOutcome(sub.getId(), null, false);
+                processRenewalPaymentOutcome(sub.getId(), null, false); // This sends SubscriptionRenewalFailedEvent
             }
         }
         log.info("Finished scheduled subscription renewal process.");
     }
 
+    @Override
+    @Transactional
+    public UserSubscriptionResponse reactivateUserSubscription(String userId, String subscriptionId) {
+        UserSubscription subscription = userSubscriptionRepository.findByIdAndUserId(subscriptionId, userId)
+            .orElseThrow(() -> new ResourceNotFoundException("UserSubscription " + subscriptionId + " not found for user " + userId));
+        log.info("User {} reactivating subscription {}. Current status: {}", userId, subscriptionId, subscription.getStatus());
+
+        if (subscription.getStatus() != UserSubscriptionStatus.CANCELLED) {
+            throw new SubscriptionActionNotAllowedException("Subscription " + subscriptionId + " is not in CANCELLED state, cannot reactivate.");
+        }
+        if (subscription.getCurrentPeriodEndDate().isBefore(Instant.now())) {
+             throw new SubscriptionActionNotAllowedException("Subscription " + subscriptionId + " billing period has already ended. Cannot reactivate; please create a new one.");
+        }
+        Instant reactivationTime = Instant.now();
+        subscription.setStatus(UserSubscriptionStatus.ACTIVE);
+        subscription.setAutoRenew(true);
+        subscription.setCancelledAt(null);
+        subscription.setCancellationReason(null);
+        subscription.setEndDate(null);
+        // subscription.setUpdatedAt(reactivationTime);
+
+        UserSubscription savedSubscription = userSubscriptionRepository.save(subscription);
+        log.info("User {} reactivated subscription {}. Status set to ACTIVE.", userId, subscriptionId);
+
+        // --- KAFKA EVENT: SubscriptionReactivatedByUser ---
+        SubscriptionReactivatedByUserPayload payload = new SubscriptionReactivatedByUserPayload(
+                savedSubscription.getId(), savedSubscription.getUserId(), savedSubscription.getSubscriptionPlanId(),
+                reactivationTime // or savedSubscription.getUpdatedAt()
+        );
+        CompletableFuture<SendResult<String, Object>> future =
+                kafkaTemplate.send(SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), payload);
+        future.whenComplete((r, e) -> logKafkaSendOutcome("SubscriptionReactivatedByUserEvent", SUBSCRIPTION_EVENTS_TOPIC, savedSubscription.getId(), r, e));
+        log.debug("Asynchronously published SubscriptionReactivatedByUserEvent for Sub ID: {}.", savedSubscription.getId());
+        // --- END KAFKA EVENT ---
+
+        return subscriptionMapper.toUserSubscriptionResponse(savedSubscription);
+    }
+
+
+    // --- Read-only methods (no Kafka events) ---
+    @Override
+    @Transactional(readOnly = true)
+    public SubscriptionPlanResponse getPlanById(String planId) {
+        log.debug("Fetching plan by ID: {}", planId);
+        return planRepository.findById(planId)
+                .map(subscriptionMapper::toSubscriptionPlanResponse)
+                .orElseThrow(() -> new ResourceNotFoundException("SubscriptionPlan not found with ID: " + planId));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SubscriptionPlanResponse> getAllPlans(boolean activeOnly) {
+        log.debug("Fetching all plans. Active only: {}", activeOnly);
+        List<SubscriptionPlan> plans;
+        if (activeOnly) {
+            plans = planRepository.findByStatus(SubscriptionPlanStatus.ACTIVE);
+        } else {
+            plans = planRepository.findAll();
+        }
+        return plans.stream()
+                .map(subscriptionMapper::toSubscriptionPlanResponse)
+                .collect(Collectors.toList());
+    }
+    
+    @Override
+    @Transactional(readOnly = true)
+    public UserSubscriptionResponse getUserSubscriptionById(String userId, String subscriptionId) {
+        UserSubscription sub = userSubscriptionRepository.findByIdAndUserId(subscriptionId, userId)
+                .orElseThrow(() -> new ResourceNotFoundException("UserSubscription " + subscriptionId + " not found for user " + userId));
+        return subscriptionMapper.toUserSubscriptionResponse(sub);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserSubscriptionResponse getActiveUserSubscriptionForPlan(String userId, String planId) {
+        return userSubscriptionRepository
+                .findByUserIdAndSubscriptionPlanIdAndStatusIn(userId, planId,
+                    List.of(UserSubscriptionStatus.ACTIVE, UserSubscriptionStatus.TRIALING, UserSubscriptionStatus.PAST_DUE))
+                .map(subscriptionMapper::toUserSubscriptionResponse)
+                .orElse(null);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<UserSubscriptionResponse> getAllUserSubscriptions(String userId) {
+        return userSubscriptionRepository.findByUserIdOrderByStartDateDesc(userId).stream()
+                .map(subscriptionMapper::toUserSubscriptionResponse)
+                .collect(Collectors.toList());
+    }
 
     // Helper to calculate next billing date
     private Instant calculateNextBillingDate(Instant currentPeriodStartDate, SubscriptionPlan plan) {
@@ -488,88 +725,20 @@ public class SubscriptionServiceImpl implements SubscriptionService {
             throw new IllegalStateException("BillingIntervalCount must be positive for plan: " + plan.getId());
         }
 
-          ZonedDateTime zdt = currentPeriodStartDate.atZone(ZoneId.systemDefault()); // Or ZoneId.of("UTC")
-    ZonedDateTime nextZdt;
+        ZonedDateTime zdt = currentPeriodStartDate.atZone(ZoneId.systemDefault());
+        ZonedDateTime nextZdt;
+        long amountToAdd = plan.getBillingIntervalCount();
 
-    long amountToAdd = plan.getBillingIntervalCount();
-
-    switch (plan.getBillingInterval()) {
-        case DAY:
-            nextZdt = zdt.plusDays(amountToAdd);
-            break;
-        case WEEK:
-            nextZdt = zdt.plusWeeks(amountToAdd);
-            break;
-        case MONTH:
-            nextZdt = zdt.plusMonths(amountToAdd); // <<< USE ZonedDateTime's plusMonths
-            break;
-        case QUARTER:
-            nextZdt = zdt.plusMonths(amountToAdd * 3); // <<< USE ZonedDateTime's plusMonths
-            break;
-        case YEAR:
-            nextZdt = zdt.plusYears(amountToAdd); // <<< USE ZonedDateTime's plusYears
-            break;
-        default:
-            log.error("Unsupported billing interval: {} for plan ID: {}", plan.getBillingInterval(), plan.getId());
-            throw new IllegalArgumentException("Unsupported billing interval: " + plan.getBillingInterval());
-    }
-    return nextZdt.toInstant(); // Convert back to Instant
-    }
-
-
-    @Override
-    @Transactional(readOnly = true)
-    public UserSubscriptionResponse getUserSubscriptionById(String userId, String subscriptionId) {
-        UserSubscription sub = userSubscriptionRepository.findByIdAndUserId(subscriptionId, userId)
-                .orElseThrow(() -> new ResourceNotFoundException("UserSubscription " + subscriptionId + " not found for user " + userId));
-        return subscriptionMapper.toUserSubscriptionResponse(sub);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public UserSubscriptionResponse getActiveUserSubscriptionForPlan(String userId, String planId) {
-        return userSubscriptionRepository
-                .findByUserIdAndSubscriptionPlanIdAndStatusIn(userId, planId,
-                    List.of(UserSubscriptionStatus.ACTIVE, UserSubscriptionStatus.TRIALING, UserSubscriptionStatus.PAST_DUE)) // PAST_DUE might still grant access for a bit
-                .map(subscriptionMapper::toUserSubscriptionResponse)
-                .orElse(null);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserSubscriptionResponse> getAllUserSubscriptions(String userId) {
-        return userSubscriptionRepository.findByUserIdOrderByStartDateDesc(userId).stream()
-                .map(subscriptionMapper::toUserSubscriptionResponse)
-                .collect(Collectors.toList());
-    }
-
-
-    @Override
-    @Transactional
-    public UserSubscriptionResponse reactivateUserSubscription(String userId, String subscriptionId) {
-        UserSubscription subscription = userSubscriptionRepository.findByIdAndUserId(subscriptionId, userId)
-            .orElseThrow(() -> new ResourceNotFoundException("UserSubscription " + subscriptionId + " not found for user " + userId));
-        log.info("User {} reactivating subscription {}. Current status: {}", userId, subscriptionId, subscription.getStatus());
-
-        if (subscription.getStatus() != UserSubscriptionStatus.CANCELLED) {
-            throw new SubscriptionActionNotAllowedException("Subscription " + subscriptionId + " is not in CANCELLED state, cannot reactivate.");
+        switch (plan.getBillingInterval()) {
+            case DAY: nextZdt = zdt.plusDays(amountToAdd); break;
+            case WEEK: nextZdt = zdt.plusWeeks(amountToAdd); break;
+            case MONTH: nextZdt = zdt.plusMonths(amountToAdd); break;
+            case QUARTER: nextZdt = zdt.plusMonths(amountToAdd * 3); break;
+            case YEAR: nextZdt = zdt.plusYears(amountToAdd); break;
+            default:
+                log.error("Unsupported billing interval: {} for plan ID: {}", plan.getBillingInterval(), plan.getId());
+                throw new IllegalArgumentException("Unsupported billing interval: " + plan.getBillingInterval());
         }
-        if (subscription.getCurrentPeriodEndDate().isBefore(Instant.now())) {
-             throw new SubscriptionActionNotAllowedException("Subscription " + subscriptionId + " billing period has already ended. Cannot reactivate this subscription; please create a new one.");
-        }
-
-        // Determine what state to return to. If was trialing and trialEndDate is still in future, could go back to trialing.
-        // For simplicity, assume back to ACTIVE.
-        subscription.setStatus(UserSubscriptionStatus.ACTIVE);
-        subscription.setAutoRenew(true); // Turn auto-renew back on
-        subscription.setCancelledAt(null);
-        subscription.setCancellationReason(null);
-        // endDate might be cleared if it was set to currentPeriodEndDate upon cancellation
-        subscription.setEndDate(null);
-
-        UserSubscription saved = userSubscriptionRepository.save(subscription);
-        log.info("User {} reactivated subscription {}. Status set to ACTIVE.", userId, subscriptionId);
-        // eventService.recordEvent(saved.getId(), SubscriptionEventType.STATUS_CHANGED, "Reactivated by user.", "USER");
-        return subscriptionMapper.toUserSubscriptionResponse(saved);
+        return nextZdt.toInstant();
     }
 }

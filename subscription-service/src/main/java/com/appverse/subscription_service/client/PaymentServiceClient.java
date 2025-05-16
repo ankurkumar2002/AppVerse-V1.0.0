@@ -3,6 +3,11 @@ package com.appverse.subscription_service.client;
 
 import com.appverse.subscription_service.enums.PaymentGatewayType; // Assuming this enum exists in a shared lib or also here
 import com.appverse.subscription_service.enums.PaymentReferenceType; // Assuming this enum exists in a shared lib or also here
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.observation.annotation.Observed;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -42,7 +47,24 @@ public interface PaymentServiceClient {
     ) {}
 
     @PostMapping("/api/v1/payments/initiate")
+    @CircuitBreaker(name = "paymentServiceClient", fallbackMethod = "initiatePaymentFallback")
+    @Retry(name = "paymentServiceClient") // Uncomment if you want to add retry logic
+    @Observed(name = "subscriptionService.initiatepayment", contextualName = "InitiatePayment")
     ResponseEntity<PaymentServiceResponse> initiatePayment(@RequestBody InitiatePaymentPayload payload);
+
+    // Fallback method for initiatePayment
+    default ResponseEntity<PaymentServiceResponse> initiatePaymentFallback(
+            InitiatePaymentPayload payload, Throwable throwable) {
+        // Log the error and return a default response
+        System.out.println("Fallback for initiatePayment: " + throwable.getMessage());
+        return ResponseEntity.ok(new PaymentServiceResponse(
+                payload.referenceId,
+                "FAILED",
+                null,
+                null,
+                null
+        ));
+    }
 
     // You might also need a client method to add/manage stored payment methods
     // if SubscriptionService orchestrates that part for the user during signup.

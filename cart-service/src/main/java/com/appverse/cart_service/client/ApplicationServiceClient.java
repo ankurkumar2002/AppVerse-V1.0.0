@@ -3,6 +3,11 @@ package com.appverse.cart_service.client;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.service.annotation.GetExchange;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.observation.annotation.Observed;
 
 import java.math.BigDecimal; // Import BigDecimal
 import java.time.Instant;    // Import Instant
@@ -49,6 +54,41 @@ public interface ApplicationServiceClient {
         Integer ratingCount         // Use Integer (object type) for nullability
     ) {}
 
+    // @GetMapping("/api/apps/{applicationId}")
     @GetMapping("/api/apps/{applicationId}")
+    @CircuitBreaker(name = "applicationServiceClient", fallbackMethod = "getApplicationDetailsFallback")
+    @Retry(name = "applicationServiceClient")
+    @Observed(name = "cartService.GetApplication", contextualName = "get-application-details")
     ApplicationDetails getApplicationDetails(@PathVariable("applicationId") String applicationId);
+
+    default ApplicationDetails getApplicationDetailsFallback(String applicationId, Throwable throwable) {
+        // Return a default or empty ApplicationDetails object
+        return new ApplicationDetails(
+                applicationId,
+                "Fallback App",
+                "Fallback Tagline",
+                "Fallback Description",
+                "1.0",
+                "fallback-category-id",
+                BigDecimal.ZERO,
+                "USD",
+                false,
+                List.of(),
+                "http://fallback-url.com",
+                "http://fallback-website.com",
+                "http://fallback-support.com",
+                "http://fallback-thumbnail.com",
+                List.of(new ScreenshotDetails("fallback-screenshot-id", "http://fallback-screenshot.com", "Fallback Caption", 1)),
+                "fallback-developer-id",
+                "Fallback Developer Name",
+                "Fallback Category Name",
+                List.of(),
+                "inactive",
+                Instant.now(),
+                Instant.now(),
+                Instant.now(),
+                0.0,
+                0
+        );
+    }
 }

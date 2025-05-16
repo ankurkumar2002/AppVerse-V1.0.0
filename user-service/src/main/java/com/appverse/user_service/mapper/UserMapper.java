@@ -21,6 +21,7 @@ public interface UserMapper {
 
     // --- UserRequest to User Entity ---
 
+
     /**
      * Maps UserRequest DTO to User entity for creation.
      * Fields like id, createdAt, updatedAt, status, deactivatedByAdmin, lastLoginAt

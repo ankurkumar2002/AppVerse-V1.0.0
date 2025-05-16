@@ -16,7 +16,8 @@ import java.util.List;
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
 public interface ScreenshotMapper {
-
+    
+    
     ScreenshotResponse toResponse(Screenshot screenshot);
 
     List<ScreenshotResponse> toResponseList(List<Screenshot> screenshots);
@@ -26,4 +27,5 @@ public interface ScreenshotMapper {
     List<Screenshot> toEntityList(List<ScreenshotRequest> requests);
 
     void updateFromDto(ScreenshotRequest dto, @MappingTarget Screenshot screenshot);
+
 }

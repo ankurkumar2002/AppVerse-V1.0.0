@@ -4,41 +4,55 @@ import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.service.annotation.PostExchange;
+
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
+import io.micrometer.observation.annotation.Observed;
+
 import java.math.BigDecimal; // Make sure BigDecimal is imported
 
 // Ensure this 'name' matches what you configure for load balancing or direct URL for subscription-service
 @FeignClient(name = "subscription-service", url = "${feign.client.subscription-service.url}")
 public interface SubscriptionServiceClient {
 
-    // --- Nested Record for the Request Payload ---
-    // This record is defined *inside* the SubscriptionServiceClient interface.
+
     record SubscriptionServicePlanCreationRequest(
         String planNameKey,
         String displayName,
         String description,
         BigDecimal price,
         String currency,
-        String billingInterval, // e.g., "MONTH", "YEAR" (sent as String)
+        String billingInterval,
         Integer billingIntervalCount,
         Integer trialPeriodDays,
-        String applicationId,    // ID of the app in app-service
-        String developerId       // ID of the developer
+        String applicationId,    
+        String developerId       
     ) {}
 
-    // --- Nested Record for the Expected Response ---
-    // Also defined *inside* the SubscriptionServiceClient interface.
+   
     record SubscriptionServicePlanResponse(
-        String id,      // The ID of the plan created in subscription-service
-        String name,    // Or displayName, matching what subscription-service returns
-        String status   // Example field from subscription-service's plan response
-        // Add any other fields that the subscription-service's
-        // internal plan creation endpoint actually returns.
+        String id,   
+        String name,    
+        String status   
     ) {}
 
-    // The Feign client method
-    // Ensure this path matches the internal endpoint in subscription-service's SubscriptionPlanController
+
     @PostMapping("/api/v1/admin/subscription-plans/subscription-plans/by-developer")
+    @CircuitBreaker(name = "subscriptionServiceClient", fallbackMethod = "createDeveloperSubscriptionPlanFallback")
+    @Retry(name = "subscriptionServiceClient")
+    @Observed(name = "appService.createSubscriptionPlan", contextualName = "create-developer-subscription-plan")
     ResponseEntity<SubscriptionServicePlanResponse> createDeveloperSubscriptionPlan(
         @RequestBody SubscriptionServicePlanCreationRequest planRequest
     );
+
+
+    default ResponseEntity<SubscriptionServicePlanResponse> createDeveloperSubscriptionPlanFallback(
+        SubscriptionServicePlanCreationRequest planRequest, Throwable throwable) {
+        return ResponseEntity
+                .status(503)
+                .body(new SubscriptionServicePlanResponse(
+                        "fallback-id", "Fallback Plan", "FAILED"
+                ));
+    }
 }

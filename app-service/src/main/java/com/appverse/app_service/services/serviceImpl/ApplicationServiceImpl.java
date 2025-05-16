@@ -14,8 +14,14 @@ import java.util.UUID;
 // import java.util.stream.Collectors; // Not strictly needed in this version
 
 import com.appverse.app_service.enums.MonetizationType;
+import com.appverse.app_service.event.EventMetaData;
+import com.appverse.app_service.event.payload.ApplicationCreatedPayload;
+import com.appverse.app_service.event.payload.ApplicationDeletedPayload;
+import com.appverse.app_service.event.payload.ApplicationUpdatedPayload;
+
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -64,6 +70,15 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final DeveloperClient developerClient;
     private final SubscriptionServiceClient subscriptionServiceClient;
 
+    private final KafkaTemplate<String, Object> kafkaTemplate; // Inject KafkaTemplate
+
+    private static final String APPLICATION_EVENTS_TOPIC = "application-events";
+    private static final String SERVICE_NAME = "app-service";
+
+
+
+    
+
     @Override
     @Transactional
     public MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail,
@@ -79,33 +94,43 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new DuplicateResourceException("An application with this name already exists.");
         }
         categoryRepository.findById(request.categoryId())
-                .orElseThrow(() -> new ResourceNotFoundException("Category ID " + request.categoryId() + " not found."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Category ID " + request.categoryId() + " not found."));
 
         // VALIDATION BLOCK 2 (FEIGN CALL to Developer Service)
         try {
             log.debug("Validating developer ID: {}", request.developerId());
+
             if (!developerClient.isDeveloperById(request.developerId())) {
                 throw new ResourceNotFoundException("Invalid or non-existent developer ID: " + request.developerId());
             }
             log.debug("Developer ID {} validated successfully.", request.developerId());
         } catch (FeignException ex) {
-            log.error("FeignException while validating developer ID {}: Status {}, Message: {}", request.developerId(), ex.status(), ex.getMessage(), ex);
-            throw new BadRequestException("Failed to validate developer ID. External service may be unavailable or ID is invalid.");
+            log.error("FeignException while validating developer ID {}: Status {}, Message: {}", request.developerId(),
+                    ex.status(), ex.getMessage(), ex);
+            throw new BadRequestException(
+                    "Failed to validate developer ID. External service may be unavailable or ID is invalid.");
         } catch (Exception e) {
-            log.error("Unexpected error while validating developer ID {}: {}", request.developerId(), e.getMessage(), e);
-            throw new CreationException("Unexpected error during developer validation.");
+            log.error("Unexpected error while validating developer ID {}: {}", request.developerId(), e.getMessage(),
+                    e);
+            throw new CreationException("Unexpected error during developer validation."
+                    + developerClient.isDeveloperById(request.developerId()) + request.developerId());
         }
 
         // Validate monetization type with offered plans
-        if ((request.monetizationType() == MonetizationType.FREE || request.monetizationType() == MonetizationType.ONE_TIME_PURCHASE) &&
-            (request.offeredSubscriptionPlans() != null && !request.offeredSubscriptionPlans().isEmpty())) {
-            throw new BadRequestException("Subscription plans cannot be offered for FREE or purely ONE_TIME_PURCHASE applications through this field. Adjust monetizationType.");
+        if ((request.monetizationType() == MonetizationType.FREE
+                || request.monetizationType() == MonetizationType.ONE_TIME_PURCHASE) &&
+                (request.offeredSubscriptionPlans() != null && !request.offeredSubscriptionPlans().isEmpty())) {
+            throw new BadRequestException(
+                    "Subscription plans cannot be offered for FREE or purely ONE_TIME_PURCHASE applications through this field. Adjust monetizationType.");
         }
-        if ((request.monetizationType() == MonetizationType.SUBSCRIPTION_ONLY || request.monetizationType() == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) &&
-            (request.offeredSubscriptionPlans() == null || request.offeredSubscriptionPlans().isEmpty())) {
-            log.warn("Application monetizationType indicates subscription, but no offeredSubscriptionPlans provided for app: {}", request.name());
+        if ((request.monetizationType() == MonetizationType.SUBSCRIPTION_ONLY
+                || request.monetizationType() == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) &&
+                (request.offeredSubscriptionPlans() == null || request.offeredSubscriptionPlans().isEmpty())) {
+            log.warn(
+                    "Application monetizationType indicates subscription, but no offeredSubscriptionPlans provided for app: {}",
+                    request.name());
         }
-
 
         Application application = applicationCreateService.toEntity(request);
 
@@ -116,23 +141,28 @@ public class ApplicationServiceImpl implements ApplicationService {
         } else if (application.getMonetizationType() == MonetizationType.SUBSCRIPTION_ONLY) {
             application.setFree(false);
             if (application.getPrice() == null || application.getPrice().compareTo(BigDecimal.ZERO) != 0) {
-                 log.warn("For SUBSCRIPTION_ONLY app '{}', price is expected to be 0. Setting it to 0.", application.getName());
-                 application.setPrice(BigDecimal.ZERO);
-                 application.setCurrency(null);
+                log.warn("For SUBSCRIPTION_ONLY app '{}', price is expected to be 0. Setting it to 0.",
+                        application.getName());
+                application.setPrice(BigDecimal.ZERO);
+                application.setCurrency(null);
             }
-        } else if (application.getMonetizationType() == MonetizationType.ONE_TIME_PURCHASE || application.getMonetizationType() == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) {
+        } else if (application.getMonetizationType() == MonetizationType.ONE_TIME_PURCHASE
+                || application.getMonetizationType() == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) {
             if (application.getPrice() == null || application.getPrice().compareTo(BigDecimal.ZERO) < 0) {
-                throw new BadRequestException("Price must be provided and non-negative for purchasable monetization types.");
+                throw new BadRequestException(
+                        "Price must be provided and non-negative for purchasable monetization types.");
             }
-            if (application.getPrice().compareTo(BigDecimal.ZERO) > 0 && (application.getCurrency() == null || application.getCurrency().isBlank())) {
-                 throw new BadRequestException("Currency must be provided for priced items.");
+            if (application.getPrice().compareTo(BigDecimal.ZERO) > 0
+                    && (application.getCurrency() == null || application.getCurrency().isBlank())) {
+                throw new BadRequestException("Currency must be provided for priced items.");
             }
             application.setFree(application.getPrice().compareTo(BigDecimal.ZERO) == 0);
         }
 
-        if (thumbnail != null && !thumbnail.isEmpty()) { /* ... file handling ... */ 
+        if (thumbnail != null && !thumbnail.isEmpty()) { /* ... file handling ... */
             try {
-                String filename = UUID.randomUUID().toString() + "_" + Paths.get(thumbnail.getOriginalFilename()).getFileName().toString();
+                String filename = UUID.randomUUID().toString() + "_"
+                        + Paths.get(thumbnail.getOriginalFilename()).getFileName().toString();
                 Path path = Paths.get("uploads/thumbnails/" + filename);
                 Files.createDirectories(path.getParent());
                 Files.copy(thumbnail.getInputStream(), path);
@@ -140,20 +170,21 @@ public class ApplicationServiceImpl implements ApplicationService {
                 log.debug("Thumbnail uploaded to: {}", application.getThumbnailUrl());
             } catch (IOException e) {
                 log.error("Failed to upload thumbnail for application {}: {}", request.name(), e.getMessage(), e);
-                throw new CreationException("Failed to process thumbnail image."+ e);
+                throw new CreationException("Failed to process thumbnail image." + e);
             }
         }
 
         List<Screenshot> screenshotEntities = new ArrayList<>();
-        if (screenshots != null && !screenshots.isEmpty()) { /* ... file handling ... */ 
-             if (screenshots.size() > 5) {
+        if (screenshots != null && !screenshots.isEmpty()) { /* ... file handling ... */
+            if (screenshots.size() > 5) {
                 throw new BadRequestException("You can upload a maximum of 5 screenshots.");
             }
             for (int i = 0; i < screenshots.size(); i++) {
                 MultipartFile screenshotFile = screenshots.get(i);
                 if (!screenshotFile.isEmpty()) {
                     try {
-                        String filename = UUID.randomUUID().toString() + "_" + Paths.get(screenshotFile.getOriginalFilename()).getFileName().toString();
+                        String filename = UUID.randomUUID().toString() + "_"
+                                + Paths.get(screenshotFile.getOriginalFilename()).getFileName().toString();
                         Path path = Paths.get("uploads/screenshots/" + filename);
                         Files.createDirectories(path.getParent());
                         Files.copy(screenshotFile.getInputStream(), path);
@@ -169,8 +200,9 @@ public class ApplicationServiceImpl implements ApplicationService {
                         screenshotEntities.add(screenshotObj);
                         log.debug("Screenshot {} uploaded to: {}", i + 1, screenshotUrl);
                     } catch (IOException e) {
-                        log.error("Failed to upload screenshot #{} for application {}: {}", i + 1, request.name(), e.getMessage(), e);
-                        throw new CreationException("Failed to process screenshot image #" + (i + 1)+ e);
+                        log.error("Failed to upload screenshot #{} for application {}: {}", i + 1, request.name(),
+                                e.getMessage(), e);
+                        throw new CreationException("Failed to process screenshot image #" + (i + 1) + e);
                     }
                 }
             }
@@ -180,20 +212,44 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application savedApplication;
         try {
             savedApplication = applicationRepository.save(application);
-            log.info("Application {} (ID: {}) saved to database initially.", savedApplication.getName(), savedApplication.getId());
+
+            if (savedApplication != null) {
+            ApplicationCreatedPayload payload = new ApplicationCreatedPayload(
+                savedApplication.getId(),
+                savedApplication.getName(),
+                savedApplication.getDeveloperId(),
+                savedApplication.getCategoryId(),
+                savedApplication.getMonetizationType(),
+                savedApplication.getPrice(),
+                savedApplication.getCurrency(),
+                savedApplication.isFree(),
+                savedApplication.getPlatforms(),
+                savedApplication.getStatus(),
+                savedApplication.getTags(),
+                savedApplication.getCreatedAt(),
+                savedApplication.getAssociatedSubscriptionPlanIds()
+            );
+            EventMetaData meta = new EventMetaData("ApplicationCreated", SERVICE_NAME);
+            // You can create a generic Event<T> class or specific event classes
+            // For simplicity, sending payload directly or a custom event object:
+            // MyCustomEvent<ApplicationCreatedPayload> event = new MyCustomEvent<>(meta, payload);
+            // kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, savedApplication.getId(), event);
+            kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, savedApplication.getId(), payload); // Key by app ID
+            log.info("Published ApplicationCreatedEvent for app ID: {}", savedApplication.getId());
+            }
+            log.info("Application {} (ID: {}) saved to database initially.", savedApplication.getName(),savedApplication.getId());
         } catch (DataAccessException e) {
             log.error("Database error while saving application {}: {}", application.getName(), e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to save application due to a database issue."+ e);
+            throw new DatabaseOperationException("Failed to save application due to a database issue." + e);
         }
-
 
         List<String> createdPlanIds = new ArrayList<>();
         if (request.offeredSubscriptionPlans() != null && !request.offeredSubscriptionPlans().isEmpty()) {
-            log.info("Processing {} offered subscription plans for application ID: {}", request.offeredSubscriptionPlans().size(), savedApplication.getId());
+            log.info("Processing {} offered subscription plans for application ID: {}",
+                    request.offeredSubscriptionPlans().size(), savedApplication.getId());
             for (DeveloperOfferedSubscriptionPlanDto planDto : request.offeredSubscriptionPlans()) {
                 // Use the Feign client's nested record type
-                SubscriptionServiceClient.SubscriptionServicePlanCreationRequest planCreationRequest =
-                    new SubscriptionServiceClient.SubscriptionServicePlanCreationRequest(
+                SubscriptionServiceClient.SubscriptionServicePlanCreationRequest planCreationRequest = new SubscriptionServiceClient.SubscriptionServicePlanCreationRequest(
                         planDto.planNameKey(),
                         planDto.displayName(),
                         planDto.description(),
@@ -203,13 +259,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                         planDto.billingIntervalCount(),
                         planDto.trialPeriodDays(),
                         savedApplication.getId(),
-                        savedApplication.getDeveloperId()
-                    );
+                        savedApplication.getDeveloperId());
                 try {
                     log.debug("Calling subscription-service to create plan: {}", planDto.displayName());
                     // Use the Feign client's nested record type
-                    ResponseEntity<SubscriptionServiceClient.SubscriptionServicePlanResponse> planResponse =
-                            subscriptionServiceClient.createDeveloperSubscriptionPlan(planCreationRequest);
+                    ResponseEntity<SubscriptionServiceClient.SubscriptionServicePlanResponse> planResponse = subscriptionServiceClient
+                            .createDeveloperSubscriptionPlan(planCreationRequest);
 
                     if (planResponse.getStatusCode().is2xxSuccessful() && planResponse.getBody() != null) {
                         String newPlanId = planResponse.getBody().id();
@@ -217,19 +272,24 @@ public class ApplicationServiceImpl implements ApplicationService {
                         log.info("Successfully created subscription plan '{}' (ID: {}) for application ID: {}",
                                 planDto.displayName(), newPlanId, savedApplication.getId());
                     } else {
-                        log.error("Failed to create subscription plan '{}' in subscription-service for app {}. Response status: {}, Body: {}",
-                                planDto.displayName(), savedApplication.getId(), planResponse.getStatusCode(), planResponse.getBody());
-                        throw new CreationException("Failed to create associated subscription plan: " + planDto.displayName() +
-                                                    ". App creation rolled back. Reason: " + planResponse.getStatusCode());
+                        log.error(
+                                "Failed to create subscription plan '{}' in subscription-service for app {}. Response status: {}, Body: {}",
+                                planDto.displayName(), savedApplication.getId(), planResponse.getStatusCode(),
+                                planResponse.getBody());
+                        throw new CreationException(
+                                "Failed to create associated subscription plan: " + planDto.displayName() +
+                                        ". App creation rolled back. Reason: " + planResponse.getStatusCode());
                     }
                 } catch (FeignException ex) {
                     log.error("FeignException while creating subscription plan '{}' for app {}: Status {}, Message: {}",
                             planDto.displayName(), savedApplication.getId(), ex.status(), ex.getMessage(), ex);
-                    throw new CreationException("Failed to communicate with subscription service for plan: " + planDto.displayName() + ". App creation rolled back."+ ex);
+                    throw new CreationException("Failed to communicate with subscription service for plan: "
+                            + planDto.displayName() + ". App creation rolled back." + ex);
                 } catch (Exception ex) {
-                     log.error("Unexpected exception while creating subscription plan '{}' for app {}: {}",
+                    log.error("Unexpected exception while creating subscription plan '{}' for app {}: {}",
                             planDto.displayName(), savedApplication.getId(), ex.getMessage(), ex);
-                    throw new CreationException("Unexpected error creating subscription plan: " + planDto.displayName() + ". App creation rolled back."+ ex);
+                    throw new CreationException("Unexpected error creating subscription plan: " + planDto.displayName()
+                            + ". App creation rolled back." + ex);
                 }
             }
 
@@ -237,10 +297,12 @@ public class ApplicationServiceImpl implements ApplicationService {
                 savedApplication.setApplicationSpecificSubscriptionPlanIds(createdPlanIds);
                 try {
                     savedApplication = applicationRepository.save(savedApplication); // Save again
-                    log.info("Updated application {} with {} associated subscription plan IDs.", savedApplication.getId(), createdPlanIds.size());
+                    log.info("Updated application {} with {} associated subscription plan IDs.",
+                            savedApplication.getId(), createdPlanIds.size());
                 } catch (DataAccessException e) {
-                    log.error("Database error while updating application {} with plan IDs: {}", savedApplication.getId(), e.getMessage(), e);
-                    throw new DatabaseOperationException("Failed to link subscription plans to application."+ e);
+                    log.error("Database error while updating application {} with plan IDs: {}",
+                            savedApplication.getId(), e.getMessage(), e);
+                    throw new DatabaseOperationException("Failed to link subscription plans to application." + e);
                 }
             }
         }
@@ -249,10 +311,14 @@ public class ApplicationServiceImpl implements ApplicationService {
         return new MessageResponse("Application created successfully", savedApplication.getId());
     }
 
-    // --- Other methods (updateApplication, deleteApplication, getApplicationById, getAllApplications) ---
-    // These methods would also need to be here. I'm omitting them for brevity as the focus is on the createApplication error.
-    // Ensure your ApplicationMapper handles mapping the new fields for getApplicationById and getAllApplications.
-    // updateApplication would need significant logic to handle changes to offeredSubscriptionPlans.
+    // --- Other methods (updateApplication, deleteApplication, getApplicationById,
+    // getAllApplications) ---
+    // These methods would also need to be here. I'm omitting them for brevity as
+    // the focus is on the createApplication error.
+    // Ensure your ApplicationMapper handles mapping the new fields for
+    // getApplicationById and getAllApplications.
+    // updateApplication would need significant logic to handle changes to
+    // offeredSubscriptionPlans.
 
     @Override
     @Transactional
@@ -260,7 +326,8 @@ public class ApplicationServiceImpl implements ApplicationService {
             MultipartFile thumbnail,
             List<MultipartFile> screenshots,
             List<ScreenshotRequest> metadata) {
-        // ... (Implementation as provided before, but consider how to update offeredSubscriptionPlans) ...
+        // ... (Implementation as provided before, but consider how to update
+        // offeredSubscriptionPlans) ...
         log.info("Attempting to update application with ID: {}", id);
         Application existingApp = applicationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Application with ID " + id + " not found."));
@@ -272,24 +339,54 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
         if (request.categoryId() != null) { // Only validate if categoryId is part of the update request
             categoryRepository.findById(request.categoryId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Category ID " + request.categoryId() + " not found."));
+                    .orElseThrow(
+                            () -> new ResourceNotFoundException("Category ID " + request.categoryId() + " not found."));
         }
-        applicationMapper.updateFromDto(request, existingApp); // Ensure mapper handles new fields if in UpdateApplicationRequest
+        applicationMapper.updateFromDto(request, existingApp); // Ensure mapper handles new fields if in
+                                                               // UpdateApplicationRequest
 
         // Consistency logic for monetizationType, price, isFree
-        if (existingApp.getMonetizationType() == MonetizationType.FREE) { /* ... */ }
-        else if (existingApp.getMonetizationType() == MonetizationType.SUBSCRIPTION_ONLY) { /* ... */ }
-        else if (existingApp.getMonetizationType() == MonetizationType.ONE_TIME_PURCHASE || existingApp.getMonetizationType() == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) { /* ... */ }
-        
-        // File handling for thumbnail and screenshots (similar to create, with deletion of old files)
+        if (existingApp.getMonetizationType() == MonetizationType.FREE) {
+            /* ... */ } else if (existingApp.getMonetizationType() == MonetizationType.SUBSCRIPTION_ONLY) {
+            /* ... */ } else if (existingApp.getMonetizationType() == MonetizationType.ONE_TIME_PURCHASE
+                    || existingApp.getMonetizationType() == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) {
+            /* ... */ }
+
+        // File handling for thumbnail and screenshots (similar to create, with deletion
+        // of old files)
         // ...
 
-        // TODO: Implement robust logic for updating/adding/deleting associated subscription plans
+        // TODO: Implement robust logic for updating/adding/deleting associated
+        // subscription plans
         // This would involve calling SubscriptionServiceClient
-        log.warn("Updating 'offeredSubscriptionPlans' via app update is not fully implemented yet. Only basic app fields are updated.");
-
+        log.warn(
+                "Updating 'offeredSubscriptionPlans' via app update is not fully implemented yet. Only basic app fields are updated.");
 
         Application updatedApp = applicationRepository.save(existingApp);
+        log.info("Application {} updated successfully in database.", updatedApp.getId());
+
+        // --- Publish ApplicationUpdatedEvent ---
+        ApplicationUpdatedPayload payload = new ApplicationUpdatedPayload(
+                updatedApp.getId(),
+                updatedApp.getName(),
+                updatedApp.getDeveloperId(),
+                updatedApp.getCategoryId(),
+                updatedApp.getMonetizationType(),
+                updatedApp.getPrice(),
+                updatedApp.getCurrency(),
+                updatedApp.isFree(),
+                updatedApp.getPlatforms(),
+                updatedApp.getStatus(),
+                updatedApp.getTags(),
+                updatedApp.getUpdatedAt(), // Use the timestamp after save
+                updatedApp.getAssociatedSubscriptionPlanIds()
+                // You could add more fields if your ApplicationUpdatedPayload includes them
+                // e.g., tagline, description, version, accessUrl, websiteUrl, supportUrl, thumbnailUrl,
+                // averageRating, ratingCount, publishedAt
+        );
+        // EventMetaData meta = new EventMetaData("ApplicationUpdated", SERVICE_NAME); // If using a wrapper
+        kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, updatedApp.getId(), payload); // Key by app ID
+        log.info("Published ApplicationUpdatedEvent for app ID: {}", updatedApp.getId());
         log.info("Application {} updated successfully.", updatedApp.getId());
         return new MessageResponse("Application Updated Successfully!", updatedApp.getId());
     }
@@ -300,9 +397,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         // ... (Implementation as provided before) ...
         log.info("Attempting to delete application with ID: {}", id);
         Application application = applicationRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Application with ID " + id + " not found, cannot delete."));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Application with ID " + id + " not found, cannot delete."));
         // TODO: Notify subscription-service to handle/deactivate plans for this app
         applicationRepository.deleteById(id);
+         ApplicationDeletedPayload payload = new ApplicationDeletedPayload(
+            application.getId(),
+            application.getDeveloperId(),
+            application.getName(),
+            Instant.now()
+        );
+        // EventMetaData meta = new EventMetaData("ApplicationDeleted", SERVICE_NAME);
+        kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, application.getId(), payload);
+        log.info("Published ApplicationDeletedEvent for app ID: {}", application.getId());
         log.info("Application with ID: {} deleted successfully.", id);
         // TODO: Delete files from disk
     }

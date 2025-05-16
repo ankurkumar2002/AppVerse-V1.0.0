@@ -17,5 +17,6 @@ public enum PaymentTransactionStatus {
     REFUND_REQUESTED,           // A refund has been requested for this transaction
     REFUND_PROCESSING,          // A refund is being processed by the gateway
     REFUNDED,                   // The entire transaction amount has been refunded
-    PARTIALLY_REFUNDED          // A portion of the transaction amount has been refunded
+    PARTIALLY_REFUNDED, REQUIRES_CLIENT_ACTION,          // A portion of the transaction amount has been refunded
+
 }
