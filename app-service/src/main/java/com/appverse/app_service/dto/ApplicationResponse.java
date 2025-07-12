@@ -16,16 +16,8 @@ public record ApplicationResponse(
     BigDecimal price,
     String currency,
     boolean isFree,
-
-    // ****************************************************
-    // ****** CHANGES START HERE FOR RESPONSE DTO *******
-    // ****************************************************
     MonetizationType monetizationType,
     List<String> associatedSubscriptionPlanIds,
-    // ****************************************************
-    // ****** CHANGES END HERE FOR RESPONSE DTO *********
-    // ****************************************************
-
     List<String> platforms,
     String accessUrl,
     String websiteUrl,

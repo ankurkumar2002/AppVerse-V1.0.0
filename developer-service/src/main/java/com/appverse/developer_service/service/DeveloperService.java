@@ -21,4 +21,9 @@ public interface DeveloperService {
     List<DeveloperResponse> getAll();
 
     boolean existsById(String id);
+    boolean existsByKeycloakUserId(String keycloakUserId);
+
+    boolean isDeveloperProfileComplete(String keycloakUserId);
+    public DeveloperResponse getDeveloperByKeycloakUserId(String keycloakUserId);
+
 }

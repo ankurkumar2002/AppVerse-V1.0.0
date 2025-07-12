@@ -1,12 +1,11 @@
-// === In API Gateway Project ===
-package com.appverse.api_gateway.routes; // Ensure this package name is correct
+
+package com.appverse.api_gateway.routes;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctions;
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
-import org.springframework.cloud.gateway.server.mvc.filter.CircuitBreakerFilterFunctions; // Correct import
-// import org.springframework.cloud.circuitbreaker.resilience4j.Resilience4JCircuitBreakerFactory; // Not strictly needed for this usage but doesn't harm if present
+import org.springframework.cloud.gateway.server.mvc.filter.CircuitBreakerFilterFunctions; 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -23,22 +22,15 @@ import java.net.URI;
 public class Routes {
     private static final Logger logger = LoggerFactory.getLogger(Routes.class);
 
-    // The Resilience4JCircuitBreakerFactory is auto-configured and available in the context.
-    // You don't need to inject it explicitly for the CircuitBreakerFilterFunctions.circuitBreaker() method to work,
-    // but having it injected is fine if you plan to use it for other custom Resilience4j configurations.
-    // For this specific fix, its direct usage in the filter call is removed.
-    // public Routes(Resilience4JCircuitBreakerFactory circuitBreakerFactory) {
-    //     // this.circuitBreakerFactory = circuitBreakerFactory; // Not directly used in the simplified filter call
-    // }
 
-    private final URI fallbackUri = URI.create("forward:/fallback"); // Define fallback URI once
 
-    // --- ROUTES FOR FORWARDING API REQUESTS TO DOWNSTREAM SERVICES ---
+    private final URI fallbackUri = URI.create("forward:/fallback"); 
+
     @Bean
     public RouterFunction<ServerResponse> developerServiceApiRoute() {
         return GatewayRouterFunctions.route("developer-service-api")
                 .route(RequestPredicates.path("/api/developers/**"), HandlerFunctions.http("http://localhost:8081"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("developerServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("developerServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to developer-service (http://localhost:8081)",
                             request.uri());
@@ -52,7 +44,7 @@ public class Routes {
     public RouterFunction<ServerResponse> applicationServiceApiRoute() {
         return GatewayRouterFunctions.route("application-service-api")
                 .route(RequestPredicates.path("/api/apps/**"), HandlerFunctions.http("http://localhost:8080"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("applicationServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("applicationServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to application-service (http://localhost:8080)",
                             request.uri());
@@ -63,10 +55,9 @@ public class Routes {
 
     @Bean
     public RouterFunction<ServerResponse> categoryServiceApiRoute() {
-        // Assuming category service shares the same circuit breaker as application service (applicationServiceCB)
         return GatewayRouterFunctions.route("category-service-api")
                 .route(RequestPredicates.path("/api/categories/**"), HandlerFunctions.http("http://localhost:8080"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("applicationServiceCB", fallbackUri)) // CORRECTED (or a dedicated CB "categoryServiceCB" if defined)
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("applicationServiceCB", fallbackUri))  
                 .filter((request, next) -> {
                     logger.info(
                             "[API] Forwarding request for {} to category-service (via app-service http://localhost:8080)",
@@ -80,7 +71,7 @@ public class Routes {
     public RouterFunction<ServerResponse> userServiceApiRoute() {
         return GatewayRouterFunctions.route("user-service-api")
                 .route(RequestPredicates.path("/api/v1/users/**"), HandlerFunctions.http("http://localhost:8082"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("userServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("userServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to user-service (http://localhost:8082)",
                             request.uri());
@@ -93,7 +84,7 @@ public class Routes {
     public RouterFunction<ServerResponse> cartServiceApiRoute() {
         return GatewayRouterFunctions.route("cart-service-api")
                 .route(RequestPredicates.path("/api/v1/carts/**"), HandlerFunctions.http("http://localhost:8083"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("cartServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("cartServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to cart-service (http://localhost:8083)",
                             request.uri());
@@ -106,7 +97,7 @@ public class Routes {
     public RouterFunction<ServerResponse> orderServiceApiRoute() {
         return GatewayRouterFunctions.route("order-service-api")
                 .route(RequestPredicates.path("/api/v1/orders/**"), HandlerFunctions.http("http://localhost:8084"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("orderServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("orderServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to order-service (http://localhost:8084)",
                             request.uri());
@@ -119,7 +110,7 @@ public class Routes {
     public RouterFunction<ServerResponse> paymentServiceApiRoute() {
         return GatewayRouterFunctions.route("payment-service-api")
                 .route(RequestPredicates.path("/api/v1/payments/**"), HandlerFunctions.http("http://localhost:8085"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("paymentServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("paymentServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to payment-service (http://localhost:8085)",
                             request.uri());
@@ -133,7 +124,7 @@ public class Routes {
         return GatewayRouterFunctions.route("subscription-service-api")
                 .route(RequestPredicates.path("/api/v1/subscriptions/**"),
                         HandlerFunctions.http("http://localhost:8086"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("subscriptionServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("subscriptionServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to subscription-service (http://localhost:8086)",
                             request.uri());
@@ -146,7 +137,7 @@ public class Routes {
         return GatewayRouterFunctions.route("subscription-service-api")
                 .route(RequestPredicates.path("/api/v1/subscription-plans/**"),
                         HandlerFunctions.http("http://localhost:8086"))
-                .filter(CircuitBreakerFilterFunctions.circuitBreaker("subscriptionServiceCB", fallbackUri)) // CORRECTED
+                .filter(CircuitBreakerFilterFunctions.circuitBreaker("subscriptionServiceCB", fallbackUri)) 
                 .filter((request, next) -> {
                     logger.info("[API] Forwarding request for {} to subscription-service (http://localhost:8086)",
                             request.uri());
@@ -155,7 +146,7 @@ public class Routes {
                 .build();
     }
 
-    // --- CORRECTED ROUTES FOR AGGREGATED SWAGGER API DOCS ---
+   
     private ServerRequest rewriteToApiDocs(ServerRequest request) {
         URI newUri = UriComponentsBuilder.fromUri(request.uri())
                 .replacePath("/v3/api-docs")

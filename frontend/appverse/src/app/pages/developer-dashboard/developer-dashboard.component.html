@@ -1,0 +1,79 @@
+<div class="dashboard-container">
+  <!-- Loading Spinner -->
+  @if (isLoading) {
+    <mat-spinner class="loading-spinner"></mat-spinner>
+  }
+
+  <!-- Content when loaded -->
+  @if (!isLoading) {
+    <!-- Profile Section -->
+    <mat-card class="profile-card">
+      <mat-card-header>
+        <mat-card-title>
+          Welcome, {{ (developer$ | async)?.name || 'User' }}
+        </mat-card-title>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <p class="bio">{{ (developer$ | async)?.bio || 'No bio available' }}</p>
+        <p class="email">
+          <mat-icon>email</mat-icon>
+          {{ (developer$ | async)?.email }}
+        </p>
+        
+        @if ((developer$ | async)?.website) {
+          <div class="website">
+            <mat-icon>public</mat-icon>
+            <a [href]="(developer$ | async)?.website" target="_blank" rel="noopener">
+              {{ (developer$ | async)?.website }}
+            </a>
+          </div>
+        }
+      </mat-card-content>
+      
+      <mat-card-actions>
+        <button mat-raised-button color="primary" (click)="editProfile()">
+          <mat-icon>edit</mat-icon> Edit Profile
+        </button>
+      </mat-card-actions>
+    </mat-card>
+
+    <!-- Stats Grid -->
+    <div class="stats-grid">
+      @for (stat of stats; track stat.label) {
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <mat-icon>{{ stat.icon }}</mat-icon>
+            <h3>{{ stat.value }}</h3>
+            <p>{{ stat.label }}</p>
+          </mat-card-content>
+        </mat-card>
+      }
+    </div>
+
+    <!-- Recent Activity -->
+    <mat-card class="activity-card">
+      <mat-card-header>
+        <mat-card-title>Recent Activity</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <mat-list>
+          @for (activity of recentActivities; track activity.message) {
+            <mat-list-item>
+              <mat-icon matListItemIcon>notifications</mat-icon>
+              <div matListItemTitle>{{ activity.message }}</div>
+              <div matListItemLine>{{ activity.date | date:'medium' }}</div>
+            </mat-list-item>
+          }
+          
+          @if (recentActivities.length === 0) {
+            <div class="empty-state">
+              <mat-icon>info</mat-icon>
+              <p>No recent activity</p>
+            </div>
+          }
+        </mat-list>
+      </mat-card-content>
+    </mat-card>
+  }
+</div>

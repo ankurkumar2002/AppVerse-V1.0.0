@@ -1,0 +1,71 @@
+<!-- Loading Spinner -->
+<div *ngIf="!application" class="loading-container">
+  <mat-spinner color="accent"></mat-spinner>
+  <p>Loading Application Details...</p>
+</div>
+
+<!-- Main Application Detail View -->
+<div *ngIf="application as app" class="app-detail-container">
+  <mat-card>
+    <!-- ===== HEADER SECTION ===== -->
+    <header class="app-header">
+      <!-- App Icon (using the thumbnail) -->
+      <!-- The class "app-icon" is what makes it small -->
+      <img [src]="thumbnailBlobUrl" alt="{{ app.name }} icon" class="app-icon" *ngIf="thumbnailBlobUrl">
+
+      <div class="app-title-block">
+        <h1>{{ app.name }}</h1>
+        <!-- Using a non-clickable span for now. You can fetch and link this later. -->
+        <span class="developer-link">By Developer Name Placeholder</span>
+        <span class="category-badge">Category Placeholder</span>
+      </div>
+
+      <!-- Action Button (Links to external site) -->
+      <div class="app-actions" *ngIf="app.websiteUrl">
+        <!-- NOTE: This button will only show if 'websiteUrl' exists in your data -->
+        <a mat-raised-button color="accent" [href]="app.websiteUrl" target="_blank" rel="noopener noreferrer">
+          Visit Website
+        </a>
+      </div>
+    </header>
+
+    <mat-card-content>
+      <!-- ===== SCREENSHOTS (now more prominent) ===== -->
+      <section *ngIf="app.screenshots && app.screenshots.length > 0" class="screenshots-section">
+        <div class="screenshot-gallery">
+          <div *ngFor="let screenshot of app.screenshots" class="screenshot-item">
+            <img [src]="screenshotBlobUrls[screenshot._id]" [alt]="screenshot.caption || 'Screenshot ' + screenshot.order" *ngIf="screenshotBlobUrls[screenshot._id]">
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== DESCRIPTION ===== -->
+      <section class="description-section">
+        <h3>About this app</h3>
+        <!-- FIX: Removed the non-existent 'newline' pipe. The CSS will handle line breaks. -->
+        <p>{{ app.description }}</p>
+      </section>
+
+      <!-- ===== METADATA (now integrated below) ===== -->
+      <section class="about-section">
+        <h3>Additional Information</h3>
+        <ul class="metadata-list">
+          <li>
+            <strong>Version</strong>
+            <span>{{ app.version }}</span>
+          </li>
+           <li>
+            <strong>Price</strong>
+            <div [ngSwitch]="app.monetizationType">
+              <span *ngSwitchCase="'FREE'" class="price-free">Free</span>
+              <span *ngSwitchCase="'ONE_TIME_PURCHASE'" class="price-display">{{ app.price | currency:'USD' }}</span>
+              <span *ngSwitchCase="'SUBSCRIPTION_ONLY'" class="price-subscription">Subscription Based</span>
+              <span *ngSwitchCase="'ONE_TIME_OR_SUBSCRIPTION'" class="price-display">{{ app.price | currency:'USD' }}</span>
+              <span *ngSwitchDefault class="price-display">N/A</span>
+            </div>
+          </li>
+        </ul>
+      </section>
+    </mat-card-content>
+  </mat-card>
+</div>

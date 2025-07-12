@@ -32,7 +32,7 @@ public record UpdateApplicationRequest(
     List<@NotBlank String> tags,
     @NotBlank String status,
     Instant publishedAt,
-    MonetizationType monetizationType, // Allow updating this (might be nullable if not always updated)
-    List<String> associatedSubscriptionPlanIds // Allow updating this
+    MonetizationType monetizationType, 
+    List<String> associatedSubscriptionPlanIds 
 
 ) {}

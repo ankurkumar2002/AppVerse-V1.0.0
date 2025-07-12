@@ -1,0 +1,64 @@
+<h2>Create Developer Profile</h2>
+
+<form [formGroup]="developerForm" (ngSubmit)="onSubmit()">
+  <!-- Name (fetched from Keycloak) -->
+  <label>Name:</label>
+  <input formControlName="name"  />
+  <br />
+
+  <!-- Email (fetched from Keycloak) -->
+  <label>Email:</label>
+  <input formControlName="email"  />
+  <br />
+
+  <!-- Developer Type -->
+  <label>Developer Type:</label>
+  <select formControlName="developerType" required>
+    <option value="" disabled>Select Developer Type</option>
+    <option value="INDIVIDUAL">Individual</option>
+    <option value="COMPANY">Company</option>
+  </select>
+  <div *ngIf="developerForm.get('developerType')?.invalid && developerForm.get('developerType')?.touched">
+    Developer type is required.
+  </div>
+  <br />
+
+  <!-- Role -->
+  <label>Role:</label>
+  <select formControlName="role" required>
+    <option value="" disabled>Select Role</option>
+    <option value="ADMIN">Admin</option>
+    <option value="DEVELOPER">Developer</option>
+  </select>
+  <div *ngIf="developerForm.get('role')?.invalid && developerForm.get('role')?.touched">
+    Role is required.
+  </div>
+  <br />
+
+  <!-- Bio -->
+  <label>Bio:</label>
+  <textarea formControlName="bio" placeholder="Tell us about yourself..."></textarea>
+  <br />
+
+  <!-- Website -->
+  <label>Website:</label>
+  <input formControlName="website" type="url" />
+  <br />
+
+  <!-- Company Name -->
+  <label>Company Name:</label>
+  <input formControlName="companyName" />
+  <br />
+
+  <!-- Logo URL -->
+  <label>Logo URL:</label>
+  <input formControlName="logoUrl" type="url" />
+  <br />
+
+  <!-- Location -->
+  <label>Location:</label>
+  <input formControlName="location" />
+  <br /><br />
+
+  <button type="submit" [disabled]="developerForm.invalid">Create Profile</button>
+</form>

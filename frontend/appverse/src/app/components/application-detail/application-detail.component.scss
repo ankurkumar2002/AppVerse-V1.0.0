@@ -1,0 +1,156 @@
+:host {
+  display: flex;
+  justify-content: center;
+  padding: 2rem;
+  background-color: #121212;
+  color: #e0e0e0;
+  min-height: 100vh;
+  font-family: 'Roboto', sans-serif;
+}
+
+// --- Loading Spinner Styling ---
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+// --- Main Card Styling ---
+mat-card {
+  width: 100%;
+  max-width: 960px;
+  background-color: #1e1e1e;
+  padding: 0; // Remove default card padding
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.7);
+  border-radius: 16px;
+  border: 1px solid #333;
+}
+
+// --- NEW APP HEADER LAYOUT ---
+.app-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-bottom: 1px solid #333;
+}
+
+// THIS IS THE FIX FOR THE THUMBNAIL SIZE
+.app-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 20%; // "Squircle" shape for icons
+  object-fit: cover; // Ensures the image fills the space without distortion
+  flex-shrink: 0; // Prevents icon from shrinking if the title is long
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
+}
+
+.app-title-block {
+  flex-grow: 1; // Takes up available space, pushing button to the right
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+  }
+}
+
+.developer-link {
+  color: #03dac6;
+  font-size: 1.1rem;
+}
+
+.category-badge {
+  display: inline-block;
+  background-color: #333;
+  color: #03dac6;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  margin-top: 0.5rem;
+  border: 1px solid #444;
+}
+
+.app-actions a[mat-raised-button] {
+  padding: 0 2rem;
+  line-height: 48px;
+  font-size: 1rem;
+  font-weight: 500;
+  border-radius: 24px;
+}
+
+// --- Main Content Sections ---
+mat-card-content {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+section h3 {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #e0e0e0;
+  margin-bottom: 1rem;
+}
+
+// --- Screenshots Gallery ---
+.screenshot-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+
+  img {
+    width: 100%;
+    height: auto;
+    border-radius: 8px;
+    border: 1px solid #444;
+  }
+}
+
+// --- Description ---
+.description-section p {
+  font-size: 1rem;
+  line-height: 1.7;
+  color: #ccc;
+  // THIS IS THE FIX FOR THE NEWLINE PIPE
+  white-space: pre-wrap; // This makes the browser respect newlines (\n) in the text
+}
+
+// --- Metadata List ---
+.metadata-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+
+  li {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1rem;
+
+    strong {
+      color: #aaa;
+      font-weight: 400;
+    }
+
+    span {
+      font-weight: 500;
+      color: #fff;
+    }
+  }
+}
+
+.price-display, .price-subscription {
+  font-weight: bold;
+  color: #fff;
+}
+.price-free {
+  font-weight: bold;
+  color: #81c784;
+}

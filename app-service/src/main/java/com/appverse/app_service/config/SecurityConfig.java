@@ -19,7 +19,6 @@ public class SecurityConfig {
 
     private static final Logger logger = LoggerFactory.getLogger(SecurityConfig.class);
 
-    // ****** ADDED SWAGGER UI PATHS ******
     private static final String[] SWAGGER_UI_PATHS = {
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -30,7 +29,6 @@ public class SecurityConfig {
             "/webjars/**",
             "/actuator/**"
     };
-    // ************************************
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -45,19 +43,17 @@ public class SecurityConfig {
                 if (authHeader != null && authHeader.startsWith("Bearer ")) {
                     logger.debug("APP-SERVICE: Authorization Bearer token present.");
                 } else {
-                    // Log only if the path is NOT a Swagger path, to reduce noise for permitted paths
                     String requestURI = ((jakarta.servlet.http.HttpServletRequest) request).getRequestURI();
                     boolean isSwaggerPath = false;
                     for (String path : SWAGGER_UI_PATHS) {
-                        // Basic matching, AntPathMatcher would be more robust if paths have wildcards like /api/**
                         if (requestURI.equals(path.replace("/**", "")) || requestURI.startsWith(path.replace("/**", ""))) {
-                           if (path.endsWith("/**") && requestURI.startsWith(path.substring(0, path.length() - 3)) ) isSwaggerPath = true;
-                           else if (requestURI.equals(path)) isSwaggerPath = true;
-                           if(isSwaggerPath) break;
+                            if (path.endsWith("/**") && requestURI.startsWith(path.substring(0, path.length() - 3))) isSwaggerPath = true;
+                            else if (requestURI.equals(path)) isSwaggerPath = true;
+                            if (isSwaggerPath) break;
                         }
                     }
                     if (!isSwaggerPath) {
-                         logger.warn("APP-SERVICE: No/Invalid Authorization Bearer token found in request to {}", requestURI);
+                        logger.warn("APP-SERVICE: No/Invalid Authorization Bearer token found in request to {}", requestURI);
                     }
                 }
                 chain.doFilter(request, response);
@@ -65,13 +61,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(authorize -> {
                 logger.info("APP-SERVICE: Configuring authorizeHttpRequests...");
                 authorize
-                    // ****** ADDED RULE TO PERMIT SWAGGER UI ******
                     .requestMatchers(SWAGGER_UI_PATHS).permitAll()
-                    // **********************************************
                     .requestMatchers("/api/apps/test-public").permitAll()
-                    .requestMatchers("/api/apps/**").authenticated() // Explicitly secure your API endpoints
-                    .requestMatchers("/actuator/**").permitAll() // Actuator endpoints are public
-                    .anyRequest().authenticated(); // All other requests require authentication
+                    // .requestMatchers("/uploads/**").permitAll() // <-- 🔥 Added this line
+                    .requestMatchers("/api/apps/**").authenticated()
+                    .requestMatchers("/actuator/**").permitAll()
+                    .anyRequest().authenticated();
             })
             .oauth2ResourceServer(oauth2 -> {
                 logger.info("APP-SERVICE: Configuring OAuth2 Resource Server with JWT...");

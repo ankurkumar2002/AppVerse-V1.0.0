@@ -12,7 +12,8 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 
 public interface SubscriptionMapper {
-
+    
+    
     // Plan Mappers
     SubscriptionPlan toSubscriptionPlan(SubscriptionPlanRequest request);
     SubscriptionPlanResponse toSubscriptionPlanResponse(SubscriptionPlan plan);
