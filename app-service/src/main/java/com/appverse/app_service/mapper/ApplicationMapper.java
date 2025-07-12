@@ -17,12 +17,12 @@ import java.util.List;
     uses = {
         ScreenshotMapper.class,
         CategoryMapper.class
-        // DeveloperMapper.class
     },
     unmappedTargetPolicy = ReportingPolicy.IGNORE,
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
 public interface ApplicationMapper {
+
 
 ApplicationResponse toResponse(Application application);
 

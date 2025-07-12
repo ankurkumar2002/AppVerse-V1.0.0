@@ -10,7 +10,7 @@ import lombok.AllArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Screenshot {
-    private String id; // Unique identifier for the screenshot
+    private String id; 
     private String imageUrl; 
     private String caption;
     private Integer order;

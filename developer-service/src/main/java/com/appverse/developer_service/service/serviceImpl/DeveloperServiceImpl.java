@@ -14,6 +14,11 @@ import com.appverse.developer_service.service.DeveloperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult; // <<< IMPORT FOR COMPLETABLEFUTURE
 import org.springframework.security.core.Authentication;
@@ -21,9 +26,14 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
+import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture; // <<< IMPORT FOR COMPLETABLEFUTURE
 
 @Service
@@ -36,6 +46,7 @@ public class DeveloperServiceImpl implements DeveloperService {
     private final KafkaTemplate<String, Object> kafkaTemplate;
 
     private static final String DEVELOPER_EVENTS_TOPIC = "developer-events";
+    private final RestTemplate restTemplate;
 
     @Override
     @Transactional
@@ -49,20 +60,51 @@ public class DeveloperServiceImpl implements DeveloperService {
         }
         log.debug("Creating developer for Keycloak User ID: {}", keycloakUserId);
 
-        // if (developerRepository.existsByKeycloakUserId(keycloakUserId)) {
-        //     throw new DuplicateResourceException("Developer profile already exists for Keycloak user ID: " + keycloakUserId);
-        // }
-        // if (developerRepository.existsByEmailIgnoreCase(request.email())) {
-        //     throw new DuplicateResourceException("Developer with email '" + request.email() + "' already exists.");
+        if (developerRepository.existsByKeycloakUserId(keycloakUserId)) {
+            throw new DuplicateResourceException(
+                    "Developer profile already exists for Keycloak user ID: " + keycloakUserId);
+        }
+        if (developerRepository.existsByEmailIgnoreCase(request.email())) {
+            throw new DuplicateResourceException("Developer with email '" +
+                    request.email() + "' already exists.");
+        }
+
+        // if (!isDeveloperProfileComplete(keycloakUserId)) {
+        // throw new BadRequestException("Developer profile is incomplete. Please
+        // complete your profile.");
         // }
 
         Developer developer = developerMapper.toEntity(request);
         developer.setKeycloakUserId(keycloakUserId);
 
+        String adminToken = getKeycloakAdminToken();
+        Map<String, Object> keycloakUserInfo = getKeycloakUserInfo(keycloakUserId, adminToken);
+
+        // Optionally, override request.email() and request.name() here
+        String name = (String) keycloakUserInfo.get("firstName") + " " + (String) keycloakUserInfo.get("lastName");
+        String email = (String) keycloakUserInfo.get("email");
+
+        // Use this info to override the request
+        // Developer developer = developerMapper.toEntity(request);
+        developer.setKeycloakUserId(keycloakUserId);
+        developer.setEmail(email); // override
+        developer.setName(name); // override
+
         try {
             Developer savedDeveloper = developerRepository.save(developer);
+            if (!isDeveloperProfileComplete(keycloakUserId)) {
+                log.warn("Profile saved but considered incomplete.");
+            }
+            try {
+                // String adminToken = getKeycloakAdminToken();
+                assignRoleToUser(savedDeveloper.getKeycloakUserId(), "developer", adminToken); // "developer" is the
+                                                                                               // Keycloak role name
+                log.info("Assigned 'developer' role to Keycloak user ID {}", savedDeveloper.getKeycloakUserId());
+            } catch (Exception e) {
+                log.error("Failed to assign role to Keycloak user: {}", e.getMessage(), e);
+            }
             log.info("Developer profile created successfully with ID: {} for Keycloak ID: {}",
-                     savedDeveloper.getId(), keycloakUserId);
+                    savedDeveloper.getId(), keycloakUserId);
 
             DeveloperProfileCreatedPayload payload = new DeveloperProfileCreatedPayload(
                     savedDeveloper.getId(),
@@ -71,31 +113,35 @@ public class DeveloperServiceImpl implements DeveloperService {
                     savedDeveloper.getEmail(),
                     savedDeveloper.getDeveloperType(),
                     savedDeveloper.getCompanyName(),
-                    savedDeveloper.getCreatedAt()
-            );
+                    savedDeveloper.getCreatedAt());
 
             // --- ENHANCED KAFKA SEND WITH LOGGING CALLBACK ---
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(), payload);
+            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC,
+                    savedDeveloper.getId(), payload);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
-                    log.info("Successfully sent DeveloperProfileCreatedEvent to topic {} for key {}: offset {}, partition {}",
+                    log.info(
+                            "Successfully sent DeveloperProfileCreatedEvent to topic {} for key {}: offset {}, partition {}",
                             DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(),
                             result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
                 } else {
                     log.error("Failed to send DeveloperProfileCreatedEvent to topic {} for key {}: {}",
                             DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(), ex.getMessage(), ex);
-                    // Consider further error handling here if send failure is critical (e.g., add to a retry queue)
+                    // Consider further error handling here if send failure is critical (e.g., add
+                    // to a retry queue)
                 }
             });
-            log.debug("Asynchronously published DeveloperProfileCreatedEvent for Developer ID: {}. Callback will log success/failure.", savedDeveloper.getId());
-            // Note: The main thread continues, and the log above appears before the callback log.
+            log.debug(
+                    "Asynchronously published DeveloperProfileCreatedEvent for Developer ID: {}. Callback will log success/failure.",
+                    savedDeveloper.getId());
+            // Note: The main thread continues, and the log above appears before the
+            // callback log.
 
             return new MessageResponse("Developer created successfully.", savedDeveloper.getId());
         } catch (DataAccessException e) {
             log.error("Database error creating developer for Keycloak ID {}: {}", keycloakUserId, e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to create developer due to a database issue."+ e);
+            throw new DatabaseOperationException("Failed to create developer due to a database issue." + e);
         }
     }
 
@@ -107,9 +153,10 @@ public class DeveloperServiceImpl implements DeveloperService {
                 .orElseThrow(() -> new ResourceNotFoundException("Developer not found with ID: " + id));
 
         if (request.email() != null && !request.email().isBlank() &&
-            !existingDeveloper.getEmail().equalsIgnoreCase(request.email()) &&
-            developerRepository.existsByEmailIgnoreCase(request.email())) {
-            throw new DuplicateResourceException("Cannot update: Another developer with email '" + request.email() + "' already exists.");
+                !existingDeveloper.getEmail().equalsIgnoreCase(request.email()) &&
+                developerRepository.existsByEmailIgnoreCase(request.email())) {
+            throw new DuplicateResourceException(
+                    "Cannot update: Another developer with email '" + request.email() + "' already exists.");
         }
 
         developerMapper.updateFromDto(request, existingDeveloper);
@@ -117,6 +164,13 @@ public class DeveloperServiceImpl implements DeveloperService {
         try {
             Developer updatedDeveloper = developerRepository.save(existingDeveloper);
             log.info("Developer profile updated successfully with ID: {}", id);
+            try {
+                updateKeycloakUser(existingDeveloper.getKeycloakUserId(), request); // <-- Call Keycloak update here
+                log.info("Keycloak user profile updated for userId: {}", existingDeveloper.getKeycloakUserId());
+            } catch (Exception ex) {
+                log.warn("Keycloak update failed: {}", ex.getMessage(), ex);
+                // Optional: decide if this should fail the entire update or not
+            }
 
             DeveloperProfileUpdatedPayload payload = new DeveloperProfileUpdatedPayload(
                     updatedDeveloper.getId(),
@@ -129,16 +183,16 @@ public class DeveloperServiceImpl implements DeveloperService {
                     updatedDeveloper.getBio(),
                     updatedDeveloper.getLogoUrl(),
                     updatedDeveloper.getLocation(),
-                    updatedDeveloper.getUpdatedAt()
-            );
+                    updatedDeveloper.getUpdatedAt());
 
             // --- ENHANCED KAFKA SEND WITH LOGGING CALLBACK ---
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC, updatedDeveloper.getId(), payload);
+            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC,
+                    updatedDeveloper.getId(), payload);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
-                    log.info("Successfully sent DeveloperProfileUpdatedEvent to topic {} for key {}: offset {}, partition {}",
+                    log.info(
+                            "Successfully sent DeveloperProfileUpdatedEvent to topic {} for key {}: offset {}, partition {}",
                             DEVELOPER_EVENTS_TOPIC, updatedDeveloper.getId(),
                             result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
                 } else {
@@ -146,13 +200,13 @@ public class DeveloperServiceImpl implements DeveloperService {
                             DEVELOPER_EVENTS_TOPIC, updatedDeveloper.getId(), ex.getMessage(), ex);
                 }
             });
-            log.debug("Asynchronously published DeveloperProfileUpdatedEvent for Developer ID: {}.", updatedDeveloper.getId());
-
+            log.debug("Asynchronously published DeveloperProfileUpdatedEvent for Developer ID: {}.",
+                    updatedDeveloper.getId());
 
             return new MessageResponse("Developer updated successfully.", updatedDeveloper.getId());
         } catch (DataAccessException e) {
             log.error("Database error updating developer with ID {}: {}", id, e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to update developer due to a database issue."+ e);
+            throw new DatabaseOperationException("Failed to update developer due to a database issue." + e);
         }
     }
 
@@ -161,7 +215,8 @@ public class DeveloperServiceImpl implements DeveloperService {
     public void deleteDeveloper(String id) {
         log.info("Attempting to delete developer profile with ID: {}", id);
         Developer developerToDelete = developerRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Developer not found with ID: " + id + ", cannot delete."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Developer not found with ID: " + id + ", cannot delete."));
 
         try {
             developerRepository.deleteById(id);
@@ -172,16 +227,16 @@ public class DeveloperServiceImpl implements DeveloperService {
                     developerToDelete.getKeycloakUserId(),
                     developerToDelete.getName(),
                     developerToDelete.getEmail(),
-                    Instant.now()
-            );
+                    Instant.now());
 
             // --- ENHANCED KAFKA SEND WITH LOGGING CALLBACK ---
-            CompletableFuture<SendResult<String, Object>> future =
-                    kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC, developerToDelete.getId(), payload);
+            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC,
+                    developerToDelete.getId(), payload);
 
             future.whenComplete((result, ex) -> {
                 if (ex == null) {
-                    log.info("Successfully sent DeveloperProfileDeletedEvent to topic {} for key {}: offset {}, partition {}",
+                    log.info(
+                            "Successfully sent DeveloperProfileDeletedEvent to topic {} for key {}: offset {}, partition {}",
                             DEVELOPER_EVENTS_TOPIC, developerToDelete.getId(),
                             result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
                 } else {
@@ -189,11 +244,12 @@ public class DeveloperServiceImpl implements DeveloperService {
                             DEVELOPER_EVENTS_TOPIC, developerToDelete.getId(), ex.getMessage(), ex);
                 }
             });
-            log.debug("Asynchronously published DeveloperProfileDeletedEvent for Developer ID: {}.", developerToDelete.getId());
+            log.debug("Asynchronously published DeveloperProfileDeletedEvent for Developer ID: {}.",
+                    developerToDelete.getId());
 
         } catch (DataAccessException e) {
             log.error("Database error deleting developer with ID {}: {}", id, e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to delete developer due to a database issue."+ e);
+            throw new DatabaseOperationException("Failed to delete developer due to a database issue." + e);
         }
     }
 
@@ -214,8 +270,8 @@ public class DeveloperServiceImpl implements DeveloperService {
             List<Developer> developers = developerRepository.findAll();
             return developerMapper.toResponseList(developers);
         } catch (DataAccessException e) {
-             log.error("Database error retrieving all developers: {}", e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to retrieve developers due to a database issue."+ e);
+            log.error("Database error retrieving all developers: {}", e.getMessage(), e);
+            throw new DatabaseOperationException("Failed to retrieve developers due to a database issue." + e);
         }
     }
 
@@ -224,6 +280,13 @@ public class DeveloperServiceImpl implements DeveloperService {
     public boolean existsById(String id) {
         log.debug("Checking existence for developer ID: {}", id);
         return developerRepository.existsById(id);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByKeycloakUserId(String keycloakUserId) {
+        log.debug("Checking existence for developer with Keycloak User ID: {}", keycloakUserId);
+        return developerRepository.existsByKeycloakUserId(keycloakUserId);
     }
 
     private String getKeycloakUserIdFromSecurityContext() {
@@ -235,4 +298,118 @@ public class DeveloperServiceImpl implements DeveloperService {
         log.warn("Could not retrieve Keycloak User ID from SecurityContext. Authentication was: {}", authentication);
         return null;
     }
+
+    private String getKeycloakAdminToken() {
+        String tokenUrl = "http://localhost:8181/realms/master/protocol/openid-connect/token";
+
+        MultiValueMap<String, String> formData = new LinkedMultiValueMap<>();
+        formData.add("client_id", "admin-cli");
+        formData.add("username", "admin"); // your Keycloak admin
+        formData.add("password", "admin"); // your Keycloak admin password
+        formData.add("grant_type", "password");
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+
+        HttpEntity<MultiValueMap<String, String>> request = new HttpEntity<>(formData, headers);
+        ResponseEntity<Map> response = restTemplate.postForEntity(tokenUrl, request, Map.class);
+
+        return response.getBody().get("access_token").toString();
+    }
+
+    private void assignRoleToUser(String userId, String roleName, String token) {
+        // Fetch available client roles from the realm (here assuming 'realm roles')
+        String realmName = "appverse";
+        String roleUrl = "http://localhost:8181/admin/realms/" + realmName + "/roles/" + roleName;
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        ResponseEntity<Map> roleResponse = restTemplate.exchange(
+                roleUrl, HttpMethod.GET, new HttpEntity<>(headers), Map.class);
+
+        Map role = roleResponse.getBody();
+
+        String assignUrl = "http://localhost:8181/admin/realms/" + realmName + "/users/" + userId
+                + "/role-mappings/realm";
+
+        List<Map<String, Object>> rolesToAssign = new ArrayList<>();
+        rolesToAssign.add(Map.of(
+                "id", role.get("id"),
+                "name", role.get("name")));
+
+        HttpEntity<List<Map<String, Object>>> assignRequest = new HttpEntity<>(rolesToAssign, headers);
+        restTemplate.postForEntity(assignUrl, assignRequest, Void.class);
+    }
+
+    private Map<String, Object> getKeycloakUserInfo(String userId, String token) {
+        String url = "http://localhost:8181/admin/realms/appverse/users/" + userId;
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setBearerAuth(token);
+
+        HttpEntity<Void> request = new HttpEntity<>(headers);
+
+        ResponseEntity<Map> response = restTemplate.exchange(
+                url, HttpMethod.GET, request, Map.class);
+
+        return response.getBody();
+    }
+
+    public boolean isDeveloperProfileComplete(String keycloakUserId) {
+        return developerRepository.findByKeycloakUserId(keycloakUserId)
+                .map(developer -> developer.getName() != null &&
+                        developer.getEmail() != null &&
+                        developer.getDeveloperType() != null &&
+                        developer.getRole() != null)
+                .orElse(false); // false if no profile exists
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DeveloperResponse getDeveloperByKeycloakUserId(String keycloakUserId) {
+        log.info("Fetching developer for Keycloak ID: {}", keycloakUserId);
+
+        if (keycloakUserId == null || keycloakUserId.isBlank()) {
+            log.error("Keycloak User ID is null or empty");
+            throw new IllegalArgumentException("Keycloak User ID must not be null or empty");
+        }
+
+        try {
+            Developer developer = developerRepository.findByKeycloakUserId(keycloakUserId)
+                    .orElseThrow(() -> new ResourceNotFoundException(
+                            "Developer not found with Keycloak User ID: " + keycloakUserId));
+            return developerMapper.toResponse(developer);
+        } catch (DataAccessException e) {
+            log.error("Database error fetching developer for Keycloak ID {}: {}", keycloakUserId, e.getMessage(), e);
+            throw new DatabaseOperationException("Failed to fetch developer due to a database issue." + e);
+        }
+    }
+
+    private void updateKeycloakUser(String userId, DeveloperRequest request) {
+    String realmName = "appverse";
+    String url = "http://localhost:8181/admin/realms/" + realmName + "/users/" + userId;
+
+    HttpHeaders headers = new HttpHeaders();
+    headers.setBearerAuth(getKeycloakAdminToken());
+    headers.setContentType(MediaType.APPLICATION_JSON);
+
+    Map<String, Object> updateData = Map.of(
+        "firstName", request.name() != null ? request.name().split(" ")[0] : "Developer",
+        "lastName", request.name() != null && request.name().split(" ").length > 1 ? request.name().split(" ")[1] : "",
+        "email", request.email()
+    );
+
+    HttpEntity<Map<String, Object>> updateRequest = new HttpEntity<>(updateData, headers);
+
+    try {
+        restTemplate.exchange(url, HttpMethod.PUT, updateRequest, Void.class);
+        log.info("Keycloak user updated successfully for user ID: {}", userId);
+    } catch (Exception e) {
+        log.error("Failed to update Keycloak user: {}", e.getMessage(), e);
+        throw new RuntimeException("Keycloak user update failed");
+    }
+}
+
+
 }

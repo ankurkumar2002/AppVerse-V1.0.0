@@ -20,11 +20,8 @@ public record ApplicationRequest(
     boolean isFree,
     @NotNull MonetizationType monetizationType,
 
-    // ****** MODIFIED/ADDED FOR DEVELOPER-DEFINED PLANS ******
-    List<@Valid DeveloperOfferedSubscriptionPlanDto> offeredSubscriptionPlans, // List of plans developer wants for this app
-    // 'associatedSubscriptionPlanIds' might now be less relevant if plans are created WITH the app
-    // List<String> associatedSubscriptionPlanIds, // Keep if you also link to existing platform-wide plans
-    // *********************************************************
+
+    List<@Valid DeveloperOfferedSubscriptionPlanDto> offeredSubscriptionPlans,
 
     List<String> platforms,
     String accessUrl,

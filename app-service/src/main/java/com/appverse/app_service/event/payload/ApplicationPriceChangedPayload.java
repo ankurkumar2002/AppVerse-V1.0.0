@@ -1,4 +1,4 @@
-// === In app-service Project ===
+
 package com.appverse.app_service.event.payload;
 
 import java.math.BigDecimal;
@@ -12,6 +12,3 @@ public record ApplicationPriceChangedPayload(
     String newCurrency,
     Instant priceChangedAt
 ) {}
-
-// Full event:
-// public record ApplicationPriceChangedEvent(EventMetaData metaData, ApplicationPriceChangedPayload payload) {}

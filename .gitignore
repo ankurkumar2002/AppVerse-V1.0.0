@@ -1,53 +1,100 @@
-# IntelliJ IDEA
+######################################
+#         COMMON IGNORE RULES        #
+######################################
+
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Environment and config secrets
+.env
+.env.*
+
+# Temporary files
+*.swp
+*.swo
+*.tmp
+
+# Build outputs
+/build/
+dist/
+target/
+out/
+*.class
+*.jar
+*.war
+
+# Maven
+.mvn/
+**/.mvn/wrapper/maven-wrapper.jar
+!**/src/main/**/mvnw
+!**/src/main/**/mvnw.cmd
+!**/src/main/**/.mvn/wrapper/
+
+# Gradle
+.gradle/
+build/
+
+# Node & npm
+node_modules/
+package-lock.json
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# IDEs
+# IntelliJ
 .idea/
 *.iws
 *.iml
 *.ipr
 
-# VS Code
-.vscode/
-
-# Maven Wrapper
-.mvn/
-!**/src/main/**/mvnw
-!**/src/main/**/mvnw.cmd
-!**/src/main/**/.mvn/wrapper/
-
-# Build directories
-/target/
-!**/src/main/**/target/
-!**/src/test/**/target/
-
-# Compiled Java class files
-*.class
-
-# Log files
-*.log
-
-# Maven build output
-*.war
-*.jar
-
-# Application-specific build
-build/
-
-# Eclipse IDE
+# Eclipse
 .classpath
 .project
 .settings/
 
-# Spring Boot application configurations
+# NetBeans
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+# VS Code
+.vscode/
+
+######################################
+#        ANGULAR FRONTEND IGNORE     #
+######################################
+
+# Angular build output
+/frontend/dist/
+/frontend/.angular/
+/frontend/.angular/cache/
+/frontend/node_modules/
+
+# Angular environments (keep if you need them)
+# !frontend/src/environments/environment.ts
+# !frontend/src/environments/environment.prod.ts
+
+######################################
+#     SPRING BOOT & DATABASE IGNORE  #
+######################################
+
+# Spring Boot config (ignore if not in src)
 *.properties
 *.yml
-
-# Files for temporary files generated during test runs
-*.swp
-*.swo
+!**/src/main/resources/*.properties
+!**/src/main/resources/*.yml
 
 # Keycloak
 *.keycloak/
 
-# MongoDB local data
+# MongoDB
 data/
 *.sock
 
@@ -56,18 +103,18 @@ mysql.sock
 *.sql
 *.dump
 
-# Docker files
-# .docker/
+######################################
+#        DOCKER / VOLUMES / TEMP     #
+######################################
 
-# Environment files
-.env
+# Docker volumes and runtime data
+**/tempo-data/
+**/volume-data/
+**/uploads/
+uploads/
+**/#*
 
-# Operating System files
-.DS_Store
-Thumbs.db
+# Keep Docker config files
+!Dockerfile
+!docker-compose.yml
 
-# Node.js and npm
-node_modules/
-
-# Maven Wrapper jar files
-**/.mvn/wrapper/maven-wrapper.jar

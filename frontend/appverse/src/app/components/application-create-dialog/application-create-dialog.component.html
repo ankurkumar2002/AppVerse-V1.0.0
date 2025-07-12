@@ -1,0 +1,78 @@
+<h2 mat-dialog-title>Create Application</h2>
+<mat-dialog-content>
+  <form [formGroup]="applicationForm">
+    <mat-form-field appearance="fill">
+      <mat-label>Name</mat-label>
+      <input matInput formControlName="name" required>
+      <mat-error *ngIf="applicationForm.get('name')?.hasError('required')">Name is required</mat-error>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Tagline</mat-label>
+      <input matInput formControlName="tagline">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Description</mat-label>
+      <textarea matInput formControlName="description"></textarea>
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Version</mat-label>
+      <input matInput formControlName="version">
+    </mat-form-field>
+
+    <mat-form-field appearance="fill">
+      <mat-label>Category ID</mat-label>
+      <input matInput formControlName="categoryId">
+    </mat-form-field>
+
+    <mat-checkbox formControlName="isFree">Is Free?</mat-checkbox>
+
+    <div *ngIf="!applicationForm.get('isFree')?.value">
+      <mat-form-field appearance="fill">
+        <mat-label>Price</mat-label>
+        <input matInput type="number" formControlName="price" required min="0.01" step="0.01">
+        <mat-error *ngIf="applicationForm.get('price')?.hasError('required')">Price is required</mat-error>
+        <mat-error *ngIf="applicationForm.get('price')?.hasError('min')">Price must be at least 0.01</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Currency</mat-label>
+        <mat-select formControlName="currency" required>
+          <mat-option *ngFor="let currency of currencies" [value]="currency">
+            {{ currency }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="applicationForm.get('currency')?.hasError('required')">Currency is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Billing Interval</mat-label>
+        <mat-select formControlName="billingInterval" required>
+          <mat-option *ngFor="let interval of billingIntervals" [value]="interval">
+            {{ interval }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="applicationForm.get('billingInterval')?.hasError('required')">Billing interval is required</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Billing Interval Count</mat-label>
+        <input matInput type="number" formControlName="billingIntervalCount" required min="1">
+        <mat-error *ngIf="applicationForm.get('billingIntervalCount')?.hasError('required')">Count is required</mat-error>
+        <mat-error *ngIf="applicationForm.get('billingIntervalCount')?.hasError('min')">Count must be at least 1</mat-error>
+      </mat-form-field>
+
+      <mat-form-field appearance="fill">
+        <mat-label>Trial Period Days</mat-label>
+        <input matInput type="number" formControlName="trialPeriodDays" min="0">
+        <mat-error *ngIf="applicationForm.get('trialPeriodDays')?.hasError('min')">Days must be non-negative</mat-error>
+      </mat-form-field>
+    </div>
+  </form>
+</mat-dialog-content>
+<mat-dialog-actions>
+  <button mat-button (click)="onCancel()">Cancel</button>
+  <button mat-button (click)="onSubmit()" [disabled]="applicationForm.invalid">Submit</button>
+</mat-dialog-actions>

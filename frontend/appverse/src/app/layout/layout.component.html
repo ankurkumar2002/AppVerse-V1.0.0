@@ -1,0 +1,72 @@
+<mat-sidenav-container class="layout-container">
+  <!-- Sidenav -->
+  <mat-sidenav #sidenav mode="side" opened class="layout-sidenav">
+    <!-- App Logo/Name -->
+    <mat-toolbar class="sidenav-header">
+      <span class="app-logo">AppVerse</span>
+    </mat-toolbar>
+
+    <!-- Navigation -->
+    <mat-nav-list>
+  <a mat-list-item routerLink="/developer/dashboard" routerLinkActive="active-link" class="nav-item">
+    <mat-icon matListIcon>dashboard</mat-icon>
+    <span matLine>Dashboard</span>
+  </a>
+
+  <a mat-list-item routerLink="/apps" routerLinkActive="active-link" class="nav-item">
+    <mat-icon matListIcon>apps</mat-icon>
+    <span matLine>My Apps</span>
+  </a>
+
+  <a *ngIf="developer" mat-list-item routerLink="/apps/create" routerLinkActive="active-link" class="nav-item">
+    <mat-icon matListIcon>cloud_upload</mat-icon>
+    <span matLine>Upload App</span>
+  </a>
+
+  <a mat-list-item routerLink="/developer/update" routerLinkActive="active-link" class="nav-item">
+    <mat-icon matListIcon>edit</mat-icon>
+    <span matLine>Edit Profile</span>
+  </a>
+
+  <a mat-list-item routerLink="/developer/create" routerLinkActive="active-link" class="nav-item">
+    <mat-icon matListIcon>person_add</mat-icon>
+    <span matLine>Create Profile</span>
+  </a>
+</mat-nav-list>
+
+
+    <!-- Profile Section -->
+    <div class="profile-section">
+      <div class="profile-pic" [style.background]="profileGradient">
+        {{ developer?.name?.charAt(0) || 'U' }}
+      </div>
+      <div class="profile-info">
+        <span class="profile-name">{{ developer?.name || 'User' }}</span>
+        <span class="profile-email">{{ developer?.email || 'user@example.com' }}</span>
+      </div>
+    </div>
+  </mat-sidenav>
+
+  <!-- Main Content -->
+  <mat-sidenav-content class="layout-content">
+    <mat-toolbar class="layout-toolbar">
+      <button mat-icon-button (click)="sidenav.toggle()">
+        <mat-icon>menu</mat-icon>
+      </button>
+      <span class="toolbar-title">AppVerse Developer Panel</span>
+      <span class="spacer"></span>
+      <button mat-button routerLink="/apps/create">
+        <mat-icon>add_circle</mat-icon>
+        <span>Create App</span>
+      </button>
+      <button mat-button (click)="logout()">
+        <mat-icon>logout</mat-icon>
+        <span>Logout</span>
+      </button>
+    </mat-toolbar>
+
+    <div class="main-content">
+      <router-outlet></router-outlet>
+    </div>
+  </mat-sidenav-content>
+</mat-sidenav-container>

@@ -11,7 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 
-@Component // Register this as a Spring Bean
+@Component 
 public class FeignClientInterceptor implements RequestInterceptor {
 
     private static final Logger logger = LoggerFactory.getLogger(FeignClientInterceptor.class);
@@ -20,7 +20,6 @@ public class FeignClientInterceptor implements RequestInterceptor {
 
     @Override
     public void apply(RequestTemplate template) {
-        // Check if the header already exists (e.g., set manually elsewhere)
         if (template.headers().containsKey(AUTHORIZATION_HEADER)) {
              logger.debug("Authorization header already exists for Feign request to {}. Skipping.", template.url());
              return;
@@ -38,7 +37,6 @@ public class FeignClientInterceptor implements RequestInterceptor {
                  logger.warn("JWT token value is null, cannot add Authorization header for Feign request to {}", template.url());
             }
         } else {
-            // Log if authentication is not the expected type or is null
             if (authentication != null) {
                 logger.warn("Current authentication type ({}) is not JwtAuthenticationToken. Cannot propagate token for Feign request to {}",
                         authentication.getClass().getSimpleName(), template.url());

@@ -18,5 +18,7 @@ public interface DeveloperRepository extends JpaRepository<Developer, String>{
     boolean existsById(String id);
 
     void deleteById(String id);
+
+    Optional<Developer> findByKeycloakUserId(String keycloakUserId);
     
 }

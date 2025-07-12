@@ -10,9 +10,7 @@ import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import io.github.resilience4j.retry.annotation.Retry;
 import io.micrometer.observation.annotation.Observed;
 
-import java.math.BigDecimal; // Make sure BigDecimal is imported
-
-// Ensure this 'name' matches what you configure for load balancing or direct URL for subscription-service
+import java.math.BigDecimal; 
 @FeignClient(name = "subscription-service", url = "${feign.client.subscription-service.url}")
 public interface SubscriptionServiceClient {
 

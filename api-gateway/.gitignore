@@ -1,10 +1,20 @@
+# Project root helper file
 HELP.md
+
+# Maven build output
 target/
-!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Maven Wrapper - Keep the jar
+!.mvn/wrapper/maven-wrapper.jar
+
+# Gradle/NB build output
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# IDE - Spring Tool Suite (STS)
 .apt_generated
 .classpath
 .factorypath
@@ -13,21 +23,31 @@ target/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
+# IDE - IntelliJ
+.idea/
 *.iws
+*.iml
 *.ipr
 *.sock
 
-### NetBeans ###
+# IDE - NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# IDE - VSCode
 .vscode/
+
+# Docker-generated runtime data (exclude actual Dockerfiles!)
+api-gateway/docker/tempo/tempo-data/
+api-gateway/volume-data/
+
+# Upload folders (should not be tracked)
+app-service/uploads/
+uploads/
+
+# Optional: OS junk
+.DS_Store
+Thumbs.db

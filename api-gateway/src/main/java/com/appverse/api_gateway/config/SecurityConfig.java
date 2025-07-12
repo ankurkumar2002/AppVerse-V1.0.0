@@ -29,14 +29,14 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(Customizer.withDefaults())
             .authorizeHttpRequests(authorize -> authorize
                 .requestMatchers(SWAGGER_UI_PATHS).permitAll()
                 .requestMatchers(SWAGGER_AGGREGATE_PATHS).permitAll()
-                .requestMatchers("/fallback").permitAll() // <<< ADD THIS TO PERMIT FALLBACK
+                .requestMatchers("/fallback").permitAll() 
                 .requestMatchers("/api/developers/**").authenticated()
                 .requestMatchers("/api/apps/**").authenticated()
-                // Ensure /api/categories/** is also handled if it's a distinct secured path
-                .requestMatchers("/api/categories/**").authenticated() // <<< ADD IF NEEDED
+                .requestMatchers("/api/categories/**").authenticated()
                 .requestMatchers("/api/v1/users/**").authenticated()
                 .requestMatchers("/api/v1/carts/**").authenticated()
                 .requestMatchers("/api/v1/orders/**").authenticated()
