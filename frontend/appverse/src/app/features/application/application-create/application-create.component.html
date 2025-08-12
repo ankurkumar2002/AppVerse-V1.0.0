@@ -1,0 +1,143 @@
+<div class="create-app-container">
+  <div class="create-app-layout">
+    <!-- === FORM PANEL (LEFT) === -->
+    <div class="form-panel">
+      <h2 class="form-title gradient-text">Create New Application</h2>
+
+      <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()">
+        <!-- Group 1: Core Details -->
+        <div class="form-group">
+          <h3 class="form-section-title">Core Details</h3>
+          <div class="form-section">
+            <mat-form-field appearance="outline">
+              <mat-label>Application Name</mat-label>
+              <input matInput formControlName="name" required />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Category</mat-label>
+              <mat-select formControlName="categoryId" required>
+                <mat-option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <mat-form-field appearance="outline">
+            <mat-label>Tagline</mat-label>
+            <input matInput formControlName="tagline" maxlength="100" />
+            <mat-hint>A catchy, one-liner for your app that will appear in listings.</mat-hint>
+          </mat-form-field>
+          <mat-form-field appearance="outline">
+            <mat-label>Description</mat-label>
+            <textarea matInput formControlName="description" rows="5"></textarea>
+          </mat-form-field>
+        </div>
+
+        <!-- Group 2: Monetization & Versioning -->
+        <div class="form-group">
+          <h3 class="form-section-title">Monetization & Version</h3>
+          <div class="form-section">
+            <mat-form-field appearance="outline">
+              <mat-label>Monetization Type</mat-label>
+              <mat-select formControlName="monetizationType">
+                <mat-option *ngFor="let type of monetizationTypes" [value]="type">
+                  {{ type | titlecase }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Version</mat-label>
+              <input matInput formControlName="version" placeholder="e.g., 1.0.0" />
+            </mat-form-field>
+          </div>
+
+          <div *ngIf="applicationForm.get('monetizationType')?.value !== 'FREE'" class="form-section" style="margin-top: 1rem;">
+            <mat-form-field appearance="outline">
+              <mat-label>Price</mat-label>
+              <input matInput type="number" formControlName="price" />
+            </mat-form-field>
+            <mat-form-field appearance="outline">
+              <mat-label>Currency</mat-label>
+              <mat-select formControlName="currency">
+                <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <mat-form-field appearance="outline" class="w-full">
+            <mat-label>Supported Platforms</mat-label>
+            <mat-select formControlName="platforms" multiple required>
+              <mat-option *ngFor="let platform of availablePlatforms" [value]="platform">
+                {{ platform }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+
+        <!-- Group 3: Media Uploads -->
+        <div class="form-group">
+          <h3 class="form-section-title">Promotional Media</h3>
+          <div class="form-section">
+            <!-- Thumbnail -->
+            <div class="file-input-container">
+              <label class="file-label">App Thumbnail</label>
+              <div class="thumbnail-preview" (click)="thumbnailInput.click()" tabindex="0">
+                <ng-container *ngIf="thumbnailPreviewUrl; else thumbnailPlaceholder">
+                  <img [src]="thumbnailPreviewUrl" alt="Thumbnail preview">
+                </ng-container>
+                <ng-template #thumbnailPlaceholder>
+                  <div class="thumbnail-placeholder">
+                    <mat-icon>add_photo_alternate</mat-icon>
+                    <span>Click to upload</span>
+                  </div>
+                </ng-template>
+              </div>
+              <input type="file" #thumbnailInput hidden (change)="onThumbnailSelected($event)" accept="image/png, image/jpeg" />
+              <mat-hint>Required. Recommended: 512x512px, JPG or PNG.</mat-hint>
+            </div>
+
+            <!-- Screenshots -->
+            <div class="file-input-container">
+              <label class="file-label">Screenshots</label>
+              <button mat-stroked-button type="button" class="upload-button" (click)="screenshotsInput.click()">
+                <mat-icon>collections</mat-icon>
+                <span>Upload Screenshots</span>
+              </button>
+              <input type="file" #screenshotsInput hidden multiple (change)="onScreenshotsSelected($event)" accept="image/png, image/jpeg" />
+
+              <div *ngIf="screenshotFiles.length > 0" class="screenshot-previews">
+                <div *ngFor="let file of screenshotFiles; let i = index" class="screenshot-item">
+                  <mat-icon class="screenshot-icon">image</mat-icon>
+                  <span>{{ file.name }}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="form-actions">
+          <button mat-button type="button" (click)="onCancel()">Cancel</button>
+          <button mat-raised-button color="primary" type="submit" [disabled]="applicationForm.invalid || !thumbnailFile">
+            Create Application
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- === INFO PANEL (RIGHT) === -->
+    <div class="info-panel">
+      <div class="info-panel-content">
+        <h2 class="gradient-text">Launch Your Next Big Thing</h2>
+        <p>
+          A great application listing is key to attracting users. Make a strong first impression with high-quality images and a clear, compelling description.
+        </p>
+        <h4 class="checklist-title">Quick Checklist</h4>
+        <ul>
+          <li><mat-icon>check_circle_outline</mat-icon><span>Compelling Name & Tagline</span></li>
+          <li><mat-icon>check_circle_outline</mat-icon><span>Clear, High-Resolution Thumbnail</span></li>
+          <li><mat-icon>check_circle_outline</mat-icon><span>Informative Screenshots</span></li>
+          <li><mat-icon>check_circle_outline</mat-icon><span>Accurate Category Selection</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>

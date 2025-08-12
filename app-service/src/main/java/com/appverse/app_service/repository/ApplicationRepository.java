@@ -1,5 +1,7 @@
 package com.appverse.app_service.repository;
 
+import java.util.List;
+
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.stereotype.Repository;
 
@@ -9,5 +11,7 @@ import com.appverse.app_service.model.Application;
 public interface ApplicationRepository extends MongoRepository<Application, String> {
 
     boolean existsByNameIgnoreCase(String name);
+
+    List<Application> findByDeveloperId(String developerId);
     
 }

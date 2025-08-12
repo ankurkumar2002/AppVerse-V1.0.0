@@ -1,0 +1,55 @@
+<div class="form-container">
+  <h2>Developer Registration</h2>
+
+  <form [formGroup]="developerForm" (ngSubmit)="onSubmit()" class="form-grid">
+
+    <div class="form-field">
+      <label>Name</label>
+      <input type="text" formControlName="name" [disabled]="true" />
+    </div>
+
+    <div class="form-field">
+      <label>Email</label>
+      <input type="email" formControlName="email" [disabled]="true" />
+    </div>
+
+    <div class="form-field">
+      <label>Developer Type<span>*</span></label>
+      <select formControlName="developerType">
+        <option value="" disabled>Select developer type</option>
+        <option value="INDIVIDUAL">Individual</option>
+        <option value="COMPANY">Company</option>
+      </select>
+    </div>
+
+    <div class="form-field">
+      <label>Company Name</label>
+      <input type="text" formControlName="companyName" />
+    </div>
+
+    <div class="form-field">
+      <label>Website</label>
+      <input type="url" formControlName="website" />
+    </div>
+
+    <div class="form-field">
+      <label>Logo URL</label>
+      <input type="url" formControlName="logoUrl" />
+    </div>
+
+    <div class="form-field">
+      <label>Location</label>
+      <input type="text" formControlName="location" />
+    </div>
+
+    <div class="form-field full-width">
+      <label>Bio<span>*</span></label>
+      <textarea rows="4" formControlName="bio" placeholder="Tell us about yourself..."></textarea>
+    </div>
+
+    <div class="form-action">
+      <button type="submit" [disabled]="developerForm.invalid">Submit</button>
+    </div>
+
+  </form>
+</div>

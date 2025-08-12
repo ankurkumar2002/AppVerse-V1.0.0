@@ -150,4 +150,6 @@ public interface UserService {
      */
     boolean existsByEmail(String email);
 
+    public void assignRoleToKeycloakUser(String keycloakUserId, Role role);
+
 }

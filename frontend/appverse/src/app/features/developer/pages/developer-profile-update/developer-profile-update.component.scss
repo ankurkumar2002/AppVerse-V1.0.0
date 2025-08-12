@@ -1,0 +1,195 @@
+// ==== DARK THEME VARIABLES ====
+$bg-page: #121212;
+$bg-input: #1e1e1e;
+$primary: #8ab4f8;
+$text-header: #e8eaed;
+$text-body: #bdc1c6;
+$text-label: #acacb3;
+$text-hint: #70757a;
+$border: #3c4043;
+
+// ==== GLOBAL FIX ====
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+// ==== PAGE CONTAINER ====
+.profile-page-container {
+  background-color: $bg-page;
+  min-height: 100vh;           // Full viewport height
+  // padding: 2rem 1.5rem;
+  margin: 0 auto;
+  width: 100%;
+  max-width: 1000px;
+}
+
+// ==== HEADER ====
+.profile-header {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  margin-bottom: 2.5rem;
+
+  .profile-avatar {
+    width: 90px;
+    height: 90px;
+    border-radius: 50%;
+    background-color: #2a2a2a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    border: 2px solid $border;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .placeholder-icon {
+      font-size: 2.5rem;
+      color: $text-label;
+    }
+  }
+
+  .profile-info {
+    .profile-name {
+      font-size: 2rem;
+      font-weight: 600;
+      color: $text-header;
+      margin: 0;
+    }
+
+    .profile-email {
+      font-size: 0.95rem;
+      color: $text-label;
+      margin-top: 0.25rem;
+    }
+  }
+}
+
+// ==== FORM SECTIONS ====
+.form-section {
+  border: none;
+  margin-bottom: 2.5rem;
+
+  legend {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: $text-header;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba($primary, 0.3);
+  }
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+
+  &.full-width {
+    grid-column: 1 / -1;
+  }
+
+  label {
+    font-size: 0.95rem;
+    color: $text-label;
+  }
+
+  small {
+    font-size: 0.8rem;
+    color: $text-hint;
+  }
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 2rem;
+  border-top: 1px solid $border;
+}
+
+// ==== PRIMENG DARK MODE OVERRIDES ====
+:host ::ng-deep {
+  .p-inputtext,
+  .p-dropdown,
+  .p-inputtextarea {
+    width: 100%;
+    background-color: $bg-input;
+    color: $text-body;
+    border: 1px solid $border;
+    border-radius: 8px;
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+
+    &:hover {
+      border-color: lighten($border, 15%);
+    }
+
+    &:enabled:focus,
+    &.p-focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 2px rgba($primary, 0.2);
+    }
+  }
+
+  .p-button {
+    background: $primary;
+    border: none;
+    color: #121212;
+    font-weight: 600;
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+
+    &:hover {
+      background-color: lighten($primary, 5%);
+      transform: translateY(-1px);
+    }
+  }
+
+  .p-dropdown-panel {
+    background-color: darken($bg-input, 4%);
+    border: 1px solid $border;
+
+    .p-dropdown-item {
+      color: $text-body;
+
+      &:hover {
+        background-color: rgba($primary, 0.1);
+      }
+
+      &.p-highlight {
+        background-color: rgba($primary, 0.2);
+        color: $text-header;
+      }
+    }
+  }
+
+  .p-toast .p-toast-message {
+    background-color: lighten($bg-input, 5%);
+    border-left: 4px solid $primary;
+
+    .p-toast-summary {
+      color: $text-header;
+      font-weight: 600;
+    }
+
+    .p-toast-detail {
+      color: $text-body;
+    }
+  }
+}

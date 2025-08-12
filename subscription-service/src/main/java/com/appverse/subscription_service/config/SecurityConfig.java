@@ -39,9 +39,9 @@ public class SecurityConfig {
         http
             .addFilterBefore((request, response, chain) -> {
                 // UPDATED Log Message
-                logger.info("SUBSCRIPTION-SERVICE: Request received at SecurityFilterChain: {} {}",
-                        ((jakarta.servlet.http.HttpServletRequest) request).getMethod(),
-                        ((jakarta.servlet.http.HttpServletRequest) request).getRequestURI());
+                // logger.info("SUBSCRIPTION-SERVICE: Request received at SecurityFilterChain: {} {}",
+                //         ((jakarta.servlet.http.HttpServletRequest) request).getMethod(),
+                //         ((jakarta.servlet.http.HttpServletRequest) request).getRequestURI());
                 String authHeader = ((jakarta.servlet.http.HttpServletRequest) request).getHeader("Authorization");
                 if (authHeader != null && authHeader.startsWith("Bearer ")) {
                     logger.debug("SUBSCRIPTION-SERVICE: Authorization Bearer token present."); // UPDATED Log Message

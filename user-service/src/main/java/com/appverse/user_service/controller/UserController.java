@@ -1,5 +1,6 @@
 package com.appverse.user_service.controller;
 
+import com.appverse.user_service.dto.RoleAssignRequest;
 import com.appverse.user_service.dto.UserRequest;
 import com.appverse.user_service.dto.UserResponse;
 // import com.appverse.user_service.dto.MessageResponse; // If you use it for some responses
@@ -33,7 +34,8 @@ public class UserController {
 
     // --- User Creation ---
     @PostMapping
-    // @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_manage:users')") // Example: Only ADMINs or services with specific scope can create
+    // @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_manage:users')") //
+    // Example: Only ADMINs or services with specific scope can create
     public ResponseEntity<UserResponse> createUser(@Valid @RequestBody UserRequest userRequest) {
         log.info("Received request to create user for Keycloak ID: {}", userRequest.keycloakUserId());
         UserResponse createdUser = userService.createUser(userRequest);
@@ -80,7 +82,8 @@ public class UserController {
     }
 
     @GetMapping
-    // @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_view:users:all')") // Example: More specific scope for listing all
+    // @PreAuthorize("hasRole('ADMIN') or hasAuthority('SCOPE_view:users:all')") //
+    // Example: More specific scope for listing all
     public ResponseEntity<List<UserResponse>> getAllUsers() {
         // Consider adding Pageable here for production: (Pageable pageable)
         log.debug("Request to get all users");
@@ -105,7 +108,8 @@ public class UserController {
     public ResponseEntity<UserResponse> updateUserStatus(
             @PathVariable UUID userId,
             @RequestParam UserStatus newStatus) {
-        // For isAdminAction, you might derive it from the caller's roles or pass explicitly
+        // For isAdminAction, you might derive it from the caller's roles or pass
+        // explicitly
         log.info("Request to update status to {} for user ID: {}", newStatus, userId);
         UserResponse updatedUser = userService.updateUserStatus(userId, newStatus, true); // Assuming admin action
         return ResponseEntity.ok(updatedUser);
@@ -139,7 +143,8 @@ public class UserController {
         return ResponseEntity.ok().build();
     }
 
-    // Example: Endpoint for the currently authenticated user to get their own profile
+    // Example: Endpoint for the currently authenticated user to get their own
+    // profile
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserResponse> getMyProfile(@AuthenticationPrincipal Jwt jwt) {
@@ -152,4 +157,13 @@ public class UserController {
         UserResponse userResponse = userService.getUserByKyloakUserId(keycloakUserId);
         return ResponseEntity.ok(userResponse);
     }
+
+    @PostMapping("/assign-role")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Void> assignRoleToUser(@RequestBody RoleAssignRequest request) {
+        log.info("Assigning role {} to Keycloak user: {}", request.role(), request.keycloakUserId());
+        userService.assignRoleToKeycloakUser(request.keycloakUserId(), request.role());
+        return ResponseEntity.ok().build();
+    }
+
 }

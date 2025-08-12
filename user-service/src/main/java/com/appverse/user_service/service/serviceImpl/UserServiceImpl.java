@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.keycloak.admin.client.Keycloak;
 import org.keycloak.admin.client.resource.UserResource;
+import org.keycloak.representations.idm.RoleRepresentation;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,6 +33,7 @@ import org.springframework.transaction.annotation.Transactional;
 import jakarta.ws.rs.NotFoundException;
 import java.time.Instant; // For event payloads
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture; // KAFKA IMPORT
@@ -409,4 +411,31 @@ public class UserServiceImpl implements UserService {
     public boolean existsByEmail(String email) {
         return userRepository.existsByEmail(email);
     }
+
+    public void assignRoleToKeycloakUser(String keycloakUserId, Role role) {
+    try {
+        UserResource userResource = keycloakAdminClient.realm(keycloakRealm)
+            .users()
+            .get(keycloakUserId);
+
+        RoleRepresentation roleRep = keycloakAdminClient.realm(keycloakRealm)
+            .roles()
+            .get(role.name().toUpperCase()) // assuming role names match exactly in Keycloak
+            .toRepresentation();
+
+        if (roleRep == null) {
+            throw new RuntimeException("Role " + role.name() + " not found in Keycloak.");
+        }
+
+        userResource.roles()
+            .realmLevel()
+            .add(Collections.singletonList(roleRep));
+
+        log.info("Successfully assigned role {} to Keycloak user {}", role.name(), keycloakUserId);
+    } catch (Exception e) {
+        log.error("Failed to assign role {} to Keycloak user {}: {}", role.name(), keycloakUserId, e.getMessage(), e);
+        throw new IntegrationException("Failed to assign role in Keycloak", e);
+    }
+}
+
 }
