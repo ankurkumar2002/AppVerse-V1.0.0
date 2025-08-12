@@ -1,0 +1,172 @@
+@use 'sass:color';
+
+/* Theme Variables */
+$dark-bg: #121212; // This is our main page background
+$dark-text: #e0e0e0;
+$dark-primary: #90caf9;
+$dark-border: #3f3f3f; // This is great for row separators
+$dark-hover: rgba(144, 202, 249, 0.08);
+$light-blue: #64b5f6;
+$danger-red: #ef5350;
+$icon-gray: rgba($dark-text, 0.7);
+
+.application-container {
+  padding: 24px;
+}
+
+/*
+* ✅ NEW SEAMLESS TABLE CONTAINER STYLES
+* This replaces the old .table-card styles.
+*/
+.table-container {
+  // --- Custom Header Styles ---
+  .table-header {
+    display: flex;
+    align-items: center;
+    padding: 0 0 24px 0; // Padding only on the bottom
+  }
+
+  .table-title {
+    font-size: 24px;
+    font-weight: 500;
+    line-height: 32px;
+    margin: 0;
+  }
+
+  .spacer {
+    flex-grow: 1;
+  }
+
+  // --- Table Styles ---
+  // Make the table background transparent to blend with the page
+  .mat-table, .mat-mdc-table {
+    background: transparent !important;
+  }
+  
+  // Style all cells with a bottom border for separation
+  .mat-header-cell, .mat-mdc-header-cell,
+  .mat-cell, .mat-mdc-cell {
+    border-bottom: 1px solid $dark-border !important;
+  }
+  
+  .mat-header-cell, .mat-mdc-header-cell {
+    color: rgba($dark-text, 0.7) !important;
+    font-size: 0.8rem;
+    font-weight: 500;
+    padding: 12px 10px;
+    text-transform: none;
+    letter-spacing: 0.2px;
+  }
+  
+  .mat-cell, .mat-mdc-cell {
+    color: $dark-text !important;
+    padding: 16px 10px;
+    font-weight: 500;
+  }
+
+  .mat-row, .mat-mdc-row {
+    transition: background-color 0.2s ease-in-out;
+    &:hover { background-color: $dark-hover !important; }
+  }
+
+  // Remove the bottom border from the very last row
+  .mat-row:last-of-type .mat-cell,
+  .mat-mdc-row:last-of-type .mat-mdc-cell {
+    border-bottom-width: 0;
+  }
+
+  // --- Paginator Styles ---
+  mat-paginator {
+    background: transparent !important; // Blend with page
+    color: rgba($dark-text, 0.7) !important;
+    padding-top: 16px;
+  }
+
+  .mat-mdc-paginator-range-label,
+  .mat-mdc-paginator-page-size-label {
+    color: rgba($dark-text, 0.7) !important;
+  }
+  .mat-mdc-select-value, .mat-mdc-select-arrow,
+  .mat-mdc-icon-button .mat-icon {
+    color: $dark-text !important;
+  }
+}
+
+// Scrollbar Styling (remains the same)
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  &::-webkit-scrollbar { height: 6px; }
+  &::-webkit-scrollbar-thumb { background-color: rgba($dark-text, 0.3); border-radius: 3px; }
+  &::-webkit-scrollbar-track { background: $dark-bg; }
+}
+
+// Cell-specific and Badge styles (remain the same)
+.tagline-cell {
+  color: rgba($dark-text, 0.7) !important;
+  font-weight: 400;
+}
+
+.actions-cell {
+  text-align: right;
+  width: 140px;
+
+  .view-button .mat-icon { color: $icon-gray !important; }
+  .edit-button .mat-icon { color: $light-blue !important; }
+  .delete-button .mat-icon { color: $danger-red !important; }
+
+  button.mat-icon-button {
+    margin-left: 4px;
+
+    .mat-icon {
+      opacity: 0.6;
+      transition: opacity 0.2s ease-in-out;
+    }
+
+    &:hover .mat-icon {
+      opacity: 1;
+    }
+  }
+}
+
+.status-badge {
+  display: inline-block;
+  padding: 5px 14px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #fff;
+
+  &.status-published {
+    background-color: #28a745;
+  }
+  &.status-draft {
+    background-color: #ffc107;
+    color: #111;
+  }
+  &.status-rejected {
+    background-color: #dc3545;
+  }
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 64px 24px;
+  text-align: center;
+  color: rgba($dark-text, 0.6);
+
+  mat-icon {
+    font-size: 56px;
+    width: 56px;
+    height: 56px;
+    margin-bottom: 24px;
+    color: rgba($dark-text, 0.4);
+  }
+
+  .empty-state-button {
+    margin-top: 24px;
+  }
+}

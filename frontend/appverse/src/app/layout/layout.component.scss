@@ -1,223 +1,222 @@
 @use 'sass:color';
 
-/* Dark Theme Variables */
+/* Theme Variables */
 $dark-bg: #121212;
 $dark-card: #1e1e1e;
 $dark-text: #e0e0e0;
 $dark-primary: #90caf9;
 $dark-border: #333;
-$dark-hover: rgba(0, 170, 255, 0.1);
+$dark-hover: rgba(144, 202, 249, 0.08);
 
-/* Layout Container */
+/* Sidenav Dimensions */
+$sidenav-width: 260px;
+$sidenav-collapsed-width: 80px;
+$toolbar-height: 64px;
+$transition-speed: 0.4s;
+
+/*
+==========================================================================
+  THE BULLETPROOF FIX: Working *with* the Material Component
+==========================================================================
+*/
+
+// Set the base container properties. No grid or flex hacks needed here.
 .layout-container {
   height: 100vh;
   background: $dark-bg;
   color: $dark-text;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  display: flex;
+
+  // 1. Tell the content area to smoothly animate its margin.
+  //    This is how the component is designed to work.
+  .mat-sidenav-content {
+    transition: margin-left $transition-speed ease-in-out;
+  }
 }
 
-/* Side Navigation */
+// Style the sidenav itself
 .layout-sidenav {
-  width: 260px;
-  background: $dark-card !important;
+  // 2. THIS IS THE KEY: We explicitly tell the sidenav to animate its width.
+  transition: width $transition-speed ease-in-out;
+  width: $sidenav-width; // Set the default expanded width
+
+  background: $dark-card;
   border-right: 1px solid $dark-border;
-  border-radius: 0 !important;
-  color: $dark-text;
+  border-radius: 0; // Ensure no rounded corners
   display: flex;
   flex-direction: column;
-  box-shadow: none;
+  overflow: hidden;
+}
 
+// === STYLES FOR THE COLLAPSED STATE ===
+.sidenav-collapsed {
+
+  // 3. When collapsed, we command the sidenav to shrink.
+  //    The transition property we set above will make this animated.
+  .layout-sidenav {
+    width: $sidenav-collapsed-width;
+  }
+
+  // 4. We also explicitly command the content to have a smaller margin.
+  //    Using !important here is a safe way to ensure our style wins
+  //    over any inline styles the component might be calculating.
+  .mat-sidenav-content {
+    margin-left: $sidenav-collapsed-width !important;
+  }
+
+  // All the other style changes for the collapsed state
+  .layout-sidenav {
+    .sidenav-header {
+      padding: 0;
+      .app-logo-text { display: none; }
+      .app-logo-icon { display: block; }
+    }
+
+    .custom-list-item {
+      justify-content: center;
+      padding: 0;
+      .item-icon { margin-right: 0; }
+      .item-text { width: 0; opacity: 0; }
+    }
+
+    .profile-section {
+      justify-content: center;
+      padding: 1rem 0;
+      .profile-info { width: 0; opacity: 0; }
+    }
+  }
+}
+
+/*
+==========================================================================
+  Sidenav Internal Item Styling (Unchanged from previous versions)
+==========================================================================
+*/
+
+.layout-sidenav {
   .sidenav-header {
-    background: $dark-card;
-    font-size: 1.5rem;
-    font-weight: 600;
-    padding: 0 1rem;
-    height: 64px;
+    height: $toolbar-height;
     display: flex;
     align-items: center;
-    border-bottom: 1px solid $dark-border;
+    justify-content: center;
+    padding: 0 1.5rem;
+    background: color.adjust($dark-card, $lightness: 5%);
+    font-size: 1.3rem;
+    font-weight: 600;
     color: $dark-primary;
+    border-bottom: 1px solid $dark-border;
+    flex-shrink: 0;
+
+    .app-logo-container {
+      width: 100%;
+      text-align: center;
+    }
   }
 
   .mat-nav-list {
-    padding: 0;
+    padding: 8px 0;
     flex-grow: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 
-    a.mat-mdc-list-item {
-      height: 48px;
-      margin: 4px 8px;
-      border-radius: 8px;
-      text-decoration: none;
-      color: $dark-text;
+  .custom-list-item {
+    display: flex;
+    align-items: center;
+    height: 48px;
+    padding: 0 24px;
+    margin: 4px 12px;
+    color: $dark-text;
+    border-radius: 0;
+    text-decoration: none;
+    transition: background-color 0.2s, color 0.2s;
+    white-space: nowrap;
 
-      ::ng-deep .mat-mdc-list-item {
-        padding: 0 !important;
-        height: 48px !important;
-        margin: 0 !important;
-        display: flex !important;
-        align-items: center !important;
-      }
+    .item-icon {
+      margin-right: 16px;
+      font-size: 22px;
+      transition: color 0.2s;
+    }
 
-      ::ng-deep .mat-mdc-list-item-content {
-        display: flex !important;
-        align-items: center !important;
-        padding: 0 16px !important;
-        gap: 12px;
-        width: 100%;
-      }
+    .item-text {
+      font-size: 0.95rem;
+      transition: opacity 0.2s ease, width 0.3s ease;
+      opacity: 1;
+      overflow: hidden;
+    }
 
-      ::ng-deep .mat-icon {
-        font-size: 20px !important;
-        height: 20px !important;
-        width: 20px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        line-height: 1 !important;
-        vertical-align: middle !important;
-      }
-
-      &:hover,
-      &.active-link {
-        background: $dark-hover;
-        color: $dark-primary;
-
-        ::ng-deep .mat-icon {
-          color: $dark-primary;
-        }
-      }
+    &:hover,
+    &.active-link {
+      background: $dark-hover;
+      color: $dark-primary;
+      .item-icon { color: $dark-primary; }
     }
   }
 
   .profile-section {
-    position: sticky;
-    bottom: 0;
     padding: 1rem;
     border-top: 1px solid $dark-border;
+    background: color.adjust($dark-card, $lightness: -5%);
     display: flex;
     align-items: center;
     gap: 12px;
-    background: color.adjust($dark-card, $lightness: -5%);
-    z-index: 10;
+    flex-shrink: 0;
+    transition: padding 0.3s ease;
 
     .profile-pic {
       width: 40px;
       height: 40px;
       border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: $dark-card;
+      color: white;
       font-weight: bold;
-      background: $dark-primary;
+      flex-shrink: 0;
     }
 
     .profile-info {
       display: flex;
       flex-direction: column;
-
-      .profile-name {
-        font-weight: 500;
-        color: $dark-text;
-      }
-
-      .profile-email {
-        font-size: 0.75rem;
-        color: color.adjust($dark-text, $lightness: 30%);
-      }
+      transition: opacity 0.2s ease, width 0.3s ease;
+      opacity: 1;
+      overflow: hidden;
+      white-space: nowrap;
     }
   }
 }
 
-/* Toolbar */
+/*
+==========================================================================
+  Toolbar and Main Content Area (Unchanged)
+==========================================================================
+*/
+.layout-content {
+  flex-grow: 1;
+  background: $dark-bg;
+  overflow-y: auto;
+}
+
 .layout-toolbar {
   background: $dark-card;
   color: $dark-text;
   border-bottom: 1px solid $dark-border;
+  height: $toolbar-height;
   display: flex;
   align-items: center;
-  padding: 0 16px;
-  height: 64px;
+  padding: 0 1rem;
 
   button {
     color: $dark-text;
-
-    &:hover {
-      background: $dark-hover;
-    }
-
-    mat-icon {
-      color: $dark-text;
-    }
+    &:hover { background: $dark-hover; }
+    mat-icon { color: $dark-text; }
   }
 
   .toolbar-title {
-    margin-left: 16px;
-    font-size: 1.2rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-left: 1rem;
   }
 
-  .spacer {
-    flex: 1 1 auto;
-  }
-}
-
-/* Main Content */
-.layout-content {
-  background: $dark-bg;
-  color: $dark-text;
-  flex-grow: 1;
+  .spacer { flex-grow: 1; }
 }
 
 .main-content {
   padding: 2rem;
-  min-height: calc(100vh - 64px);
-
-  form {
-    background: $dark-card;
-    padding: 2rem;
-    border-radius: 8px;
-    border: 1px solid $dark-border;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.4);
-  }
-}
-
-/* List Items Styling */
-.mat-mdc-list-base {
-  --mdc-list-list-item-label-text-color: #e0e0e0;
-  --mdc-list-list-item-supporting-text-color: #b0b0b0;
-  --mdc-list-list-item-leading-icon-color: #e0e0e0;
-}
-
-.mat-mdc-list-item.mat-mdc-list-item-interactive {
-  &:hover,
-  &.active-link {
-    --mdc-list-list-item-label-text-color: #00aaff;
-    --mdc-list-list-item-leading-icon-color: #00aaff;
-    background: rgba(0, 170, 255, 0.1) !important;
-  }
-}
-
-/* Responsive Fix */
-@media (max-width: 768px) {
-  .layout-sidenav {
-    width: 72px;
-
-    .link-text,
-    .profile-info {
-      display: none;
-    }
-
-    .mat-nav-list a {
-      justify-content: center;
-      padding: 12px 0;
-
-      .mat-icon {
-        margin-right: 0;
-      }
-    }
-  }
 }

@@ -109,7 +109,7 @@ public class Application {
             this.isFree = true;
             this.price = BigDecimal.ZERO;
             this.currency = null;
-        } else if (this.monetizationType == MonetizationType.SUBSCRIPTION_ONLY) {
+        } else if (this.monetizationType == MonetizationType.SUBSCRIPTION) {
             this.isFree = false;
         } else if (this.monetizationType == MonetizationType.ONE_TIME_PURCHASE
                 || this.monetizationType == MonetizationType.ONE_TIME_OR_SUBSCRIPTION) {

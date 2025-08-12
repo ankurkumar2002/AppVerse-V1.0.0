@@ -9,7 +9,7 @@ export function initializeKeycloak(keycloak: KeycloakService): () => Promise<boo
         clientId: 'appverse-angular',
       },
       initOptions: {
-        onLoad: 'login-required',
+        onLoad: 'check-sso', // 👈 allows unauthenticated users
         checkLoginIframe: false,
       },
       enableBearerInterceptor: true,

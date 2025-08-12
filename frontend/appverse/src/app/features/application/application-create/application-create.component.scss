@@ -1,0 +1,203 @@
+@use 'sass:color';
+@use '@angular/material' as mat;
+
+/* --- Theme Variables --- */
+$dark-bg: #121212;
+$dark-card: #1e1e1e;
+$dark-text: #e0e0e0;
+$dark-primary: #90caf9; // Primary Blue
+$dark-accent: #bb86fc;  // Accent Purple
+$dark-border: rgba(255, 255, 255, 0.12); // Softer border
+$dark-hover: rgba(144, 202, 249, 0.08);
+$dark-error: #f44336; // Standard Material error red
+
+/* --- Main Layout --- */
+.create-app-container {
+  padding: 32px;
+  background-color: $dark-bg;
+  color: $dark-text;
+  min-height: 100vh;
+}
+
+.create-app-layout {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 48px;
+  max-width: 1400px;
+  margin: 0 auto;
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
+}
+
+.form-title {
+  font-size: 36px;
+  font-weight: 700;
+  margin-bottom: 32px;
+}
+
+.gradient-text {
+  background: linear-gradient(90deg, $dark-primary, $dark-accent);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Form Styling --- */
+.form-group {
+  margin-bottom: 48px;
+}
+
+.form-section-title {
+  color: $dark-primary;
+  font-size: 20px;
+  font-weight: 500;
+  margin: 0 0 24px 0;
+  padding-bottom: 12px;
+  border-bottom: 1px solid $dark-border;
+  display: inline-block;
+  width: 100%;
+}
+
+.form-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.form-group > mat-form-field {
+  display: block;
+}
+
+/* --- Right Info Panel --- */
+.info-panel {
+  border-radius: 12px;
+  position: sticky;
+  top: 32px;
+  height: fit-content;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 14px;
+    background: linear-gradient(145deg, $dark-accent, $dark-primary);
+    z-index: 1;
+  }
+
+  .info-panel-content {
+    position: relative;
+    z-index: 2;
+    padding: 32px;
+    background-color: $dark-card;
+    border-radius: 12px;
+    h2 { margin-top: 0; font-size: 24px; margin-bottom: 16px; }
+    p { color: rgba($dark-text, 0.7); line-height: 1.6; font-size: 15px; margin-bottom: 24px; }
+  }
+
+  .checklist-title { font-size: 16px; font-weight: 500; color: $dark-text; margin-bottom: 12px; }
+
+  ul {
+    list-style: none; padding: 0; margin: 0;
+    li { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; color: rgba($dark-text, 0.8);
+      mat-icon { color: $dark-primary; font-size: 20px; }
+    }
+  }
+}
+
+/* --- File Input & Media Styling --- */
+.file-input-container { display: flex; flex-direction: column; gap: 8px; }
+.file-label { font-size: 14px; font-weight: 500; color: rgba($dark-text, 0.7); }
+.thumbnail-preview {
+  aspect-ratio: 1 / 1; width: 160px; border: 2px dashed $dark-border; border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer; overflow: hidden; transition: all 0.2s ease-in-out;
+  &:hover { border-color: $dark-primary; background-color: rgba($dark-primary, 0.05); }
+  img { width: 100%; height: 100%; object-fit: cover; }
+}
+.thumbnail-placeholder {
+  display: flex; flex-direction: column; align-items: center; gap: 8px; color: rgba($dark-text, 0.5);
+  mat-icon { font-size: 36px; width: 36px; height: 36px; }
+  span { font-size: 14px; }
+}
+.upload-button { width: 100%; }
+.screenshot-previews {
+  margin-top: 12px; display: flex; flex-direction: column; gap: 8px; font-size: 13px;
+  .screenshot-item {
+    display: flex; align-items: center; gap: 8px; padding: 8px; background-color: rgba(255,255,255,0.05); border-radius: 4px;
+    .screenshot-icon { font-size: 18px; color: rgba($dark-text, 0.7); }
+    span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  }
+}
+
+/* --- Form Actions --- */
+.form-actions { display: flex; justify-content: flex-end; gap: 16px; margin-top: 32px; padding-top: 24px; border-top: 1px solid $dark-border; }
+
+
+/*
+ * ========================================================================
+ * == THE FIX: Component-Only Material Override using ::ng-deep ==
+ * ========================================================================
+ */
+:host ::ng-deep {
+
+  // --- Mat-Form-Field Main Override Block ---
+  .mat-mdc-form-field {
+
+    // ✅ FIX 1: Make the input text visible
+    .mat-mdc-input-element, .mat-mdc-select-value {
+      color: $dark-text !important; // ✨ THIS IS THE FIX: Added !important
+    }
+
+    // ✅ FIX 2: Set visible default and hover states
+    .mdc-notched-outline > * {
+      border-color: rgba(255, 255, 255, 0.3) !important;
+    }
+    &:hover .mdc-notched-outline > * {
+      border-color: rgba(255, 255, 255, 0.87) !important;
+    }
+
+    // Style the label text
+    .mat-mdc-floating-label {
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    // Style the FOCUSED state
+    &.mat-focused {
+      .mat-mdc-floating-label {
+        color: $dark-primary;
+      }
+      .mdc-notched-outline > * {
+        border-color: $dark-primary !important;
+        border-width: 2px;
+      }
+    }
+
+    // ✅ FIX 3: Style the INVALID state (for errors)
+    &.mat-form-field-invalid {
+      .mdc-notched-outline > * {
+        border-color: $dark-error !important;
+      }
+      .mat-mdc-floating-label {
+        color: $dark-error;
+      }
+    }
+  }
+
+  // --- Mat-Select Dropdown Panel Override ---
+  .mat-mdc-select-panel.mat-mdc-select-panel {
+    background-color: $dark-card;
+    .mat-mdc-option {
+      color: $dark-text;
+      &:hover:not(.mdc-list-item--disabled),
+      &.mat-mdc-option-active {
+        background-color: $dark-hover;
+      }
+      &.mat-mdc-option.mdc-list-item--selected:not(.mat-mdc-option-multiple) {
+        color: $dark-primary;
+      }
+    }
+  }
+}

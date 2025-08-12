@@ -35,44 +35,45 @@ public class SecurityConfig {
         logger.info("Configuring SecurityFilterChain in app-service...");
 
         http
-            .addFilterBefore((request, response, chain) -> {
-                logger.info("APP-SERVICE: Request received at SecurityFilterChain: {} {}",
-                        ((jakarta.servlet.http.HttpServletRequest) request).getMethod(),
-                        ((jakarta.servlet.http.HttpServletRequest) request).getRequestURI());
-                String authHeader = ((jakarta.servlet.http.HttpServletRequest) request).getHeader("Authorization");
-                if (authHeader != null && authHeader.startsWith("Bearer ")) {
-                    logger.debug("APP-SERVICE: Authorization Bearer token present.");
-                } else {
-                    String requestURI = ((jakarta.servlet.http.HttpServletRequest) request).getRequestURI();
-                    boolean isSwaggerPath = false;
-                    for (String path : SWAGGER_UI_PATHS) {
-                        if (requestURI.equals(path.replace("/**", "")) || requestURI.startsWith(path.replace("/**", ""))) {
-                            if (path.endsWith("/**") && requestURI.startsWith(path.substring(0, path.length() - 3))) isSwaggerPath = true;
-                            else if (requestURI.equals(path)) isSwaggerPath = true;
-                            if (isSwaggerPath) break;
+                .addFilterBefore((request, response, chain) -> {
+                    String authHeader = ((jakarta.servlet.http.HttpServletRequest) request).getHeader("Authorization");
+                    if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                        logger.debug("APP-SERVICE: Authorization Bearer token present.");
+                    } else {
+                        String requestURI = ((jakarta.servlet.http.HttpServletRequest) request).getRequestURI();
+                        boolean isSwaggerPath = false;
+                        for (String path : SWAGGER_UI_PATHS) {
+                            if (requestURI.equals(path.replace("/**", ""))
+                                    || requestURI.startsWith(path.replace("/**", ""))) {
+                                if (path.endsWith("/**") && requestURI.startsWith(path.substring(0, path.length() - 3)))
+                                    isSwaggerPath = true;
+                                else if (requestURI.equals(path))
+                                    isSwaggerPath = true;
+                                if (isSwaggerPath)
+                                    break;
+                            }
+                        }
+                        if (!isSwaggerPath) {
+                            logger.warn("APP-SERVICE: No/Invalid Authorization Bearer token found in request to {}",
+                                    requestURI);
                         }
                     }
-                    if (!isSwaggerPath) {
-                        logger.warn("APP-SERVICE: No/Invalid Authorization Bearer token found in request to {}", requestURI);
-                    }
-                }
-                chain.doFilter(request, response);
-            }, AuthorizationFilter.class)
-            .authorizeHttpRequests(authorize -> {
-                logger.info("APP-SERVICE: Configuring authorizeHttpRequests...");
-                authorize
-                    .requestMatchers(SWAGGER_UI_PATHS).permitAll()
-                    .requestMatchers("/api/apps/test-public").permitAll()
-                    // .requestMatchers("/uploads/**").permitAll() // <-- 🔥 Added this line
-                    .requestMatchers("/api/apps/**").authenticated()
-                    .requestMatchers("/actuator/**").permitAll()
-                    .anyRequest().authenticated();
-            })
-            .oauth2ResourceServer(oauth2 -> {
-                logger.info("APP-SERVICE: Configuring OAuth2 Resource Server with JWT...");
-                oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()));
-            })
-            .csrf(AbstractHttpConfigurer::disable);
+                    chain.doFilter(request, response);
+                }, AuthorizationFilter.class)
+                .authorizeHttpRequests(authorize -> {
+                    logger.info("APP-SERVICE: Configuring authorizeHttpRequests...");
+                    authorize
+                            .requestMatchers(SWAGGER_UI_PATHS).permitAll()
+                            .requestMatchers("/api/apps/test-public").permitAll()
+                            .requestMatchers("/api/apps/**").authenticated()
+                            .requestMatchers("/actuator/**").permitAll()
+                            .anyRequest().authenticated();
+                })
+                .oauth2ResourceServer(oauth2 -> {
+                    logger.info("APP-SERVICE: Configuring OAuth2 Resource Server with JWT...");
+                    oauth2.jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()));
+                })
+                .csrf(AbstractHttpConfigurer::disable);
 
         logger.info("APP-SERVICE: SecurityFilterChain configuration complete.");
         return http.build();

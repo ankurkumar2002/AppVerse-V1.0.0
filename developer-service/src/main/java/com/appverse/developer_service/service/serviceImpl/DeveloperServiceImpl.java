@@ -48,102 +48,101 @@ public class DeveloperServiceImpl implements DeveloperService {
     private static final String DEVELOPER_EVENTS_TOPIC = "developer-events";
     private final RestTemplate restTemplate;
 
-    @Override
-    @Transactional
-    public MessageResponse createDeveloper(DeveloperRequest request) {
-        log.info("Attempting to create developer profile for email: {}", request.email());
+   @Override
+@Transactional
+public MessageResponse createDeveloper(DeveloperRequest request) {
+    log.info("Attempting to create developer profile for email: {}", request.email());
 
+    try {
+        log.debug("[Step 1] Fetching Keycloak User ID from Security Context");
         String keycloakUserId = getKeycloakUserIdFromSecurityContext();
         if (keycloakUserId == null || keycloakUserId.isBlank()) {
             log.error("Keycloak User ID is missing from security context. Cannot create developer profile.");
             throw new IllegalArgumentException("Keycloak User ID must be provided for developer creation.");
         }
-        log.debug("Creating developer for Keycloak User ID: {}", keycloakUserId);
+        log.debug("[Step 1 Completed] Keycloak User ID: {}", keycloakUserId);
 
+        log.debug("[Step 2] Checking if developer profile already exists for Keycloak ID");
         if (developerRepository.existsByKeycloakUserId(keycloakUserId)) {
             throw new DuplicateResourceException(
-                    "Developer profile already exists for Keycloak user ID: " + keycloakUserId);
+                "Developer profile already exists for Keycloak user ID: " + keycloakUserId);
         }
+        log.debug("[Step 2.1] Checking if email already exists: {}", request.email());
         if (developerRepository.existsByEmailIgnoreCase(request.email())) {
-            throw new DuplicateResourceException("Developer with email '" +
-                    request.email() + "' already exists.");
+            throw new DuplicateResourceException(
+                "Developer with email '" + request.email() + "' already exists.");
         }
 
-        // if (!isDeveloperProfileComplete(keycloakUserId)) {
-        // throw new BadRequestException("Developer profile is incomplete. Please
-        // complete your profile.");
-        // }
-
+        log.debug("[Step 3] Mapping DeveloperRequest to entity");
         Developer developer = developerMapper.toEntity(request);
         developer.setKeycloakUserId(keycloakUserId);
 
+        log.debug("[Step 4] Fetching Keycloak admin token");
         String adminToken = getKeycloakAdminToken();
-        Map<String, Object> keycloakUserInfo = getKeycloakUserInfo(keycloakUserId, adminToken);
+        log.debug("[Step 4 Completed] Admin token retrieved successfully");
 
-        // Optionally, override request.email() and request.name() here
+        log.debug("[Step 5] Fetching Keycloak user info for ID: {}", keycloakUserId);
+        Map<String, Object> keycloakUserInfo = getKeycloakUserInfo(keycloakUserId, adminToken);
+        log.debug("[Step 5 Completed] Keycloak user info: {}", keycloakUserInfo);
+
         String name = (String) keycloakUserInfo.get("firstName") + " " + (String) keycloakUserInfo.get("lastName");
         String email = (String) keycloakUserInfo.get("email");
 
-        // Use this info to override the request
-        // Developer developer = developerMapper.toEntity(request);
-        developer.setKeycloakUserId(keycloakUserId);
-        developer.setEmail(email); // override
-        developer.setName(name); // override
+        developer.setEmail(email);
+        developer.setName(name);
 
-        try {
-            Developer savedDeveloper = developerRepository.save(developer);
-            if (!isDeveloperProfileComplete(keycloakUserId)) {
-                log.warn("Profile saved but considered incomplete.");
-            }
-            try {
-                // String adminToken = getKeycloakAdminToken();
-                assignRoleToUser(savedDeveloper.getKeycloakUserId(), "developer", adminToken); // "developer" is the
-                                                                                               // Keycloak role name
-                log.info("Assigned 'developer' role to Keycloak user ID {}", savedDeveloper.getKeycloakUserId());
-            } catch (Exception e) {
-                log.error("Failed to assign role to Keycloak user: {}", e.getMessage(), e);
-            }
-            log.info("Developer profile created successfully with ID: {} for Keycloak ID: {}",
-                    savedDeveloper.getId(), keycloakUserId);
+        log.debug("[Step 6] Saving developer entity to database");
+        Developer savedDeveloper = developerRepository.save(developer);
+        log.debug("[Step 6 Completed] Developer saved with ID: {}", savedDeveloper.getId());
 
-            DeveloperProfileCreatedPayload payload = new DeveloperProfileCreatedPayload(
-                    savedDeveloper.getId(),
-                    savedDeveloper.getKeycloakUserId(),
-                    savedDeveloper.getName(),
-                    savedDeveloper.getEmail(),
-                    savedDeveloper.getDeveloperType(),
-                    savedDeveloper.getCompanyName(),
-                    savedDeveloper.getCreatedAt());
-
-            // --- ENHANCED KAFKA SEND WITH LOGGING CALLBACK ---
-            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(DEVELOPER_EVENTS_TOPIC,
-                    savedDeveloper.getId(), payload);
-
-            future.whenComplete((result, ex) -> {
-                if (ex == null) {
-                    log.info(
-                            "Successfully sent DeveloperProfileCreatedEvent to topic {} for key {}: offset {}, partition {}",
-                            DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(),
-                            result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
-                } else {
-                    log.error("Failed to send DeveloperProfileCreatedEvent to topic {} for key {}: {}",
-                            DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(), ex.getMessage(), ex);
-                    // Consider further error handling here if send failure is critical (e.g., add
-                    // to a retry queue)
-                }
-            });
-            log.debug(
-                    "Asynchronously published DeveloperProfileCreatedEvent for Developer ID: {}. Callback will log success/failure.",
-                    savedDeveloper.getId());
-            // Note: The main thread continues, and the log above appears before the
-            // callback log.
-
-            return new MessageResponse("Developer created successfully.", savedDeveloper.getId());
-        } catch (DataAccessException e) {
-            log.error("Database error creating developer for Keycloak ID {}: {}", keycloakUserId, e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to create developer due to a database issue." + e);
+        if (!isDeveloperProfileComplete(keycloakUserId)) {
+            log.warn("Profile saved but considered incomplete.");
         }
+
+        log.debug("[Step 7] Assigning 'developer' role to Keycloak user: {}", savedDeveloper.getKeycloakUserId());
+        try {
+            assignRoleToUser(savedDeveloper.getKeycloakUserId(), "developer", adminToken);
+            log.info("Assigned 'developer' role to Keycloak user ID {}", savedDeveloper.getKeycloakUserId());
+        } catch (Exception e) {
+            log.error("Failed to assign role to Keycloak user: {}", e.getMessage(), e);
+        }
+
+        log.debug("[Step 8] Sending DeveloperProfileCreatedEvent to Kafka");
+        DeveloperProfileCreatedPayload payload = new DeveloperProfileCreatedPayload(
+                savedDeveloper.getId(),
+                savedDeveloper.getKeycloakUserId(),
+                savedDeveloper.getName(),
+                savedDeveloper.getEmail(),
+                savedDeveloper.getDeveloperType(),
+                savedDeveloper.getCompanyName(),
+                savedDeveloper.getCreatedAt());
+
+        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
+                DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(), payload);
+
+        future.whenComplete((result, ex) -> {
+            if (ex == null) {
+                log.info("Successfully sent DeveloperProfileCreatedEvent to topic {} for key {}: offset {}, partition {}",
+                        DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(),
+                        result.getRecordMetadata().offset(), result.getRecordMetadata().partition());
+            } else {
+                log.error("Failed to send DeveloperProfileCreatedEvent to topic {} for key {}: {}",
+                        DEVELOPER_EVENTS_TOPIC, savedDeveloper.getId(), ex.getMessage(), ex);
+            }
+        });
+
+        log.debug("Returning success response to client");
+        return new MessageResponse("Developer created successfully.", savedDeveloper.getId());
+
+    } catch (DataAccessException e) {
+        log.error("[Database Error] Failed to create developer: {}", e.getMessage(), e);
+        throw new DatabaseOperationException("Failed to create developer due to a database issue." + e);
+    } catch (Exception e) {
+        log.error("[Unexpected Error] {}", e.getMessage(), e);
+        throw e;
     }
+}
+
 
     @Override
     @Transactional
@@ -281,6 +280,9 @@ public class DeveloperServiceImpl implements DeveloperService {
         log.debug("Checking existence for developer ID: {}", id);
         return developerRepository.existsById(id);
     }
+
+
+
 
     @Override
     @Transactional(readOnly = true)

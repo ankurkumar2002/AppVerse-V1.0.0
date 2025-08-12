@@ -35,7 +35,6 @@ public interface UserMapper {
     @Mapping(target = "lastLoginAt", ignore = true) // Typically not set from create request
     User toEntity(UserRequest userRequest);
 
-
     // --- User Entity to UserResponse ---
 
     /**
@@ -59,13 +58,15 @@ public interface UserMapper {
      * @param userRequest DTO containing update information.
      * @param user        The entity to be updated.
      */
-    @Mapping(target = "id", ignore = true) // ID should not be changed
-    @Mapping(target = "keycloakUserId", ignore = true) // keycloakUserId is usually immutable after creation
-    @Mapping(target = "status", ignore = true) // Status is typically managed by specific actions/admin
-    @Mapping(target = "createdAt", ignore = true) // Should not be changed
-    @Mapping(target = "updatedAt", ignore = true) // Handled by @PreUpdate
-    @Mapping(target = "deactivatedByAdmin", ignore = true) // Managed by specific admin actions
-    @Mapping(target = "lastLoginAt", ignore = true) // Typically not updated this way
+    
+     
+    @Mapping(target = "id", ignore = true) 
+    @Mapping(target = "keycloakUserId", ignore = true) 
+    @Mapping(target = "status", ignore = true) 
+    @Mapping(target = "createdAt", ignore = true) 
+    @Mapping(target = "updatedAt", ignore = true) 
+    @Mapping(target = "deactivatedByAdmin", ignore = true) 
+    @Mapping(target = "lastLoginAt", ignore = true) 
     void updateEntityFromRequest(UserRequest userRequest, @MappingTarget User user);
 
 }

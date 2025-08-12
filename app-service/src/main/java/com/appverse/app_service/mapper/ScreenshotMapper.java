@@ -16,7 +16,7 @@ import java.util.List;
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
 public interface ScreenshotMapper {
-    
+
 
     ScreenshotResponse toResponse(Screenshot screenshot);
 

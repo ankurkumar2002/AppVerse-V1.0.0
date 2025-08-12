@@ -32,7 +32,7 @@ public class DeveloperController {
     private final DeveloperService developerService;
 
     @PostMapping
-    // @PreAuthorize("hasRole('DEVELOPER')")
+    @PreAuthorize("hasRole('developer')")
     public ResponseEntity<MessageResponse> create(
             @Validated(OnCreate.class) @RequestBody DeveloperRequest request) {
 
@@ -43,7 +43,7 @@ public class DeveloperController {
     }
 
     @PutMapping("/{id}")
-    // @PreAuthorize("hasRole('DEVELOPER')")
+    @PreAuthorize("hasRole('developer')")
     public ResponseEntity<MessageResponse> update(
             @PathVariable String id,
             @Validated(OnUpdate.class) @RequestBody DeveloperRequest request) {
@@ -51,14 +51,14 @@ public class DeveloperController {
     }
 
     @DeleteMapping("/{id}")
-    // @PreAuthorize("hasRole('DEVELOPER')")
+    @PreAuthorize("hasRole('developer')")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         developerService.deleteDeveloper(id);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
-    // @PreAuthorize("hasRole('DEVELOPER')")
+    @PreAuthorize("hasRole('developer')")
     public ResponseEntity<DeveloperResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(developerService.getDeveloperById(id));
     }

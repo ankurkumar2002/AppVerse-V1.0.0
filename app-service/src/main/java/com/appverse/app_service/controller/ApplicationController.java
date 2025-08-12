@@ -24,6 +24,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -44,15 +45,16 @@ import java.util.List;
 public class ApplicationController {
 
     @Value("${app.upload-dir}")
-private String uploadDir;
+    private String uploadDir;
 
     private static final Logger logger = LoggerFactory.getLogger(ApplicationController.class);
 
     private final ApplicationService applicationService;
     private final ApplicationRepository applicationRepository;
-    private final ObjectMapper objectMapper; 
+    private final ObjectMapper objectMapper;
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE) 
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('developer')")
     public ResponseEntity<MessageResponse> create(
             @RequestPart("request") String requestJson,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
@@ -60,23 +62,21 @@ private String uploadDir;
             @RequestPart(value = "metadata", required = false) String metadataJson) {
 
         ApplicationRequest request;
-        List<ScreenshotRequest> metadata = Collections.emptyList(); 
+        List<ScreenshotRequest> metadata = Collections.emptyList();
 
         try {
             request = objectMapper.readValue(requestJson, ApplicationRequest.class);
 
-
             if (metadataJson != null && !metadataJson.isBlank()) {
-                 metadata = objectMapper.readValue(metadataJson, new TypeReference<List<ScreenshotRequest>>() {});
+                metadata = objectMapper.readValue(metadataJson, new TypeReference<List<ScreenshotRequest>>() {
+                });
             }
-
-
 
         } catch (JsonProcessingException e) {
             logger.error("Failed to parse JSON request part: {}", e.getMessage());
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid JSON format in 'request' or 'metadata' part", e);
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid JSON format in 'request' or 'metadata' part", e);
         }
-
 
         System.out.println("Request object created: " + (request != null));
         System.out.println("Thumbnail type: " + (thumbnail != null ? thumbnail.getContentType() : "null"));
@@ -84,16 +84,34 @@ private String uploadDir;
         System.out.println("Metadata list created: " + (metadata != null));
         System.out.println("Metadata list size: " + (metadata != null ? metadata.size() : 0));
 
-
         return ResponseEntity.ok(applicationService.createApplication(request, thumbnail, screenshots, metadata));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<MessageResponse> update(@PathVariable String id,
-            @Valid @RequestPart UpdateApplicationRequest request,
+    public ResponseEntity<MessageResponse> update(
+            @PathVariable String id,
+            @RequestPart("request") String requestJson, // Changed to String
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
             @RequestPart(value = "screenshots", required = false) List<MultipartFile> screenshots,
-            @RequestPart(value = "metadata", required = false) List<ScreenshotRequest> metadata) {
+            @RequestPart(value = "metadata", required = false) String metadataJson) { // Changed to String
+
+        // --- Manually parse the JSON strings, just like in the create method ---
+        UpdateApplicationRequest request;
+        List<ScreenshotRequest> metadata = Collections.emptyList();
+
+        try {
+            request = objectMapper.readValue(requestJson, UpdateApplicationRequest.class);
+            if (metadataJson != null && !metadataJson.isBlank()) {
+                metadata = objectMapper.readValue(metadataJson, new TypeReference<List<ScreenshotRequest>>() {
+                });
+            }
+        } catch (JsonProcessingException e) {
+            logger.error("Failed to parse JSON for update request: {}", e.getMessage());
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "Invalid JSON format in 'request' or 'metadata' part", e);
+        }
+
+        // Call the service with the parsed objects
         return ResponseEntity.ok(applicationService.updateApplication(id, request, thumbnail, screenshots, metadata));
     }
 
@@ -112,14 +130,30 @@ private String uploadDir;
     public ResponseEntity<?> getAll() {
         logger.info("APP-SERVICE: /api/apps getAll() called. Attempting repository.findAll().");
         try {
-            List<Application> applications = applicationRepository.findAll(); 
+            List<Application> applications = applicationRepository.findAll();
             logger.info("APP-SERVICE: Successfully retrieved {} applications.", applications.size());
             return ResponseEntity.ok(applications);
         } catch (Exception e) {
-            logger.error("APP-SERVICE: CRITICAL ERROR during repository.findAll() in getAll()", e); 
-                                                                                                    
+            logger.error("APP-SERVICE: CRITICAL ERROR during repository.findAll() in getAll()", e);
+
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Error accessing database: " + e.getMessage());
+        }
+    }
+
+    @GetMapping("/my-apps")
+    public ResponseEntity<?> getMyApplications(@AuthenticationPrincipal Jwt jwt) {
+        String developerId = jwt.getSubject(); // or another claim like preferred_username or email
+
+        logger.info("Fetching applications for developer ID: {}", developerId);
+
+        try {
+            List<Application> applications = applicationRepository.findByDeveloperId(developerId);
+            return ResponseEntity.ok(applications);
+        } catch (Exception e) {
+            logger.error("Error fetching applications for developer {}", developerId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error retrieving applications: " + e.getMessage());
         }
     }
 
@@ -143,54 +177,51 @@ private String uploadDir;
         return ResponseEntity.ok("Auth OK");
     }
 
-/// Note: I'm moving this endpoint out from under the "/api/apps" prefix
-// because serving images is a general utility, not specific to an "app" resource.
-// The new URL will be, for example, /images/thumbnails/my-image.jpg
-@GetMapping("/images/{type}/{filename:.+}")
-public ResponseEntity<Resource> getImage(@PathVariable String type, @PathVariable String filename) {
-    // --- Security Check ---
-    // Whitelist the allowed directories to prevent Path Traversal attacks.
-    // A user should not be able to request a file with type = "../../some/other/folder".
-    if (!"thumbnails".equals(type) && !"screenshots".equals(type)) {
-        logger.warn("Invalid image type requested: {}", type);
-        return ResponseEntity.badRequest().build();
-    }
-
-    // Build the correct path using the 'type' variable
-    Path file = Paths.get(uploadDir).resolve(type).resolve(filename).normalize();
-
-    logger.info("Attempting to serve image from path: {}", file.toAbsolutePath());
-
-    Resource resource;
-    try {
-        resource = new UrlResource(file.toUri());
-    } catch (IOException e) {
-        logger.error("Could not create resource for file: {}", file.toAbsolutePath(), e);
-        // This can happen if the filename contains invalid characters for a URI
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-    }
-
-    if (resource.exists() && resource.isReadable()) {
-        try {
-            MediaType mediaType = MediaTypeFactory.getMediaType(resource)
-                    .orElse(MediaType.APPLICATION_OCTET_STREAM);
-
-            return ResponseEntity.ok()
-                    .contentType(mediaType)
-                    .body(resource);
-        } catch(Exception e) {
-             logger.error("Error determining media type for: {}", file.toAbsolutePath(), e);
-             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    /// Note: I'm moving this endpoint out from under the "/api/apps" prefix
+    // because serving images is a general utility, not specific to an "app"
+    /// resource.
+    // The new URL will be, for example, /images/thumbnails/my-image.jpg
+    @GetMapping("/images/{type}/{filename:.+}")
+    public ResponseEntity<Resource> getImage(@PathVariable String type, @PathVariable String filename) {
+        // --- Security Check ---
+        // Whitelist the allowed directories to prevent Path Traversal attacks.
+        // A user should not be able to request a file with type =
+        // "../../some/other/folder".
+        if (!"thumbnails".equals(type) && !"screenshots".equals(type)) {
+            logger.warn("Invalid image type requested: {}", type);
+            return ResponseEntity.badRequest().build();
         }
-    } else {
-        logger.error("Image not found or not readable at: {}", file.toAbsolutePath());
-        return ResponseEntity.notFound().build();
+
+        // Build the correct path using the 'type' variable
+        Path file = Paths.get(uploadDir).resolve(type).resolve(filename).normalize();
+
+        logger.info("Attempting to serve image from path: {}", file.toAbsolutePath());
+
+        Resource resource;
+        try {
+            resource = new UrlResource(file.toUri());
+        } catch (IOException e) {
+            logger.error("Could not create resource for file: {}", file.toAbsolutePath(), e);
+            // This can happen if the filename contains invalid characters for a URI
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
+        if (resource.exists() && resource.isReadable()) {
+            try {
+                MediaType mediaType = MediaTypeFactory.getMediaType(resource)
+                        .orElse(MediaType.APPLICATION_OCTET_STREAM);
+
+                return ResponseEntity.ok()
+                        .contentType(mediaType)
+                        .body(resource);
+            } catch (Exception e) {
+                logger.error("Error determining media type for: {}", file.toAbsolutePath(), e);
+                return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
+        } else {
+            logger.error("Image not found or not readable at: {}", file.toAbsolutePath());
+            return ResponseEntity.notFound().build();
+        }
     }
-}
-
-
-
-
-
 
 }

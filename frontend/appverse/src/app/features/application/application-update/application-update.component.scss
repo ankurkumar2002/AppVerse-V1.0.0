@@ -1,0 +1,218 @@
+/* --- Main Container & Theme --- */
+:host {
+  display: block;
+  min-height: 100vh;
+  background-color: #121212; /* Main dark background */
+  color: #e0e0e0; /* Light gray text for readability */
+  padding: 2rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+}
+
+.update-container {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+/* --- Form Headers --- */
+.form-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 1.5rem;
+}
+
+.form-header h1 {
+  font-size: 2.5rem;
+  font-weight: 300;
+  letter-spacing: 1px;
+  color: #ffffff;
+}
+
+.form-header p {
+  font-size: 1rem;
+  color: #a0a0a0;
+}
+
+/* --- Form Sections --- */
+.form-section {
+  margin-bottom: 3rem;
+}
+
+.form-section h2 {
+  font-size: 1.5rem;
+  font-weight: 400;
+  color: #ffffff;
+  margin-bottom: 0.5rem;
+  border-left: 3px solid #007bff;
+  padding-left: 1rem;
+}
+
+.section-description {
+    color: #888;
+    font-style: italic;
+    margin-bottom: 2rem;
+    padding-left: 1.3rem;
+}
+
+
+/* --- Form Elements (The Transparent Look) --- */
+.form-label {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #b0b0b0;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.form-control {
+  background-color: rgba(255, 255, 255, 0.05); /* Very transparent white */
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #e0e0e0;
+  border-radius: 4px;
+  padding: 0.75rem 1rem;
+  transition: background-color 0.2s, border-color 0.2s;
+  width: 100%;
+}
+
+.form-control:focus {
+  background-color: rgba(255, 255, 255, 0.1);
+  border-color: #007bff;
+  box-shadow: none; /* Remove default bootstrap glow */
+  outline: none;
+}
+
+.form-control::placeholder {
+  color: #777;
+}
+
+/* Specific styling for file inputs */
+input[type="file"].form-control::file-selector-button {
+    background-color: #333;
+    color: #fff;
+    border: none;
+    padding: 0.75rem 1rem;
+    margin: -0.75rem -1rem -0.75rem 0.5rem; /* Adjust padding to align nicely */
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+input[type="file"].form-control::file-selector-button:hover {
+    background-color: #444;
+}
+
+.validation-error {
+    color: #ff5252;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+
+/* --- Image Previews --- */
+.image-preview {
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    display: inline-block;
+}
+
+.image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 4px;
+    display: block;
+}
+
+.screenshots-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 1rem;
+}
+
+.screenshots-grid .image-preview {
+    padding: 0.5rem;
+    width: 100%;
+}
+.screenshots-grid .image-preview img {
+    width: 100%;
+    height: 100px;
+    object-fit: cover;
+}
+
+
+/* --- Buttons --- */
+.form-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 1rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.submit-btn, .cancel-btn {
+    border: none;
+    padding: 0.8rem 2rem;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    min-width: 140px; /* Ensure buttons have a minimum width */
+    text-align: center;
+}
+
+.submit-btn {
+    background-color: #007bff;
+    color: white;
+}
+
+.submit-btn:hover:not(:disabled) {
+    background-color: #0056b3;
+}
+
+.submit-btn:disabled {
+    background-color: #555;
+    cursor: not-allowed;
+}
+
+.cancel-btn {
+    background-color: transparent;
+    border: 1px solid #555;
+    color: #e0e0e0;
+}
+
+.cancel-btn:hover:not(:disabled) {
+    background-color: #333;
+}
+
+
+/* --- Loading & Error States --- */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 5rem 0;
+    gap: 1rem;
+    color: #aaa;
+}
+
+.error-banner {
+    background-color: #5d1c1c;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+}
+
+/* Small spinner for the submit button */
+.spinner-small {
+    display: inline-block;
+    vertical-align: middle;
+}
+
+/* This targets the mat-spinner inside the button */
+.submit-btn ::ng-deep .mat-mdc-progress-spinner {
+    --mdc-circular-progress-active-indicator-color: white;
+}

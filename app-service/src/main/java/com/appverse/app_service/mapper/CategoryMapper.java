@@ -17,7 +17,6 @@ import java.util.List;
 )
 public interface CategoryMapper {
 
-
     CategoryResponse toResponse(Category category);
 
     List<CategoryResponse> toResponseList(List<Category> categories);
