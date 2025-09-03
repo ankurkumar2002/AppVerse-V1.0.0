@@ -15,25 +15,39 @@ import { AuthGuard } from './guards/auth.guard';
 import { RoleGuard } from './guards/role.guard';
 
 export const routes: Routes = [
-   { path: 'landing', component: LandingComponent, title: 'AppVerse - Home' },
+  { path: 'landing', component: LandingComponent, title: 'AppVerse - Home' },
   { path: 'about', component: AboutComponent, title: 'About AppVerse' },
   { path: 'contact', component: ContactComponent, title: 'Contact Us' },
-  { path: 'developer/create', component: DeveloperFormComponent, title: 'Create Developer', canActivate: [AuthGuard] },
+  { 
+    path: 'developer/create', 
+    component: DeveloperFormComponent, 
+    title: 'Create Developer Profile', 
+    canActivate: [AuthGuard] 
+  },
   {
     path: 'developer',
     component: LayoutComponent,
-    canActivate: [AuthGuard, RoleGuard],
-    canActivateChild: [DeveloperAuthGuard],
-    data: { expectedRoles: ['developer'] },
+    canActivate: [AuthGuard, DeveloperAuthGuard],
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-
-      { path: 'dashboard', component: DeveloperDashboardComponent, title: 'Developer Dashboard' },
-      
-      { path: 'update', component: DeveloperProfileUpdateComponent, title: 'Update Developer Profile' },
-
+      { 
+        path: 'dashboard', 
+        component: DeveloperDashboardComponent, 
+        title: 'Developer Dashboard',
+        canActivate: [RoleGuard],
+        data: { expectedRoles: ['developer'] }
+      },
+      { 
+        path: 'update', 
+        component: DeveloperProfileUpdateComponent, 
+        title: 'Update Developer Profile',
+        canActivate: [RoleGuard],
+        data: { expectedRoles: ['developer'] }
+      },
       {
         path: 'apps',
+        canActivate: [RoleGuard],
+        data: { expectedRoles: ['developer'] },
         children: [
           { path: '', component: ApplicationComponent, title: 'Applications' },
           { path: 'create', component: ApplicationCreateComponent, title: 'Create Application' },
@@ -41,11 +55,7 @@ export const routes: Routes = [
           { path: ':id/edit', component: ApplicationUpdateComponent, title: 'Update Application' }
         ]
       },
-
-      { path: '**', redirectTo: 'dashboard' }
     ]
   },
-
-  // fallback in case non-developer route is hit
-  // { path: '**', redirectTo: 'landing' }
+  { path: '**', redirectTo: 'landing' }
 ];

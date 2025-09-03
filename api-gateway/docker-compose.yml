@@ -26,7 +26,7 @@ services:
       - "8181:8080"
     volumes:
       - ./docker/keycloak/realms/:/opt/keycloak/data/import/
-      - ./docker/keycloak/themes/my-dark-theme:/opt/keycloak/themes/my-dark-theme
+      - ./docker/keycloak/themes:/opt/keycloak/themes
     depends_on:
       - keycloak-mysql
   loki:

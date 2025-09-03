@@ -18,6 +18,7 @@ import java.util.List;
     nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE // Ignores null values from DTO during update
 )
 public interface UserMapper {
+
     
     
     // --- UserRequest to User Entity ---

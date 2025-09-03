@@ -13,7 +13,7 @@ import java.util.List;
 
 public interface SubscriptionMapper {
     
-    
+
     // Plan Mappers
     SubscriptionPlan toSubscriptionPlan(SubscriptionPlanRequest request);
     SubscriptionPlanResponse toSubscriptionPlanResponse(SubscriptionPlan plan);
