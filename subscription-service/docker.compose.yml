@@ -1,0 +1,12 @@
+version: '4'
+services:
+  mysql:
+    image: mysql:8.3.0
+    container_name: subscription-mysql
+    ports:
+      - "3312:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: ankur
+    volumes:
+      - ./data:/var/lib/mysql
+      - ./docker/mysql/init.sql:/docker-entrypoint-initdb.d/init.sql   
