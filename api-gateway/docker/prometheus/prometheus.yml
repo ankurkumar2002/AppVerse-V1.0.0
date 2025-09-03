@@ -1,0 +1,56 @@
+global:
+  scrape_interval: 2s
+  evaluation_interval: 2s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['prometheus:9090']
+  - job_name: 'app-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8080'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: app-service
+  - job_name: 'developer-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8081'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: developer-service
+  - job_name: 'user-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8082'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: user-service
+  - job_name: 'cart-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8083'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: cart-service
+  - job_name: 'order-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8084'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: order-service
+  - job_name: 'payment-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8085'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: payment-service
+  - job_name: 'subscription-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8086'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: subscription-service
+  - job_name: 'notification-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['host.docker.internal:8087'] ## only for demo purposes don't use host.docker.internal in production
+        labels:
+          service: notification-service

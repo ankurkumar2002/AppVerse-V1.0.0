@@ -4,48 +4,93 @@
 
 # Logs
 *.log
+*.out
+*.err
 
 # OS generated files
 .DS_Store
 Thumbs.db
 
-# Environment and config secrets
+# Environment and secret configs
 .env
-.env.*
+.env.* 
 
 # Temporary files
 *.swp
 *.swo
 *.tmp
 
+######################################
+#        BACKEND (SPRING BOOT)       #
+######################################
+
 # Build outputs
-/build/
-dist/
 target/
 out/
 *.class
 *.jar
 *.war
 
-# Maven
+# Maven / Gradle
+.gradle/
 .mvn/
 **/.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/mvnw
 !**/src/main/**/mvnw.cmd
 !**/src/main/**/.mvn/wrapper/
 
-# Gradle
-.gradle/
-build/
+######################################
+#        FRONTEND (ANGULAR)          #
+######################################
 
-# Node & npm
+# Node dependencies
 node_modules/
-package-lock.json
-npm-debug.log
-yarn-debug.log
-yarn-error.log
+frontend/node_modules/
 
-# IDEs
+# Angular build outputs
+dist/
+build/
+frontend/dist/
+frontend/.angular/
+frontend/.angular/cache/
+
+# Optional lockfiles (can be regenerated)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml
+
+######################################
+#        DATABASE / RUNTIME          #
+######################################
+
+# Database runtime & container volumes
+**/volume-data/
+**/tempo-data/
+data/
+uploads/
+**/uploads/
+
+# Ignore DB dump files (exports), but keep project SQL scripts
+*.dump
+*.sock
+mysql.sock
+
+# Always keep SQL files written by developer
+!*.sql
+
+######################################
+#        DOCKER CONFIG KEEP          #
+######################################
+
+# Ignore runtime, keep Docker setup
+!Dockerfile
+!docker-compose.yml
+!*.yml
+
+######################################
+#            IDE / EDITORS           #
+######################################
+
 # IntelliJ
 .idea/
 *.iws
@@ -68,53 +113,9 @@ yarn-error.log
 .vscode/
 
 ######################################
-#        ANGULAR FRONTEND IGNORE     #
+#         KEYCLOAK THEMES FIX        #
 ######################################
 
-# Angular build output
-/frontend/dist/
-/frontend/.angular/
-/frontend/.angular/cache/
-/frontend/node_modules/
-
-# Angular environments (keep if you need them)
-# !frontend/src/environments/environment.ts
-# !frontend/src/environments/environment.prod.ts
-
-######################################
-#     SPRING BOOT & DATABASE IGNORE  #
-######################################
-
-# Spring Boot config (ignore if not in src)
-*.properties
-*.yml
-!**/src/main/resources/*.properties
-!**/src/main/resources/*.yml
-
-# Keycloak
-*.keycloak/
-
-# MongoDB
-data/
-*.sock
-
-# MySQL data
-mysql.sock
-*.sql
-*.dump
-
-######################################
-#        DOCKER / VOLUMES / TEMP     #
-######################################
-
-# Docker volumes and runtime data
-**/tempo-data/
-**/volume-data/
-**/uploads/
-uploads/
-**/#*
-
-# Keep Docker config files
-!Dockerfile
-!docker-compose.yml
-
+# Track all Keycloak theme files
+!**/themes/**/theme.properties
+!**/themes/**/messages/*.properties
