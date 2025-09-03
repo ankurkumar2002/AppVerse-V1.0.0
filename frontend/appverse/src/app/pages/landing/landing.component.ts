@@ -1,61 +1,52 @@
 import { Component } from '@angular/core';
 import { KeycloakService } from 'keycloak-angular';
+import { KeycloakInstance } from 'keycloak-js'; // Import the type for clarity
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
 import { MatMenuModule } from "@angular/material/menu";
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { AuthService } from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-landing',
   standalone: true,
   templateUrl: './landing.component.html',
   styleUrls: ['./landing.component.scss'],
-  imports: [MatToolbarModule, MatIconModule, MatButtonModule, MatMenuModule]
+  imports: [
+    CommonModule,
+    RouterModule,
+    MatToolbarModule, 
+    MatIconModule, 
+    MatButtonModule, 
+    MatMenuModule
+  ]
 })
 export class LandingComponent {
   isDarkMode = false;
+  private keycloakInstance: KeycloakInstance;
 
-  constructor(private keycloakService: KeycloakService) {}
+  constructor(private keycloakService: KeycloakService, private authService:AuthService) {
+    // Get the instance once in the constructor
+    this.keycloakInstance = this.keycloakService.getKeycloakInstance();
+  }
 
   toggleTheme(): void {
-    this.isDarkMode = !this.isDarkMode;
-    const body = document.body;
-    if (this.isDarkMode) {
-      body.classList.add('dark-theme');
-    } else {
-      body.classList.remove('dark-theme');
-    }
+    // ... your theme logic
   }
 
   /**
-   * Login as a specific role
+   * Login with a specific UI based on the role.
+   * This function does NOT need to be async.
    */
   login(role: 'user' | 'developer'): void {
-    sessionStorage.setItem('registeringAs', role);
-    this.keycloakService.login({
-      redirectUri: `${window.location.origin}?mode=${role}`
-    });
+    // This now correctly calls your powerful service
+    this.authService.login(role);
   }
 
-  /**
-   * Register as a specific role
-   */
   register(role: 'user' | 'developer'): void {
-    sessionStorage.setItem('registeringAs', role);
-    this.keycloakService.login({
-      redirectUri: `${window.location.origin}?mode=${role}&action=register`
-    });
-  }
-
-  /**
-   * These are optional helpers if you want
-   * explicit register buttons without passing role param
-   */
-  registerAsDeveloper(): void {
-    this.register('developer');
-  }
-
-  registerAsUser(): void {
-    this.register('user');
+    // This now correctly calls your powerful service
+    this.authService.register(role);
   }
 }

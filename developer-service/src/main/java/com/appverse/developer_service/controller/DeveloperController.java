@@ -32,7 +32,7 @@ public class DeveloperController {
     private final DeveloperService developerService;
 
     @PostMapping
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> create(
             @Validated(OnCreate.class) @RequestBody DeveloperRequest request) {
 

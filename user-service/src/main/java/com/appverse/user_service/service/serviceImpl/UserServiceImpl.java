@@ -420,7 +420,7 @@ public class UserServiceImpl implements UserService {
 
         RoleRepresentation roleRep = keycloakAdminClient.realm(keycloakRealm)
             .roles()
-            .get(role.name().toUpperCase()) // assuming role names match exactly in Keycloak
+            .get(role.name().toLowerCase()) // assuming role names match exactly in Keycloak
             .toRepresentation();
 
         if (roleRep == null) {

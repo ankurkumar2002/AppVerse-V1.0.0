@@ -15,9 +15,11 @@ export const developerProfileGuard: CanActivateFn = () => {
         // If developer profile exists, redirect to dashboard
         router.navigate(['/developer/dashboard']);
         return false;
+      }else{
+        router.navigate(['/developer/create']);
+        return true;
       }
       // Allow access if profile doesn't exist
-      return true;
     }),
     catchError((err) => {
       // In case of error (e.g. 404), assume profile does not exist
