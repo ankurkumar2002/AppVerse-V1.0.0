@@ -9,6 +9,5 @@ public record UserProfileUpdatedPayload(
     String keycloakUserId, // For reference
     String newUsername,
     String newEmail,
-    String newPhone,
-    Role newRole
+    String newPhone
 ) {}

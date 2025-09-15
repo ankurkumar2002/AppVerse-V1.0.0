@@ -1,29 +1,10 @@
-// ==== DARK THEME VARIABLES ====
-$bg-page: #121212;
-$bg-input: #1e1e1e;
-$primary: #8ab4f8;
-$text-header: #e8eaed;
-$text-body: #bdc1c6;
-$text-label: #acacb3;
-$text-hint: #70757a;
-$border: #3c4043;
-
-// ==== GLOBAL FIX ====
-*, *::before, *::after {
-  box-sizing: border-box;
-}
-
-// ==== PAGE CONTAINER ====
+/* --- Main Container --- */
 .profile-page-container {
-  background-color: $bg-page;
-  min-height: 100vh;           // Full viewport height
-  // padding: 2rem 1.5rem;
-  margin: 0 auto;
-  width: 100%;
   max-width: 1000px;
+  margin: 0 auto;
 }
 
-// ==== HEADER ====
+/* --- Header --- */
 .profile-header {
   display: flex;
   align-items: center;
@@ -34,12 +15,13 @@ $border: #3c4043;
     width: 90px;
     height: 90px;
     border-radius: 50%;
-    background-color: #2a2a2a;
+    background-color: var(--dark-card);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    border: 2px solid $border;
+    border: 1px solid var(--dark-border);
+    flex-shrink: 0;
 
     img {
       width: 100%;
@@ -49,38 +31,45 @@ $border: #3c4043;
 
     .placeholder-icon {
       font-size: 2.5rem;
-      color: $text-label;
+      color: var(--dark-text-secondary);
     }
   }
 
   .profile-info {
-    .profile-name {
-      font-size: 2rem;
-      font-weight: 600;
-      color: $text-header;
+    h1 {
+      font-size: 2.25rem;
+      font-weight: 700;
       margin: 0;
     }
-
     .profile-email {
-      font-size: 0.95rem;
-      color: $text-label;
+      font-size: 1rem;
+      color: var(--dark-text-secondary);
       margin-top: 0.25rem;
     }
   }
 }
 
-// ==== FORM SECTIONS ====
+.gradient-text {
+  background: linear-gradient(90deg, var(--primary-accent), var(--primary-glow));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* --- Form Sections (Styled as Cards) --- */
 .form-section {
-  border: none;
+  border: 1px solid var(--dark-border);
+  background-color: var(--dark-card);
+  border-radius: 12px;
+  padding: 24px;
   margin-bottom: 2.5rem;
 
   legend {
     font-size: 1.2rem;
-    font-weight: 600;
-    color: $text-header;
-    margin-bottom: 1rem;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba($primary, 0.3);
+    font-weight: 500;
+    color: var(--dark-text-primary);
+    padding: 0 16px; // Gives space around the legend text
+    margin-left: -16px; // Aligns with the padding
   }
 }
 
@@ -97,20 +86,22 @@ $border: #3c4043;
 .form-group {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: 0.5rem;
 
   &.full-width {
     grid-column: 1 / -1;
   }
 
   label {
-    font-size: 0.95rem;
-    color: $text-label;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: var(--dark-text-secondary);
   }
 
   small {
     font-size: 0.8rem;
-    color: $text-hint;
+    color: var(--dark-text-secondary);
+    opacity: 0.8;
   }
 }
 
@@ -118,78 +109,82 @@ $border: #3c4043;
   display: flex;
   justify-content: flex-end;
   padding-top: 2rem;
-  border-top: 1px solid $border;
+  margin-top: 1rem;
+  border-top: 1px solid var(--dark-border);
 }
 
-// ==== PRIMENG DARK MODE OVERRIDES ====
+/*
+ * ========================================================================
+ * == THEME-ALIGNED PRIMENG OVERRIDES using ::ng-deep ==
+ * ========================================================================
+ */
 :host ::ng-deep {
+  // --- Text Inputs & Dropdowns ---
   .p-inputtext,
   .p-dropdown,
   .p-inputtextarea {
     width: 100%;
-    background-color: $bg-input;
-    color: $text-body;
-    border: 1px solid $border;
+    background-color: var(--dark-bg); // Use a slightly darker bg for contrast
+    color: var(--dark-text-primary);
+    border: 1px solid var(--dark-border);
     border-radius: 8px;
-    font-size: 1rem;
-    padding: 0.75rem 1rem;
 
     &:hover {
-      border-color: lighten($border, 15%);
+      border-color: var(--dark-text-secondary);
     }
 
     &:enabled:focus,
     &.p-focus {
-      border-color: $primary;
-      box-shadow: 0 0 0 2px rgba($primary, 0.2);
+      border-color: var(--primary-accent);
+      box-shadow: 0 0 0 1px var(--primary-accent);
     }
   }
 
+  // --- Buttons ---
   .p-button {
-    background: $primary;
-    border: none;
-    color: #121212;
-    font-weight: 600;
-    border-radius: 8px;
-    padding: 0.75rem 1.5rem;
-    font-size: 1rem;
-    transition: background-color 0.2s ease, transform 0.2s ease;
+    background: var(--primary-accent);
+    border-color: var(--primary-accent);
+    color: white; // Ensure contrast
+    font-weight: 500;
 
     &:hover {
-      background-color: lighten($primary, 5%);
-      transform: translateY(-1px);
+      background: var(--primary-glow);
+      border-color: var(--primary-glow);
     }
   }
 
+  // --- Dropdown Panel ---
   .p-dropdown-panel {
-    background-color: darken($bg-input, 4%);
-    border: 1px solid $border;
+    background-color: var(--dark-card);
+    border: 1px solid var(--dark-border);
 
     .p-dropdown-item {
-      color: $text-body;
-
+      color: var(--dark-text-primary);
       &:hover {
-        background-color: rgba($primary, 0.1);
+        background-color: var(--hover-bg);
       }
-
       &.p-highlight {
-        background-color: rgba($primary, 0.2);
-        color: $text-header;
+        background-color: var(--primary-accent);
+        color: white;
       }
     }
   }
 
+  // --- Toast / Notifications ---
   .p-toast .p-toast-message {
-    background-color: lighten($bg-input, 5%);
-    border-left: 4px solid $primary;
+    background-color: var(--dark-card);
+    border: 1px solid var(--dark-border);
+    border-left: 4px solid var(--primary-accent);
+
+    &.p-toast-message-success { border-left-color: #4caf50; }
+    &.p-toast-message-warn { border-left-color: #fb8c00; }
+    &.p-toast-message-error { border-left-color: #f44336; }
 
     .p-toast-summary {
-      color: $text-header;
-      font-weight: 600;
+      color: var(--dark-text-primary);
     }
-
     .p-toast-detail {
-      color: $text-body;
+      color: var(--dark-text-secondary);
     }
   }
 }

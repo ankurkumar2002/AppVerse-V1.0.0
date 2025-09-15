@@ -1,19 +1,102 @@
-
-// Custom Theming for Angular Material
-// For more information: https://material.angular.dev/guide/theming
 @use '@angular/material' as mat;
 
-html {
-  @include mat.theme((
-    color: (
-      theme-type: light,
-      primary: mat.$azure-palette,
-      tertiary: mat.$blue-palette,
-    ),
-    typography: Roboto,
-    density: 0,
-  ));
-}/* You can add global styles to this file, and also import other style files */
+// 1. Core styles
+@include mat.core();
 
-html, body { height: 100%; }
-body { margin: 0; font-family: Roboto, "Helvetica Neue", sans-serif; }
+// 2. Define your own custom palette
+$app-primary-palette: mat.m2-define-palette((
+  50:  #e3f2fd,
+  100: #bbdefb,
+  200: #90caf9,
+  300: #64b5f6,
+  400: #42a5f5,
+  500: #2196f3, // main
+  600: #1e88e5,
+  700: #1976d2,
+  800: #1565c0,
+  900: #0d47a1,
+  A100: #82b1ff,
+  A200: #448aff,
+  A400: #2979ff,
+  A700: #2962ff,
+  contrast: (
+    50:  black,
+    100: black,
+    200: black,
+    300: black,
+    400: black,
+    500: white,
+    600: white,
+    700: white,
+    800: white,
+    900: white,
+    A100: black,
+    A200: white,
+    A400: white,
+    A700: white,
+  )
+), 500, 300, 700); // pick default, lighter, darker
+
+// 3. Accent palette (blue glow style)
+$app-accent-palette: mat.m2-define-palette((
+  100: #b3e5fc,
+  200: #81d4fa, // main accent
+  400: #29b6f6,
+  A100: #80d8ff,
+  A200: #40c4ff,
+  A400: #00b0ff,
+  A700: #0091ea,
+  contrast: (
+    100: black,
+    200: black,
+    400: black,
+    A100: black,
+    A200: black,
+    A400: white,
+    A700: white,
+  )
+), 200, 100, 400);
+
+// 4. Define dark theme
+$app-dark-theme: mat.m2-define-dark-theme((
+  color: (
+    primary: $app-primary-palette,
+    accent: $app-accent-palette,
+  ),
+));
+
+// 5. Apply theme
+@include mat.all-component-themes($app-dark-theme);
+
+// 6. Global dark CSS vars
+:root {
+  --dark-bg: #111827;
+  --dark-sidebar: #1f2937;
+  --dark-card: #1f2937;
+  --dark-border: rgba(147, 197, 253, 0.2);
+  --dark-text-primary: #f9fafb;
+  --dark-text-secondary: #9ca3af;
+  --primary-glow: #60a5fa;
+  --primary-accent: #3b82f6;
+  --hover-bg: rgba(147, 197, 253, 0.1);
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background-color: var(--dark-bg);
+  color: var(--dark-text-primary);
+  overflow-x: hidden; // ✅ prevent horizontal scrollbar
+}
+
+body {
+  border: none; // ✅ remove white border
+}
+
+app-root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh; // ✅ makes it fit viewport without extra scroll
+  overflow-x: hidden;
+}

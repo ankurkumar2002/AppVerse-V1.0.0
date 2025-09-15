@@ -1,11 +1,21 @@
 <div class="profile-page-container">
   <p-toast position="top-center"></p-toast>
 
-  <!-- === PROFILE HEADER === -->
+  <!-- === PROFILE HEADER (RESTRUCTURED) === -->
   <div class="profile-header">
-    
+    <div class="profile-avatar">
+      <!-- Show logo preview if URL exists -->
+      @if (logoPreviewUrl) {
+        <img [src]="logoPreviewUrl" alt="Profile Logo Preview">
+      } @else {
+        <!-- Fallback icon -->
+        <i class="pi pi-image placeholder-icon"></i>
+      }
+    </div>
     <div class="profile-info">
-      <H1>Update Profile</H1>
+      <!-- Added gradient-text class for visual flair -->
+      <h1 class="gradient-text">Update Profile</h1>
+      <p class="profile-email">{{ developerForm.get('email')?.value }}</p>
     </div>
   </div>
 

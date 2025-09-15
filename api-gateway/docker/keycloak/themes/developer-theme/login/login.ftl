@@ -62,7 +62,18 @@
 <body>
     <div class="container">
         <h2>Developer Login</h2>
-
+            <#if message?has_content>
+      <div class="alert" style="
+            background: #2d333b;
+            border: 1px solid #da3633;
+            color: #f85149;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            text-align: center;">
+        Invalid Username or Password
+      </div>
+    </#if>
         <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
             <div class="form-group">
                 <input tabindex="1" id="username" name="username" type="text" placeholder="Username" value="${(login.username!'')}" autofocus autocomplete="off"/>

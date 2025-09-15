@@ -58,7 +58,7 @@ public class UserController {
     }
 
     @GetMapping("/keycloak/{keycloakUserId}")
-    @PreAuthorize("hasRole('ADMIN') or @userSecurity.isOwnerByKcUid(authentication, #keycloakUserId) or hasAuthority('SCOPE_view:users')")
+    @PreAuthorize("hasRole('user') or @userSecurity.isOwnerByKcUid(authentication, #keycloakUserId) or hasAuthority('SCOPE_view:users')")
     public ResponseEntity<UserResponse> getUserByKyloakUserId(@PathVariable String keycloakUserId) {
         log.debug("Request to get user by Keycloak ID: {}", keycloakUserId);
         UserResponse userResponse = userService.getUserByKyloakUserId(keycloakUserId); // Corrected method name
