@@ -68,6 +68,18 @@
 <body>
 <div class="container">
     <h2>User Login</h2>
+    <#if message?has_content>
+      <div class="alert" style="
+            background: #2d333b;
+            border: 1px solid #da3633;
+            color: #f85149;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 4px;
+            text-align: center;">
+        ${message.summary}
+      </div>
+    </#if>
     <form action="${url.loginAction}" method="post">
         <label for="username">Username or Email</label>
         <input id="username" name="username" type="text" autofocus required>

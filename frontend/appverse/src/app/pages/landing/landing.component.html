@@ -1,36 +1,43 @@
-<mat-toolbar color="primary" class="toolbar">
-  <span class="logo">AppVerse</span>
-  <span class="spacer"></span>
+<div class="landing-container">
+  <mat-toolbar class="toolbar">
+    <span class="logo">AppVerse</span>
+    <span class="spacer"></span>
 
-  <!-- Theme Toggle -->
-  <button mat-icon-button (click)="toggleTheme()" aria-label="Toggle theme">
-    <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
-  </button>
+    <!-- Theme Toggle -->
+    <button mat-icon-button (click)="toggleTheme()" aria-label="Toggle theme">
+      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    </button>
 
-  <!-- User Menu -->
-  <button mat-button [matMenuTriggerFor]="userMenu">User</button>
-  <mat-menu #userMenu="matMenu">
-    <button mat-menu-item (click)="login('user')">Login</button>
-    <button mat-menu-item (click)="register('user')">Register</button>
-  </mat-menu>
+    <!-- User Menu -->
+    <button mat-button [matMenuTriggerFor]="userMenu">User</button>
+    <mat-menu #userMenu="matMenu">
+      <button mat-menu-item (click)="login('user')">Login</button>
+      <button mat-menu-item (click)="register('user')">Register</button>
+    </mat-menu>
 
-  <!-- Developer Menu -->
-  <button mat-button [matMenuTriggerFor]="devMenu">Developer</button>
-  <mat-menu #devMenu="matMenu">
-    <button mat-menu-item (click)="login('developer')">Login</button>
-    <button mat-menu-item (click)="register('developer')">Register</button>
-  </mat-menu>
-</mat-toolbar>
+    <!-- Developer Menu -->
+    <button mat-button [matMenuTriggerFor]="devMenu">Developer</button>
+    <mat-menu #devMenu="matMenu">
+      <button mat-menu-item (click)="login('developer')">Login</button>
+      <button mat-menu-item (click)="register('developer')">Register</button>
+    </mat-menu>
+  </mat-toolbar>
 
-<!-- Hero Section -->
-<div class="hero-section">
-  <div class="hero-content">
-    <h1>Welcome to AppVerse 🚀</h1>
-    <p>Your one-stop platform to discover, upload, and manage apps.</p>
-    <div class="cta-buttons">
-      <button mat-raised-button color="primary" (click)="login('user')">Get Started</button>
-      <button mat-button color="accent" routerLink="/about">Learn More</button>
+  <!-- Hero Section -->
+  <main class="hero-section">
+    <div class="hero-content">
+      <h1 class="fade-in-up">Welcome to AppVerse 🚀</h1>
+      <p class="fade-in-up" style="animation-delay: 0.2s;">
+        Your one-stop platform to discover, deploy, and manage applications in a seamless ecosystem.
+      </p>
+      <div class="cta-buttons fade-in-up" style="animation-delay: 0.4s;">
+        <button mat-raised-button color="primary" (click)="login('user')">Explore Apps</button>
+        <button mat-flat-button class="learn-more-btn" (click)="login('developer')">Become a Developer</button>
+      </div>
     </div>
-  </div>
-  <img src="https://cdni.iconscout.com/illustration/premium/thumb/app-development-4449843-3705741.png" alt="AppVerse" />
+    <div class="hero-image-container fade-in-up" style="animation-delay: 0.6s;">
+      <!-- Using a more theme-appropriate image with a transparent background -->
+      <img src="https://cdni.iconscout.com/illustration/premium/thumb/app-development-4449843-3705741.png" alt="App development illustration" />
+    </div>
+  </main>
 </div>

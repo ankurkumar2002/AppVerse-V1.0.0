@@ -1,0 +1,206 @@
+/* --- Global Theme Variables --- */
+// NOTE: All color values now come from the global :root variables in styles.scss
+
+/* --- Layout Dimensions & Speed (Unchanged) --- */
+$sidenav-width: 260px;
+$sidenav-collapsed-width: 80px;
+$toolbar-height: 64px;
+$transition-speed: 0.3s;
+
+/*
+==========================================================================
+  Main Layout Container & Animation Logic
+==========================================================================
+*/
+.layout-container {
+  height: 100vh;
+  background-color: var(--dark-bg);
+}
+
+.layout-sidenav,
+.layout-content {
+  // Use a smoother cubic-bezier for a more professional feel
+  transition: all $transition-speed cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.layout-sidenav {
+  width: $sidenav-width;
+  background: var(--dark-sidebar);
+  border-right: 1px solid var(--dark-border);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; // Critical for clean animations
+}
+
+// === STYLES FOR THE COLLAPSED STATE ===
+.sidenav-collapsed {
+  .layout-sidenav {
+    width: $sidenav-collapsed-width;
+  }
+
+  // Hide text and adjust layout when collapsed
+  .app-logo-text,
+  .item-text,
+  .profile-info {
+    width: 0;
+    opacity: 0;
+    visibility: hidden;
+  }
+
+  .app-logo-icon {
+    display: block !important;
+  }
+
+  .custom-list-item {
+    justify-content: center;
+    .item-icon { margin-right: 0; }
+  }
+
+  .profile-section {
+    justify-content: center;
+    .profile-info { display: none; }
+  }
+}
+
+/*
+==========================================================================
+  Sidenav Internal Item Styling
+==========================================================================
+*/
+.sidenav-header {
+  height: $toolbar-height;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 1.5rem;
+  background: rgba(255, 255, 255, 0.03); // A subtle highlight
+  border-bottom: 1px solid var(--dark-border);
+  flex-shrink: 0;
+
+  .app-logo-text {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--dark-text-primary);
+  }
+
+  .app-logo-icon {
+    display: none; // Hidden by default, shown when collapsed
+    font-size: 2rem;
+    color: var(--dark-text-primary);
+  }
+}
+
+.mat-nav-list {
+  padding: 8px 0;
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.custom-list-item {
+  display: flex;
+  align-items: center;
+  height: 48px;
+  padding: 0 24px;
+  margin: 4px 12px;
+  border-radius: 8px;
+  color: var(--dark-text-secondary);
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+  white-space: nowrap;
+
+  .item-icon {
+    margin-right: 20px;
+    transition: margin-right $transition-speed cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .item-text, .profile-info {
+    transition: opacity 0.2s ease, width 0.3s ease, visibility 0.3s;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:hover {
+    background: var(--hover-bg);
+    color: var(--dark-text-primary);
+  }
+
+  &.active-link {
+    background: var(--primary-accent);
+    color: var(--dark-text-primary);
+    font-weight: 500;
+  }
+}
+
+.nav-section {
+  padding-bottom: 8px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--dark-border);
+  &:last-of-type {
+    border-bottom: none;
+  }
+}
+
+.profile-section {
+  padding: 1rem;
+  border-top: 1px solid var(--dark-border);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+  white-space: nowrap;
+  overflow: hidden;
+
+  .profile-pic {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    color: white;
+    font-weight: bold;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+  }
+
+  .profile-name {
+    font-weight: 500;
+    color: var(--dark-text-primary);
+  }
+  .profile-email {
+    font-size: 0.8rem;
+    color: var(--dark-text-secondary);
+  }
+}
+
+/*
+==========================================================================
+  Toolbar and Main Content Area
+==========================================================================
+*/
+.layout-toolbar {
+  height: $toolbar-height;
+  // Glassmorphism effect
+  background: rgba(31, 41, 55, 0.6);
+  backdrop-filter: blur(12px);
+  color: var(--dark-text-primary);
+  border-bottom: 1px solid var(--dark-border);
+  padding: 0 16px 0 24px;
+
+  .toolbar-title {
+    margin-left: 1rem;
+  }
+
+  .spacer { flex-grow: 1; }
+  
+  button {
+    margin-left: 8px;
+  }
+}
+
+.main-content {
+  padding: 24px;
+  height: calc(100vh - #{$toolbar-height});
+  overflow-y: auto;
+}

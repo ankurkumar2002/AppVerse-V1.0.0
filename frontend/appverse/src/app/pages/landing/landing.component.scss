@@ -1,124 +1,196 @@
+:host {
+  // --- Consistent Dark Theme Palette ---
+  --dark-bg: #111827;
+  --dark-card: #1f2937;
+  --dark-border: rgba(147, 197, 253, 0.2);
+  --dark-text-primary: #f9fafb;
+  --dark-text-secondary: #9ca3af;
+  --primary-glow: #60a5fa; // Lighter blue for highlights
+  --primary-accent: #3b82f6; // A vibrant blue for primary actions
+}
+
+// --- Animation Keyframes ---
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes float-animation {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+}
+
+// --- Main Container ---
 .landing-container {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background-color: var(--background);
-  transition: background-color 0.3s ease;
+  color: var(--dark-text-primary);
+  // Rich gradient background for depth
+  background: radial-gradient(ellipse at center, rgba(31, 41, 55, 0.8) 0%, var(--dark-bg) 70%);
+  overflow: hidden; // Prevents scrollbars from animations
 }
 
+// --- Glassmorphism Toolbar ---
 .toolbar {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 1rem;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: rgba(17, 24, 39, 0.6); // Semi-transparent background
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--dark-border);
+  padding: 0 24px;
+
+  .logo {
+    font-weight: 700;
+    font-size: 1.5rem;
+    letter-spacing: -1px;
+  }
+
+  .spacer {
+    flex: 1 1 auto;
+  }
+
+  button {
+    color: var(--dark-text-secondary);
+    transition: color 0.3s ease, background-color 0.3s ease;
+    &:hover {
+      color: var(--dark-text-primary);
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+  }
 }
 
-.logo {
-  font-weight: bold;
-  font-size: 1.5rem;
-}
-
-.spacer {
-  flex: 1 1 auto;
-}
-
+// --- Hero Section ---
 .hero-section {
   flex: 1;
   display: flex;
-  flex-direction: row;
   align-items: center;
   justify-content: space-evenly;
-  padding: 2rem;
-  gap: 2rem;
-  flex-wrap: wrap;
+  padding: 2rem 4rem;
+  gap: 4rem;
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+}
 
-  .hero-content {
-    max-width: 500px;
-    text-align: left;
+.hero-content {
+  max-width: 600px;
+  text-align: left;
 
-    h1 {
-      font-size: 2.5rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
+  .fade-in-up {
+    animation: fade-in-up 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+  }
+
+  h1 {
+    font-size: 3.5rem;
+    font-weight: 800;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    // Striking gradient text effect
+    background: linear-gradient(45deg, var(--dark-text-primary), var(--primary-glow));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  p {
+    font-size: 1.25rem;
+    color: var(--dark-text-secondary);
+    line-height: 1.7;
+    margin-bottom: 2.5rem;
+  }
+
+  .cta-buttons {
+    display: flex;
+    gap: 1rem;
+
+    // Primary button style
+    button[mat-raised-button] {
+      padding: 18px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 10px 20px rgba(96, 165, 250, 0.2);
+      }
     }
 
-    p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
+    // Secondary button style
+    .learn-more-btn {
+      padding: 18px 32px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--dark-text-primary);
+      &:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+      }
     }
+  }
+}
 
-    .cta-buttons {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
+.hero-image-container {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+
+  // Glowing effect behind the image
+  &::before {
+    content: '';
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.3) 0%, rgba(59, 130, 246, 0) 60%);
+    border-radius: 50%;
+    z-index: -1;
+    filter: blur(40px);
   }
 
   img {
-    max-width: 400px;
+    max-width: 450px;
     width: 100%;
-    border-radius: 1rem;
+    animation: float-animation 6s ease-in-out infinite;
   }
 }
 
-
-.landing-container {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  background-color: var(--background);
-  transition: background-color 0.3s ease;
-}
-
-.toolbar {
-  display: flex;
-  justify-content: space-between;
-  padding: 0 1rem;
-}
-
-.logo {
-  font-weight: bold;
-  font-size: 1.5rem;
-}
-
-.spacer {
-  flex: 1 1 auto;
-}
-
-.hero-section {
-  flex: 1;
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-evenly;
-  padding: 2rem;
-  gap: 2rem;
-  flex-wrap: wrap;
+// --- Responsive Adjustments ---
+@media (max-width: 992px) {
+  .hero-section {
+    flex-direction: column;
+    text-align: center;
+    padding: 2rem;
+  }
 
   .hero-content {
-    max-width: 500px;
-    text-align: left;
-
-    h1 {
-      font-size: 2.5rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-    }
-
-    p {
-      font-size: 1.2rem;
-      margin-bottom: 2rem;
-    }
-
-    .cta-buttons {
-      display: flex;
-      gap: 1rem;
-      flex-wrap: wrap;
-    }
+    text-align: center;
   }
 
-  img {
-    max-width: 400px;
-    width: 100%;
-    border-radius: 1rem;
+  .cta-buttons {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .hero-content {
+    h1 { font-size: 2.5rem; }
+    p { font-size: 1.1rem; }
+  }
+  .toolbar {
+    padding: 0 16px;
   }
 }

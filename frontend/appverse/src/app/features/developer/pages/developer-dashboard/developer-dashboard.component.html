@@ -5,70 +5,76 @@
   }
 
   <!-- Content when loaded -->
-  @if (!isLoading) {
-    <!-- Profile Card -->
-    <mat-card class="profile-card">
-      <mat-card-header>
-        <mat-card-title>Welcome, {{ (developer$ | async)?.name || 'User' }}</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <p class="bio">{{ (developer$ | async)?.bio || 'No bio available' }}</p>
-        <p class="email">
-          <mat-icon>email</mat-icon>
-          {{ (developer$ | async)?.email }}
-        </p>
-        @if ((developer$ | async)?.website) {
-          <div class="website">
-            <mat-icon>public</mat-icon>
-            <a [href]="(developer$ | async)?.website" target="_blank" rel="noopener">
-              {{ (developer$ | async)?.website }}
-            </a>
+  @if ((developer$ | async); as developer) {
+    <div class="dashboard-content">
+      <!-- Profile Card -->
+      <mat-card class="profile-card card-fade-in">
+        <mat-card-header>
+          <mat-card-title>Welcome, {{ developer.name || 'User' }}</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <p class="bio">{{ developer.bio || 'No bio available' }}</p>
+          <div class="contact-info">
+            <p class="email">
+              <mat-icon>email</mat-icon>
+              <span>{{ developer.email }}</span>
+            </p>
+            @if (developer.website) {
+              <div class="website">
+                <mat-icon>public</mat-icon>
+                <a [href]="developer.website" target="_blank" rel="noopener">
+                  {{ developer.website }}
+                </a>
+              </div>
+            }
           </div>
+        </mat-card-content>
+        <mat-card-actions>
+          <button mat-raised-button color="primary" (click)="editProfile()">
+            <mat-icon>edit</mat-icon>
+            <span>Edit Profile</span>
+          </button>
+        </mat-card-actions>
+      </mat-card>
+
+      <!-- Stats Section -->
+      <div class="stats-grid">
+        @for (stat of stats; track stat.label; let i = $index) {
+          <mat-card class="stat-card" [style.animation-delay.ms]="100 + i * 100">
+            <mat-card-content>
+              <div class="stat-icon-wrapper">
+                <mat-icon>{{ stat.icon }}</mat-icon>
+              </div>
+              <h3>{{ stat.value }}</h3>
+              <p>{{ stat.label }}</p>
+            </mat-card-content>
+          </mat-card>
         }
-      </mat-card-content>
-      <mat-card-actions>
-        <button mat-raised-button color="primary" (click)="editProfile()">
-          <mat-icon>edit</mat-icon>
-          Edit Profile
-        </button>
-      </mat-card-actions>
-    </mat-card>
+      </div>
 
-    <!-- Stats Section -->
-    <div class="stats-grid">
-      @for (stat of stats; track stat.label) {
-        <mat-card class="stat-card">
-          <mat-card-content>
-            <mat-icon>{{ stat.icon }}</mat-icon>
-            <h3>{{ stat.value }}</h3>
-            <p>{{ stat.label }}</p>
-          </mat-card-content>
-        </mat-card>
-      }
+      <!-- Recent Activity -->
+      <mat-card class="activity-card card-fade-in" style="animation-delay: 200ms;">
+        <mat-card-header>
+          <mat-card-title>Recent Activity</mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <mat-list>
+            @for (activity of recentActivities; track activity.message) {
+              <mat-list-item>
+                <mat-icon matListItemIcon>notifications</mat-icon>
+                <div matListItemTitle>{{ activity.message }}</div>
+                <div matListItemLine>{{ activity.date | date:'medium' }}</div>
+              </mat-list-item>
+            }
+            @if (recentActivities.length === 0) {
+              <div class="empty-state">
+                <mat-icon>inbox</mat-icon>
+                <p>No recent activity</p>
+              </div>
+            }
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
     </div>
-
-    <!-- Recent Activity -->
-    <mat-card class="activity-card">
-      <mat-card-header>
-        <mat-card-title>Recent Activity</mat-card-title>
-      </mat-card-header>
-      <mat-card-content>
-        <mat-list>
-          @for (activity of recentActivities; track activity.message) {
-            <mat-list-item>
-              <mat-icon matListItemIcon>notifications</mat-icon>
-              <div matListItemTitle>{{ activity.message }}</div>
-              <div matListItemLine>{{ activity.date | date:'medium' }}</div>
-            </mat-list-item>
-          }
-          @if (recentActivities.length === 0) {
-            <div class="empty-state">
-              <mat-icon>info</mat-icon>
-              <p>No recent activity</p>
-            </div>
-          }
-        </mat-list>
-      </mat-card-content>
-    </mat-card>
   }
 </div>

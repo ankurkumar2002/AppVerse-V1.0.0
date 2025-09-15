@@ -1,0 +1,45 @@
+<div class="user-layout" [class.collapsed]="isCollapsed">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <mat-icon class="logo">account_circle</mat-icon>
+      <span *ngIf="!isCollapsed" class="logo-text">AppVerse</span>
+    </div>
+
+    <nav class="nav-links">
+      <a routerLink="/user/dashboard" routerLinkActive="active-link">
+        <mat-icon>dashboard</mat-icon>
+        <span *ngIf="!isCollapsed">Dashboard</span>
+      </a>
+      <a routerLink="/user/apps" routerLinkActive="active-link">
+        <mat-icon>apps</mat-icon>
+        <span *ngIf="!isCollapsed">Browse Apps</span>
+      </a>
+      <a routerLink="/user/profile" routerLinkActive="active-link">
+        <mat-icon>person</mat-icon>
+        <span *ngIf="!isCollapsed">Profile</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <button mat-icon-button (click)="toggleSidebar()" class="collapse-btn">
+        <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <mat-toolbar class="toolbar">
+      <span class="toolbar-title">User Dashboard</span>
+      <span class="spacer"></span>
+      <button mat-icon-button (click)="logout()">
+        <mat-icon>logout</mat-icon>
+      </button>
+    </mat-toolbar>
+
+    <div class="content-body">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+</div>

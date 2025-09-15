@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
 import { KeycloakService } from 'keycloak-angular';
-import { KeycloakInstance } from 'keycloak-js'; // Import the type for clarity
+import { KeycloakInstance } from 'keycloak-js';
 import { MatToolbarModule } from "@angular/material/toolbar";
 import { MatIconModule } from "@angular/material/icon";
 import { MatButtonModule } from "@angular/material/button";
@@ -24,29 +24,24 @@ import { AuthService } from '../../core/services/auth/auth.service';
   ]
 })
 export class LandingComponent {
-  isDarkMode = false;
+  isDarkMode = true; // Default to dark mode for this theme
   private keycloakInstance: KeycloakInstance;
 
   constructor(private keycloakService: KeycloakService, private authService:AuthService) {
-    // Get the instance once in the constructor
     this.keycloakInstance = this.keycloakService.getKeycloakInstance();
   }
 
   toggleTheme(): void {
-    // ... your theme logic
+    // Implement your theme toggling logic here, e.g., by adding/removing a class from the body
+    this.isDarkMode = !this.isDarkMode;
+    document.body.classList.toggle('light-theme', !this.isDarkMode);
   }
 
-  /**
-   * Login with a specific UI based on the role.
-   * This function does NOT need to be async.
-   */
   login(role: 'user' | 'developer'): void {
-    // This now correctly calls your powerful service
     this.authService.login(role);
   }
 
   register(role: 'user' | 'developer'): void {
-    // This now correctly calls your powerful service
     this.authService.register(role);
   }
 }

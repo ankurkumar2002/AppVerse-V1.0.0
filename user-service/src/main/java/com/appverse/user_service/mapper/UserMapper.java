@@ -37,17 +37,14 @@ public interface UserMapper {
     User toEntity(UserRequest userRequest);
 
     // --- User Entity to UserResponse ---
-
     /**
      * Maps User entity to UserResponse DTO.
      */
     UserResponse toResponse(User user);
-
     /**
      * Maps a list of User entities to a list of UserResponse DTOs.
      */
     List<UserResponse> toResponseList(List<User> users);
-
 
     // --- Updating Existing User Entity from UserRequest ---
 
