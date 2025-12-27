@@ -45,9 +45,7 @@ public interface UserMapper {
      * Maps a list of User entities to a list of UserResponse DTOs.
      */
     List<UserResponse> toResponseList(List<User> users);
-
     // --- Updating Existing User Entity from UserRequest ---
-
     /**
      * Updates an existing User entity from a UserRequest DTO.
      * Ignores fields that should not be updated from a general request,
@@ -56,8 +54,7 @@ public interface UserMapper {
      * @param userRequest DTO containing update information.
      * @param user        The entity to be updated.
      */
-    
-     
+
     @Mapping(target = "id", ignore = true) 
     @Mapping(target = "keycloakUserId", ignore = true) 
     @Mapping(target = "status", ignore = true) 
