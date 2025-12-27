@@ -9,6 +9,8 @@ import com.appverse.developer_service.validation.OnUpdate;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +27,7 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/developers")
 @RequiredArgsConstructor
+@Slf4j
 public class DeveloperController {
 
     // private static final Logger log =
@@ -32,10 +35,10 @@ public class DeveloperController {
     private final DeveloperService developerService;
 
     @PostMapping
-    @PreAuthorize("isAuthenticated()")
+    // @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> create(
             @Validated(OnCreate.class) @RequestBody DeveloperRequest request) {
-
+                log.error("🔥🔥 CONTROLLER HIT 🔥🔥");
         MessageResponse response = developerService.createDeveloper(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(response.id()).toUri();

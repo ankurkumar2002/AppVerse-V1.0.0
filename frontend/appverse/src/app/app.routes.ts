@@ -49,13 +49,10 @@ export const routes: Routes = [
       },
     ]
   },
-
-  // 👉 User routes
-  // 👉 User routes
 {
   path: 'user',
   component: UserLayoutComponent,
-  canActivate: [AuthGuard], // only check auth + role here
+  canActivate: [AuthGuard], 
   data: { expectedRoles: ['user'] },
   children: [
     { path: 'profile-completion', component: ProfileCompletionComponent, title: 'Complete Profile' },

@@ -10,7 +10,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +30,7 @@ public class UserSubscriptionController {
     /**
      * Creates/Initiates a new subscription for the authenticated user.
      */
-    @PostMapping("/mine") // Endpoint to create a subscription for "me" (the authenticated user)
+    @PostMapping("/mine") 
     // @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserSubscriptionResponse> createUserSubscription(
             @Valid @RequestBody CreateUserSubscriptionRequest request,
@@ -78,10 +77,7 @@ public class UserSubscriptionController {
         return ResponseEntity.ok(subscriptions);
     }
 
-    /**
-     * Cancels an active subscription for the authenticated user.
-     * Cancellation is typically effective at the end of the current billing period.
-     */
+   
     @PostMapping("/mine/{subscriptionId}/cancel")
     // @PreAuthorize("isAuthenticated()")
     public ResponseEntity<UserSubscriptionResponse> cancelMySubscription(

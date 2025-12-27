@@ -1,0 +1,79 @@
+.dashboard-container {
+  padding: 1.5rem;
+}
+
+.welcome {
+  margin-bottom: 1.5rem;
+  h2 {
+    font-size: 1.8rem;
+    margin: 0;
+  }
+  p {
+    color: gray;
+  }
+}
+
+.quick-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+
+  button {
+    padding: 0.6rem 1.2rem;
+    border: none;
+    border-radius: 8px;
+    background: #4f46e5;
+    color: white;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  button:hover {
+    background: #4338ca;
+  }
+}
+
+.trending-apps {
+  margin-bottom: 2rem;
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 1rem;
+  }
+  .app-card {
+    padding: 1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    background: white;
+    img {
+      max-width: 100%;
+      border-radius: 6px;
+      margin-bottom: 0.5rem;
+    }
+    h4 {
+      margin: 0.5rem 0;
+    }
+    &:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+  }
+}
+
+.categories {
+  .category-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.8rem;
+  }
+  .category-card {
+    padding: 0.8rem 1.2rem;
+    background: #f3f4f6;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.2s;
+    &:hover {
+      background: #e5e7eb;
+    }
+  }
+}

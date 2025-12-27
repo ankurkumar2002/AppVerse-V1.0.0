@@ -1,1 +1,56 @@
-<p>user-dashboard works!</p>
+<div class="dashboard-container">
+  <!-- Welcome Section -->
+  <section class="welcome">
+    <h2>👋 Welcome, {{ username }}</h2>
+    <p>Explore trending apps and categories below.</p>
+  </section>
+
+  <!-- Quick Actions -->
+  <section class="quick-actions">
+    <button (click)="router.navigate(['/apps'])">Browse Apps</button>
+    <button (click)="router.navigate(['/user/profile-completion'])">My Profile</button>
+    <button (click)="router.navigate(['/user/dashboard'])">My Dashboard</button>
+  </section>
+
+  <!-- Trending Apps -->
+  <section class="trending-apps">
+    <h3>🔥 Trending Apps</h3>
+    <div *ngIf="loadingApps" class="loading-message">Loading apps...</div>
+
+    <div class="app-grid" *ngIf="!loadingApps">
+      <!-- We add a fallback for when there are no apps to show -->
+      <div *ngIf="applications.length === 0" class="empty-state">
+        No trending apps found.
+      </div>
+      
+      <div class="app-card" *ngFor="let app of applications" (click)="goToApp(app.id)">
+        <!-- ✅ CORRECTED IMAGE BINDING -->
+        <!-- We now bind [src] to the 'thumbnailBlobUrl' that your component creates. -->
+        <!-- We also add a placeholder for apps that might not have a thumbnail. -->
+        <div class="app-thumbnail-container">
+          <img *ngIf="app.thumbnailBlobUrl" 
+               [src]="app.thumbnailBlobUrl" 
+               alt="{{ app.name }} thumbnail" />
+          <div *ngIf="!app.thumbnailBlobUrl" class="thumbnail-placeholder">
+            <span>{{ app.name.charAt(0) }}</span>
+          </div>
+        </div>
+        
+        <h4>{{ app.name }}</h4>
+        <p>{{ app.description | slice:0:80 }}{{ app.description.length > 80 ? '...' : '' }}</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Categories -->
+  <section class="categories">
+    <h3>📂 Explore Categories</h3>
+    <div *ngIf="loadingCategories" class="loading-message">Loading categories...</div>
+    
+    <div class="category-grid" *ngIf="!loadingCategories">
+      <div class="category-card" *ngFor="let cat of categories" (click)="goToCategory(cat.id)">
+        {{ cat.name }}
+      </div>
+    </div>
+  </section>
+</div>

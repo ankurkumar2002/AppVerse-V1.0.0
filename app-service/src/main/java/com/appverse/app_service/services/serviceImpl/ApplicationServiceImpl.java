@@ -85,15 +85,12 @@ public class ApplicationServiceImpl implements ApplicationService {
 
         log.info("Attempting to create application with name: {}", request.name());
 
-        // --- STEP 1: Perform initial, sequential validations ---
-        // These must pass before we do any heavy lifting. The logic is unchanged.
         validateBasicRequest(request);
         validateMonetizationAndPlans(request);
 
         Application application = applicationCreateService.toEntity(request);
         adjustPricingAndFlags(application);
 
-        // --- STEP 2: Execute independent, long-running tasks in parallel ---
         CompletableFuture<Void> developerValidationFuture = CompletableFuture.runAsync(
                 () -> validateDeveloper(request), applicationTaskExecutor);
 
@@ -104,19 +101,16 @@ public class ApplicationServiceImpl implements ApplicationService {
                 () -> handleScreenshotUpload(screenshots, metadata, request.name()), applicationTaskExecutor);
 
         try {
-            // --- STEP 3: Wait for all parallel tasks to complete ---
             log.debug("Waiting for parallel validation and upload tasks to complete...");
             CompletableFuture.allOf(developerValidationFuture, thumbnailUploadFuture, screenshotUploadFuture).join();
             log.debug("All parallel tasks completed successfully.");
         } catch (CompletionException e) {
-            // Unwrap and re-throw the original exception from the async task
             if (e.getCause() instanceof RuntimeException) {
                 throw (RuntimeException) e.getCause();
             }
             throw new CreationException("An unexpected error occurred during a parallel task." + e.getCause());
         }
 
-        // --- STEP 4: Collect results from completed futures and update the entity ---
         String thumbnailUrl = thumbnailUploadFuture.join();
         if (thumbnailUrl != null) {
             application.setThumbnailUrl(thumbnailUrl);
@@ -223,7 +217,7 @@ public class ApplicationServiceImpl implements ApplicationService {
 
     private String handleThumbnailUpload(MultipartFile thumbnail, String applicationName) {
         if (thumbnail == null || thumbnail.isEmpty()) {
-            return null; // Return null if there's nothing to upload
+            return null; 
         }
         try {
             String newFileName = UUID.randomUUID() + "_" + System.currentTimeMillis() + "_"

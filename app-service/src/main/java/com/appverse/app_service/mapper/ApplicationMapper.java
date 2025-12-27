@@ -23,6 +23,7 @@ import java.util.List;
 )
 public interface ApplicationMapper {
 
+
 ApplicationResponse toResponse(Application application);
 
     List<ApplicationResponse> toResponseList(List<Application> applications);

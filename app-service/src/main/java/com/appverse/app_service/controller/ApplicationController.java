@@ -177,22 +177,15 @@ public class ApplicationController {
         return ResponseEntity.ok("Auth OK");
     }
 
-    /// Note: I'm moving this endpoint out from under the "/api/apps" prefix
-    // because serving images is a general utility, not specific to an "app"
-    /// resource.
-    // The new URL will be, for example, /images/thumbnails/my-image.jpg
+    
     @GetMapping("/images/{type}/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String type, @PathVariable String filename) {
-        // --- Security Check ---
-        // Whitelist the allowed directories to prevent Path Traversal attacks.
-        // A user should not be able to request a file with type =
-        // "../../some/other/folder".
+        
         if (!"thumbnails".equals(type) && !"screenshots".equals(type)) {
             logger.warn("Invalid image type requested: {}", type);
             return ResponseEntity.badRequest().build();
         }
 
-        // Build the correct path using the 'type' variable
         Path file = Paths.get(uploadDir).resolve(type).resolve(filename).normalize();
 
         logger.info("Attempting to serve image from path: {}", file.toAbsolutePath());
