@@ -3,6 +3,7 @@ package com.appverse.app_service;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.testcontainers.containers.MongoDBContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -11,6 +12,7 @@ class TestcontainersConfiguration {
 
 	@Bean
 	@ServiceConnection
+	@Conditional(DockerAvailableCondition.class)
 	MongoDBContainer mongoDbContainer() {
 		return new MongoDBContainer(DockerImageName.parse("mongo:latest"));
 	}

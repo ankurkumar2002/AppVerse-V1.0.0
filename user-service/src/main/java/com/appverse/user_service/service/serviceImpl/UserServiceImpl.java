@@ -1,6 +1,10 @@
 // === In User Service Project ===
 package com.appverse.user_service.service.serviceImpl;
 
+import com.appverse.user_service.client.IdentityClient;
+import com.appverse.user_service.dto.AssignRoleRequest;
+import com.appverse.user_service.dto.IdentityUserResponse;
+import com.appverse.user_service.dto.UpdateUserProfileRequest;
 import com.appverse.user_service.dto.UserRequest;
 import com.appverse.user_service.dto.UserResponse;
 import com.appverse.user_service.enums.Role;
@@ -15,6 +19,7 @@ import com.appverse.user_service.model.User;
 import com.appverse.user_service.repository.UserRepository;
 import com.appverse.user_service.service.UserService;
 
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 
 import org.keycloak.admin.client.Keycloak;
@@ -27,6 +32,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataAccessException;
 import org.springframework.kafka.core.KafkaTemplate; // KAFKA IMPORT
 import org.springframework.kafka.support.SendResult; // KAFKA IMPORT
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,455 +51,516 @@ import java.util.concurrent.CompletableFuture; // KAFKA IMPORT
 public class UserServiceImpl implements UserService {
 
     private static final Logger log = LoggerFactory.getLogger(UserServiceImpl.class);
-
     private final UserRepository userRepository;
     private final UserMapper userMapper;
-    private final Keycloak keycloakAdminClient;
-    private final KafkaTemplate<String, Object> kafkaTemplate; // KAFKA INJECTION
+    // private final Keycloak keycloakAdminClient;
+    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private final IdentityClient identityClient;
 
-    @Value("${appverse.keycloak.realm}")
-    private String keycloakRealm;
+    // private String determineUsername(UserRequest request, UserRepresentation
+    // kcUser) {
+    // // ... (your existing logic)
+    // if (request.username() != null && !request.username().isBlank())
+    // return request.username();
+    // if (kcUser.getUsername() != null && !kcUser.getUsername().isBlank())
+    // return kcUser.getUsername();
+    // if (kcUser.getFirstName() != null && !kcUser.getFirstName().isBlank() &&
+    // kcUser.getLastName() != null
+    // && !kcUser.getLastName().isBlank()) {
+    // String generated = (kcUser.getFirstName() + "_" +
+    // kcUser.getLastName()).toLowerCase()
+    // .replaceAll("\\s+", "_").replaceAll("[^a-z0-9_]", "");
+    // return generated.substring(0, Math.min(generated.length(), 100));
+    // }
+    // if (kcUser.getEmail() != null && !kcUser.getEmail().isBlank()) {
+    // String emailPrefix = kcUser.getEmail().split("@")[0];
+    // String generated = emailPrefix.replaceAll("[^a-zA-Z0-9_.-]", "");
+    // return generated.substring(0, Math.min(generated.length(), 100));
+    // }
+    // log.warn("Could not determine a suitable username for Keycloak ID {},
+    // generating a placeholder.",
+    // kcUser.getId());
+    // return "user_" + UUID.randomUUID().toString().substring(0, 8);
+    // }
 
-    private static final String USER_EVENTS_TOPIC = "user-events"; // KAFKA TOPIC
-
-    // Centralized Kafka Event Publishing Helper
-    private <T> void logKafkaSendAttempt(CompletableFuture<SendResult<String, T>> future, String eventName,
-            String eventKey) {
-        log.debug("Submitted {} to Kafka for key {}. Awaiting async result...", eventName, eventKey);
-        future.whenComplete((sendResult, exception) -> {
-            if (exception == null) {
-                log.info("Successfully sent {} to topic {} for key {}: offset {}, partition {}",
-                        eventName, USER_EVENTS_TOPIC, eventKey,
-                        sendResult.getRecordMetadata().offset(), sendResult.getRecordMetadata().partition());
-            } else {
-                log.error("Failed to send {} to topic {} for key {}: {}",
-                        eventName, USER_EVENTS_TOPIC, eventKey, exception.getMessage(), exception);
-            }
-        });
+    private String getCurrentKeycloakUserId() {
+        Jwt jwt = (Jwt) SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getPrincipal();
+        return jwt.getSubject(); // ✅ sub = keycloak user id
     }
 
     @Override
-    public UserResponse createUser(UserRequest userRequest) {
-        // if (userRepository.existsByKeycloakUserId(userRequest.keycloakUserId())) {
-        // throw new DuplicateResourceException("User profile with Keycloak ID '" +
-        // userRequest.keycloakUserId() + "' already exists locally.");
-        // }
+    public UserResponse updateUserProfile(UpdateUserProfileRequest userRequest) {
+        String keycloakUserId = getCurrentKeycloakUserId();
+        User user = userRepository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User profile not found"));
+        if (userRequest.phone() != null && !userRequest.phone().isBlank()) {
+            user.setPhone(userRequest.phone());
+        }
+        User updatedUser = userRepository.save(user);
+        return userMapper.toResponse(updatedUser);
+    }
 
-        UserRepresentation keycloakUserRep;
+    @Override
+    @Transactional
+    public void deleteMyAccount() {
+        String keycloakUserId = getCurrentKeycloakUserId();
+
+        User user = userRepository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
+        if (user.getStatus() == UserStatus.DEACTIVATED) {
+            return;
+        }
+
+        user.setStatus(UserStatus.DEACTIVATED);
+        user.setDeletedAt(LocalDateTime.now());
+        userRepository.save(user);
+
         try {
-            log.debug("Attempting to fetch user details from Keycloak for ID: {}", userRequest.keycloakUserId());
-            UserResource userResource = keycloakAdminClient.realm(keycloakRealm)
-                    .users()
-                    .get(userRequest.keycloakUserId());
-            keycloakUserRep = userResource.toRepresentation();
-            if (keycloakUserRep == null) {
-                throw new ResourceNotFoundException("User with Keycloak ID '" + userRequest.keycloakUserId()
-                        + "' not found in Keycloak (returned null).");
-            }
-            log.info("Successfully fetched user '{}' from Keycloak (ID: {})", keycloakUserRep.getUsername(),
-                    userRequest.keycloakUserId());
-        } catch (NotFoundException e) {
-            log.warn("User with Keycloak ID {} not found in Keycloak.", userRequest.keycloakUserId(), e);
-            throw new ResourceNotFoundException("User to be provisioned (Keycloak ID: '" + userRequest.keycloakUserId()
-                    + "') was not found in Keycloak.");
+            identityClient.disableUser(keycloakUserId);
         } catch (Exception e) {
-            log.error("Error fetching user from Keycloak (ID {}): {}", userRequest.keycloakUserId(), e.getMessage(), e);
+            // 🔥 CRITICAL: do NOT rollback DB for Keycloak failure
+            log.error("Failed to disable Keycloak user {}", keycloakUserId, e);
+        }
+    }
+
+    @Override
+    public UserResponse getMyprofile() {
+        String keycloakUserId = getCurrentKeycloakUserId();
+        User user = userRepository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException(keycloakUserId));
+        if (user.getStatus() == UserStatus.DEACTIVATED || UserStatus.DELETED == user.getStatus()) {
+            return null;
+        }
+        return userMapper.toResponse(user);
+    }
+
+    // private String determineEmail(UserRequest request, UserRepresentation kcUser)
+    // {
+    // if (request.email() != null && !request.email().isBlank())
+    // return request.email();
+    // return kcUser.getEmail();
+    // }
+
+    @Override
+    @Transactional
+    public UserResponse createUser(UserRequest userRequest) {
+
+        log.info("🔥 createUser() started");
+
+        // 1. Extract Keycloak userId from JWT
+        String keycloakUserId = getCurrentKeycloakUserId();
+
+        // 2. Prevent duplicate signup
+        if (userRepository.existsByKeycloakUserId(keycloakUserId)) {
+            throw new DuplicateResourceException(
+                    "User already exists for this account");
+        }
+
+        // 3. Fetch user details from identity-service (Keycloak)
+        IdentityUserResponse identityUser;
+        try {
+            identityUser = identityClient.getUserById(keycloakUserId);
+        } catch (FeignException.NotFound e) {
+            throw new ResourceNotFoundException(
+                    "Keycloak user not found for id: " + keycloakUserId);
+        } catch (FeignException e) {
             throw new IntegrationException(
-                    "Failed to fetch user details from Keycloak for ID '" + userRequest.keycloakUserId() + "'.", e);
+                    "Failed to communicate with identity-service", e);
         }
 
-        String finalUsername = keycloakUserRep.getUsername();
-        String finalEmail = keycloakUserRep.getEmail();
-        boolean emailVerified = keycloakUserRep.isEmailVerified() != null && keycloakUserRep.isEmailVerified();
-        String firstName = keycloakUserRep.getFirstName();
-        String lastName = keycloakUserRep.getLastName();
-        Role finalRole = Role.USER;
-
-        if (userRepository.existsByUsername(finalUsername)) {
-            throw new DuplicateResourceException("User with username '" + finalUsername + "' already exists locally.");
-        }
-        if (finalEmail != null && !finalEmail.isBlank() && userRepository.existsByEmail(finalEmail)) {
-            throw new DuplicateResourceException("User with email '" + finalEmail + "' already exists locally.");
+        // 4. Basic sanity check (defensive)
+        if (identityUser.username() == null || identityUser.email() == null) {
+            throw new IntegrationException(
+                    "Incomplete user data received from identity-service");
         }
 
-        User newUser = User.builder()
-                .keycloakUserId(userRequest.keycloakUserId())
-                .username(finalUsername)
-                .email(finalEmail)
-                .emailVerified(emailVerified)
-                .firstName(firstName)
-                .lastName(lastName)
-                .phone(userRequest.phone())
-                .role(finalRole)
-                // Assuming @PrePersist in User entity handles: id, createdAt, updatedAt, status
+        // 5. Persist user in app database
+        User user = User.builder()
+                .keycloakUserId(identityUser.id())
+                .username(identityUser.username())
+                .email(identityUser.email())
+                .emailVerified(identityUser.emailVerified())
+                .firstName(identityUser.firstName())
+                .lastName(identityUser.lastName())
+                .phone(userRequest.phone()) // ONLY app-owned field
+                .role(Role.USER) // backend-controlled
+                .status(UserStatus.ACTIVE)
                 .build();
 
         try {
-            assignUserRoleToKeycloakUser(userRequest.keycloakUserId());
+            User savedUser = userRepository.save(user);
+            // Ensure the user is persisted to database before proceeding
+            userRepository.flush();
 
-            User savedUser = userRepository.save(newUser);
-            log.info("User profile created locally for Keycloak ID {} with local ID: {}", savedUser.getKeycloakUserId(),
-                    savedUser.getId());
+            log.info("✅ User created with id {}", savedUser.getId());
 
-            // KAFKA: Publish UserCreatedEvent
-            UserCreatedPayload payload = new UserCreatedPayload(
-                    savedUser.getId().toString(), // Convert UUID to String for consistency if needed, or keep UUID
-                    savedUser.getKeycloakUserId(),
-                    savedUser.getUsername(),
-                    savedUser.getEmail(),
-                    savedUser.getFirstName(),
-                    savedUser.getLastName(),
-                    savedUser.getPhone(),
-                    savedUser.isEmailVerified(),
-                    savedUser.getRole(),
-                    savedUser.getStatus());
-            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(USER_EVENTS_TOPIC,
-                    savedUser.getId().toString(), payload);
-            logKafkaSendAttempt(future, "UserCreatedEvent", savedUser.getId().toString());
+            // 6. Assign USER role in Keycloak via identity-service (after successful DB
+            // save)
+            try {
+                identityClient.assignRoles(
+                        keycloakUserId,
+                        new AssignRoleRequest(List.of("USER")));
+            } catch (FeignException e) {
+                log.error("⚠️ Failed to assign role USER to keycloak user {}",
+                        keycloakUserId, e);
+                // DO NOT throw - user is already created in DB
+            }
 
             return userMapper.toResponse(savedUser);
         } catch (DataAccessException e) {
-            log.error("Database error saving new user profile for Keycloak ID {}: {}", newUser.getKeycloakUserId(),
-                    e.getMessage(), e);
-            throw new DatabaseOperationException("Failed to save new user profile to the database. " + e.getMessage());
-        }
-    }
-
-    private String determineUsername(UserRequest request, UserRepresentation kcUser) {
-        // ... (your existing logic)
-        if (request.username() != null && !request.username().isBlank())
-            return request.username();
-        if (kcUser.getUsername() != null && !kcUser.getUsername().isBlank())
-            return kcUser.getUsername();
-        if (kcUser.getFirstName() != null && !kcUser.getFirstName().isBlank() && kcUser.getLastName() != null
-                && !kcUser.getLastName().isBlank()) {
-            String generated = (kcUser.getFirstName() + "_" + kcUser.getLastName()).toLowerCase()
-                    .replaceAll("\\s+", "_").replaceAll("[^a-z0-9_]", "");
-            return generated.substring(0, Math.min(generated.length(), 100));
-        }
-        if (kcUser.getEmail() != null && !kcUser.getEmail().isBlank()) {
-            String emailPrefix = kcUser.getEmail().split("@")[0];
-            String generated = emailPrefix.replaceAll("[^a-zA-Z0-9_.-]", "");
-            return generated.substring(0, Math.min(generated.length(), 100));
-        }
-        log.warn("Could not determine a suitable username for Keycloak ID {}, generating a placeholder.",
-                kcUser.getId());
-        return "user_" + UUID.randomUUID().toString().substring(0, 8);
-    }
-
-    private String determineEmail(UserRequest request, UserRepresentation kcUser) {
-        // ... (your existing logic)
-        if (request.email() != null && !request.email().isBlank())
-            return request.email();
-        return kcUser.getEmail();
-    }
-
-    private void assignUserRoleToKeycloakUser(String keycloakUserId) {
-        try {
-            UserResource userResource = keycloakAdminClient.realm(keycloakRealm)
-                    .users()
-                    .get(keycloakUserId);
-
-            RoleRepresentation userRole = keycloakAdminClient.realm(keycloakRealm)
-                    .roles()
-                    .get("user") 
-                    .toRepresentation();
-
-            List<RoleRepresentation> existingRoles = userResource.roles().realmLevel().listAll();
-            boolean alreadyAssigned = existingRoles.stream()
-                    .anyMatch(r -> r.getName().equalsIgnoreCase("user"));
-
-            if (!alreadyAssigned) {
-                userResource.roles().realmLevel().add(Collections.singletonList(userRole));
-                log.info("Assigned USER role to Keycloak user {}", keycloakUserId);
-            } else {
-                log.info("USER role already assigned to Keycloak user {}", keycloakUserId);
-            }
-
-        } catch (Exception e) {
-            log.error("Failed to assign USER role to Keycloak user {}: {}", keycloakUserId, e.getMessage(), e);
-            throw new IntegrationException("Could not assign USER role in Keycloak", e);
-        }
-    }
-
-    @Override
-    public UserResponse updateUserProfile(UUID userId, UserRequest userRequest) {
-        User existingUser = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-
-        String newUsername = (userRequest.username() != null && !userRequest.username().isBlank())
-                ? userRequest.username()
-                : existingUser.getUsername();
-        String newEmail = (userRequest.email() != null && !userRequest.email().isBlank())
-                ? userRequest.email()
-                : existingUser.getEmail();
-
-        if (!existingUser.getUsername().equalsIgnoreCase(newUsername) &&
-                userRepository.existsByUsername(newUsername)) {
-            throw new DuplicateResourceException(
-                    "Cannot update: Another user with username '" + newUsername + "' already exists.");
-        }
-        if (newEmail != null && !newEmail.isBlank() &&
-                !existingUser.getEmail().equalsIgnoreCase(newEmail) &&
-                userRepository.existsByEmail(newEmail)) {
-            throw new DuplicateResourceException(
-                    "Cannot update: Another user with email '" + newEmail + "' already exists.");
+            log.error("❌ Database error while creating user: {}", e.getMessage(), e);
+            throw new DatabaseOperationException("Failed to create user due to database error: " + e.getMessage());
         }
 
-        UserRequest effectiveUpdateRequest = new UserRequest(
-                existingUser.getKeycloakUserId(),
-                newUsername,
-                newEmail,
-                userRequest.phone(),
-                existingUser.getRole() // ✅ keep current role
-        );
-
-        userMapper.updateEntityFromRequest(effectiveUpdateRequest, existingUser);
-        // Ensure fields like firstName, lastName, emailVerified are NOT updated here
-        // unless explicitly allowed and sourced (e.g. from a Keycloak sync).
-        // This method primarily updates user-mutable profile fields (username, email,
-        // phone, app-specific role).
-
-        try {
-            User updatedUser = userRepository.save(existingUser);
-            log.info("User profile updated successfully for ID: {}", userId);
-
-            // KAFKA: Publish UserProfileUpdatedEvent
-            UserProfileUpdatedPayload payload = new UserProfileUpdatedPayload(
-                    updatedUser.getId().toString(),
-                    updatedUser.getKeycloakUserId(),
-                    updatedUser.getUsername(),
-                    updatedUser.getEmail(),
-                    updatedUser.getPhone());
-            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(USER_EVENTS_TOPIC,
-                    updatedUser.getId().toString(), payload);
-            logKafkaSendAttempt(future, "UserProfileUpdatedEvent", updatedUser.getId().toString());
-
-            return userMapper.toResponse(updatedUser);
-        } catch (DataAccessException e) {
-            log.error("Database error updating user profile for ID {}: {}", userId, e.getMessage(), e);
-            throw new DatabaseOperationException(
-                    "Failed to update user profile due to a database issue. " + e.getMessage());
-        }
     }
 
-    @Override
-    public void deleteUser(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(
-                        () -> new ResourceNotFoundException("User not found with ID: " + userId + ", cannot delete."));
+    // private void assignUserRoleToKeycloakUser(String keycloakUserId) {
+    // try {
+    // UserResource userResource = keycloakAdminClient.realm(keycloakRealm)
+    // .users()
+    // .get(keycloakUserId);
 
-        UserStatus oldStatus = user.getStatus(); // Capture old status if needed for event later
-        user.setStatus(UserStatus.DELETED);
-        String suffix = "_deleted_" + UUID.randomUUID().toString().substring(0, 4);
-        // Anonymize only if not already anonymized to prevent overly long names
-        if (!user.getUsername().contains("_deleted_")) {
-            user.setUsername(
-                    user.getUsername().substring(0, Math.min(user.getUsername().length(), 100 - suffix.length() - 1))
-                            + suffix);
-        }
-        if (user.getEmail() != null && !user.getEmail().contains("_deleted_")) {
-            user.setEmail(user.getEmail().substring(0, Math.min(user.getEmail().length(), 150 - suffix.length() - 1))
-                    + suffix);
-        }
-        if (!user.getKeycloakUserId().contains("_deleted_")) {
-            user.setKeycloakUserId(user.getKeycloakUserId().substring(0,
-                    Math.min(user.getKeycloakUserId().length(), 255 - suffix.length() - 1)) + suffix);
-        }
-        // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
+    // RoleRepresentation userRole = keycloakAdminClient.realm(keycloakRealm)
+    // .roles()
+    // .get("user")
+    // .toRepresentation();
 
-        try {
-            User deletedUser = userRepository.save(user);
-            log.info("User with ID {} (soft) deleted successfully.", userId);
+    // List<RoleRepresentation> existingRoles =
+    // userResource.roles().realmLevel().listAll();
+    // boolean alreadyAssigned = existingRoles.stream()
+    // .anyMatch(r -> r.getName().equalsIgnoreCase("user"));
 
-            // KAFKA: Publish UserDeletedEvent
-            UserDeletedPayload payload = new UserDeletedPayload(
-                    deletedUser.getId().toString(),
-                    deletedUser.getKeycloakUserId());
-            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(USER_EVENTS_TOPIC,
-                    deletedUser.getId().toString(), payload);
-            logKafkaSendAttempt(future, "UserDeletedEvent", deletedUser.getId().toString());
+    // if (!alreadyAssigned) {
+    // userResource.roles().realmLevel().add(Collections.singletonList(userRole));
+    // log.info("Assigned USER role to Keycloak user {}", keycloakUserId);
+    // } else {
+    // log.info("USER role already assigned to Keycloak user {}", keycloakUserId);
+    // }
 
-        } catch (DataAccessException e) {
-            log.error("Database error (soft) deleting user with ID {}: {}", userId, e.getMessage(), e);
-            throw new DatabaseOperationException(
-                    "Failed to (soft) delete user due to a database issue. " + e.getMessage());
-        }
-    }
+    // } catch (Exception e) {
+    // log.error("Failed to assign USER role to Keycloak user {}: {}",
+    // keycloakUserId, e.getMessage(), e);
+    // throw new IntegrationException("Could not assign USER role in Keycloak", e);
+    // }
+    // }
 
-    @Override
-    public UserResponse updateUserStatus(UUID userId, UserStatus newStatus, boolean isAdminAction) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
+    // @Override
+    // public UserResponse updateUserProfile(UUID userId, UserRequest userRequest) {
+    // User existingUser = userRepository.findById(userId)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " +
+    // userId));
 
-        user.setStatus(newStatus);
-        if (isAdminAction && (newStatus == UserStatus.INACTIVE || newStatus == UserStatus.RESTRICTED)) {
-            user.setDeactivatedByAdmin(true);
-        } else if (newStatus == UserStatus.ACTIVE) {
-            user.setDeactivatedByAdmin(false);
-        }
-        // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
+    // String newUsername = (userRequest.username() != null &&
+    // !userRequest.username().isBlank())
+    // ? userRequest.username()
+    // : existingUser.getUsername();
+    // String newEmail = (userRequest.email() != null &&
+    // !userRequest.email().isBlank())
+    // ? userRequest.email()
+    // : existingUser.getEmail();
 
-        try {
-            User updatedUser = userRepository.save(user);
-            log.info("Status updated to {} for user ID: {}", newStatus, userId);
+    // if (!existingUser.getUsername().equalsIgnoreCase(newUsername) &&
+    // userRepository.existsByUsername(newUsername)) {
+    // throw new DuplicateResourceException(
+    // "Cannot update: Another user with username '" + newUsername + "' already
+    // exists.");
+    // }
+    // if (newEmail != null && !newEmail.isBlank() &&
+    // !existingUser.getEmail().equalsIgnoreCase(newEmail) &&
+    // userRepository.existsByEmail(newEmail)) {
+    // throw new DuplicateResourceException(
+    // "Cannot update: Another user with email '" + newEmail + "' already exists.");
+    // }
 
-            // KAFKA: Publish UserStatusChangedEvent
-            UserStatusChangedPayload payload = new UserStatusChangedPayload(
-                    updatedUser.getId().toString(),
-                    updatedUser.getKeycloakUserId(),
-                    updatedUser.getStatus(),
-                    updatedUser.isDeactivatedByAdmin());
-            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(USER_EVENTS_TOPIC,
-                    updatedUser.getId().toString(), payload);
-            logKafkaSendAttempt(future, "UserStatusChangedEvent", updatedUser.getId().toString());
+    // UserRequest effectiveUpdateRequest = new UserRequest(
+    // existingUser.getKeycloakUserId(),
+    // newUsername,
+    // newEmail,
+    // userRequest.phone(),
+    // existingUser.getRole() // ✅ keep current role
+    // );
 
-            return userMapper.toResponse(updatedUser);
-        } catch (DataAccessException e) {
-            log.error("Database error updating status for user ID {}: {}", userId, e.getMessage(), e);
-            throw new DatabaseOperationException(
-                    "Failed to update user status due to a database issue. " + e.getMessage());
-        }
-    }
+    // userMapper.updateEntityFromRequest(effectiveUpdateRequest, existingUser);
+    // // Ensure fields like firstName, lastName, emailVerified are NOT updated here
+    // // unless explicitly allowed and sourced (e.g. from a Keycloak sync).
+    // // This method primarily updates user-mutable profile fields (username,
+    // email,
+    // // phone, app-specific role).
 
-    @Override
-    public UserResponse updateUserRole(UUID userId, Role newRole) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-        user.setRole(newRole);
-        // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
+    // try {
+    // User updatedUser = userRepository.save(existingUser);
+    // log.info("User profile updated successfully for ID: {}", userId);
 
-        try {
-            User updatedUser = userRepository.save(user);
-            log.info("Role updated to {} for user ID: {}", newRole, userId);
+    // // KAFKA: Publish UserProfileUpdatedEvent
+    // UserProfileUpdatedPayload payload = new UserProfileUpdatedPayload(
+    // updatedUser.getId().toString(),
+    // updatedUser.getKeycloakUserId(),
+    // updatedUser.getUsername(),
+    // updatedUser.getEmail(),
+    // updatedUser.getPhone());
+    // CompletableFuture<SendResult<String, Object>> future =
+    // kafkaTemplate.send(USER_EVENTS_TOPIC,
+    // updatedUser.getId().toString(), payload);
+    // logKafkaSendAttempt(future, "UserProfileUpdatedEvent",
+    // updatedUser.getId().toString());
 
-            // KAFKA: Publish UserRoleChangedEvent
-            UserRoleChangedPayload payload = new UserRoleChangedPayload(
-                    updatedUser.getId().toString(),
-                    updatedUser.getKeycloakUserId(),
-                    updatedUser.getRole());
-            CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(USER_EVENTS_TOPIC,
-                    updatedUser.getId().toString(), payload);
-            logKafkaSendAttempt(future, "UserRoleChangedEvent", updatedUser.getId().toString());
+    // return userMapper.toResponse(updatedUser);
+    // } catch (DataAccessException e) {
+    // log.error("Database error updating user profile for ID {}: {}", userId,
+    // e.getMessage(), e);
+    // throw new DatabaseOperationException(
+    // "Failed to update user profile due to a database issue. " + e.getMessage());
+    // }
+    // }
 
-            return userMapper.toResponse(updatedUser);
-        } catch (DataAccessException e) {
-            log.error("Database error updating role for user ID {}: {}", userId, e.getMessage(), e);
-            throw new DatabaseOperationException(
-                    "Failed to update user role due to a database issue. " + e.getMessage());
-        }
-    }
+    // @Override
+    // public void deleteUser(UUID userId) {
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(
+    // () -> new ResourceNotFoundException("User not found with ID: " + userId + ",
+    // cannot delete."));
 
-    // --- Read-only methods (no Kafka events) & other methods ---
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse getUserById(UUID userId) {
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + userId));
-        return userMapper.toResponse(user);
-    }
+    // UserStatus oldStatus = user.getStatus(); // Capture old status if needed for
+    // event later
+    // user.setStatus(UserStatus.DELETED);
+    // String suffix = "_deleted_" + UUID.randomUUID().toString().substring(0, 4);
+    // // Anonymize only if not already anonymized to prevent overly long names
+    // if (!user.getUsername().contains("_deleted_")) {
+    // user.setUsername(
+    // user.getUsername().substring(0, Math.min(user.getUsername().length(), 100 -
+    // suffix.length() - 1))
+    // + suffix);
+    // }
+    // if (user.getEmail() != null && !user.getEmail().contains("_deleted_")) {
+    // user.setEmail(user.getEmail().substring(0, Math.min(user.getEmail().length(),
+    // 150 - suffix.length() - 1))
+    // + suffix);
+    // }
+    // if (!user.getKeycloakUserId().contains("_deleted_")) {
+    // user.setKeycloakUserId(user.getKeycloakUserId().substring(0,
+    // Math.min(user.getKeycloakUserId().length(), 255 - suffix.length() - 1)) +
+    // suffix);
+    // }
+    // // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse getUserByKyloakUserId(String keycloakUserId) {
-        User user = userRepository.findByKeycloakUserId(keycloakUserId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with Keycloak ID: " + keycloakUserId));
-        return userMapper.toResponse(user);
-    }
+    // try {
+    // User deletedUser = userRepository.save(user);
+    // log.info("User with ID {} (soft) deleted successfully.", userId);
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse getUserByUsername(String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
-        return userMapper.toResponse(user);
-    }
+    // // KAFKA: Publish UserDeletedEvent
+    // UserDeletedPayload payload = new UserDeletedPayload(
+    // deletedUser.getId().toString(),
+    // deletedUser.getKeycloakUserId());
+    // CompletableFuture<SendResult<String, Object>> future =
+    // kafkaTemplate.send(USER_EVENTS_TOPIC,
+    // deletedUser.getId().toString(), payload);
+    // logKafkaSendAttempt(future, "UserDeletedEvent",
+    // deletedUser.getId().toString());
 
-    @Override
-    @Transactional(readOnly = true)
-    public UserResponse getUserByEmail(String email) {
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + email));
-        return userMapper.toResponse(user);
-    }
+    // } catch (DataAccessException e) {
+    // log.error("Database error (soft) deleting user with ID {}: {}", userId,
+    // e.getMessage(), e);
+    // throw new DatabaseOperationException(
+    // "Failed to (soft) delete user due to a database issue. " + e.getMessage());
+    // }
+    // }
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<UserResponse> getAllUsers() {
-        try {
-            List<User> users = userRepository.findAll();
-            return userMapper.toResponseList(users);
-        } catch (DataAccessException e) {
-            log.error("Database error retrieving all users: {}", e.getMessage(), e);
-            throw new DatabaseOperationException(
-                    "Failed to retrieve all users due to a database issue. " + e.getMessage());
-        }
-    }
+    // @Override
+    // public UserResponse updateUserStatus(UUID userId, UserStatus newStatus,
+    // boolean isAdminAction) {
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " +
+    // userId));
 
-    @Override
-    public void recordUserLogin(UUID userId) {
-        userRepository.findById(userId).ifPresent(user -> {
-            user.setLastLoginAt(LocalDateTime.now()); // This is fine as LocalDateTime
-            // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
-            try {
-                userRepository.save(user);
-                log.info("Recorded login for user ID: {}", userId);
-                // No Kafka event typically published for just a login record update
-            } catch (DataAccessException e) {
-                log.error("Database error recording login for user ID {}: {}", userId, e.getMessage(), e);
-            }
-        });
-    }
+    // user.setStatus(newStatus);
+    // if (isAdminAction && (newStatus == UserStatus.INACTIVE || newStatus ==
+    // UserStatus.RESTRICTED)) {
+    // user.setDeactivatedByAdmin(true);
+    // } else if (newStatus == UserStatus.ACTIVE) {
+    // user.setDeactivatedByAdmin(false);
+    // }
+    // // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsById(UUID userId) {
-        return userRepository.existsById(userId);
-    }
+    // try {
+    // User updatedUser = userRepository.save(user);
+    // log.info("Status updated to {} for user ID: {}", newStatus, userId);
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByKeycloakUserId(String keycloakUserId) {
-        return userRepository.existsByKeycloakUserId(keycloakUserId);
-    }
+    // // KAFKA: Publish UserStatusChangedEvent
+    // UserStatusChangedPayload payload = new UserStatusChangedPayload(
+    // updatedUser.getId().toString(),
+    // updatedUser.getKeycloakUserId(),
+    // updatedUser.getStatus(),
+    // updatedUser.isDeactivatedByAdmin());
+    // CompletableFuture<SendResult<String, Object>> future =
+    // kafkaTemplate.send(USER_EVENTS_TOPIC,
+    // updatedUser.getId().toString(), payload);
+    // logKafkaSendAttempt(future, "UserStatusChangedEvent",
+    // updatedUser.getId().toString());
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByUsername(String username) {
-        return userRepository.existsByUsername(username);
-    }
+    // return userMapper.toResponse(updatedUser);
+    // } catch (DataAccessException e) {
+    // log.error("Database error updating status for user ID {}: {}", userId,
+    // e.getMessage(), e);
+    // throw new DatabaseOperationException(
+    // "Failed to update user status due to a database issue. " + e.getMessage());
+    // }
+    // }
 
-    @Override
-    @Transactional(readOnly = true)
-    public boolean existsByEmail(String email) {
-        return userRepository.existsByEmail(email);
-    }
+    // @Override
+    // public UserResponse updateUserRole(UUID userId, Role newRole) {
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " +
+    // userId));
+    // user.setRole(newRole);
+    // // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
 
-    public void assignRoleToKeycloakUser(String keycloakUserId, Role role) {
-        try {
-            UserResource userResource = keycloakAdminClient.realm(keycloakRealm)
-                    .users()
-                    .get(keycloakUserId);
+    // try {
+    // User updatedUser = userRepository.save(user);
+    // log.info("Role updated to {} for user ID: {}", newRole, userId);
 
-            RoleRepresentation roleRep = keycloakAdminClient.realm(keycloakRealm)
-                    .roles()
-                    .get(role.name().toLowerCase()) // assuming role names match exactly in Keycloak
-                    .toRepresentation();
+    // // KAFKA: Publish UserRoleChangedEvent
+    // UserRoleChangedPayload payload = new UserRoleChangedPayload(
+    // updatedUser.getId().toString(),
+    // updatedUser.getKeycloakUserId(),
+    // updatedUser.getRole());
+    // CompletableFuture<SendResult<String, Object>> future =
+    // kafkaTemplate.send(USER_EVENTS_TOPIC,
+    // updatedUser.getId().toString(), payload);
+    // logKafkaSendAttempt(future, "UserRoleChangedEvent",
+    // updatedUser.getId().toString());
 
-            if (roleRep == null) {
-                throw new RuntimeException("Role " + role.name() + " not found in Keycloak.");
-            }
+    // return userMapper.toResponse(updatedUser);
+    // } catch (DataAccessException e) {
+    // log.error("Database error updating role for user ID {}: {}", userId,
+    // e.getMessage(), e);
+    // throw new DatabaseOperationException(
+    // "Failed to update user role due to a database issue. " + e.getMessage());
+    // }
+    // }
 
-            userResource.roles()
-                    .realmLevel()
-                    .add(Collections.singletonList(roleRep));
+    // // --- Read-only methods (no Kafka events) & other methods ---
+    // @Override
+    // @Transactional(readOnly = true)
+    // public UserResponse getUserById(UUID userId) {
+    // User user = userRepository.findById(userId)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " +
+    // userId));
+    // return userMapper.toResponse(user);
+    // }
 
-            log.info("Successfully assigned role {} to Keycloak user {}", role.name(), keycloakUserId);
-        } catch (Exception e) {
-            log.error("Failed to assign role {} to Keycloak user {}: {}", role.name(), keycloakUserId, e.getMessage(),
-                    e);
-            throw new IntegrationException("Failed to assign role in Keycloak", e);
-        }
-    }
+    // @Override
+    // @Transactional(readOnly = true)
+    // public UserResponse getUserByKyloakUserId(String keycloakUserId) {
+    // User user = userRepository.findByKeycloakUserId(keycloakUserId)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with
+    // Keycloak ID: " + keycloakUserId));
+    // return userMapper.toResponse(user);
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public UserResponse getUserByUsername(String username) {
+    // User user = userRepository.findByUsername(username)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with
+    // username: " + username));
+    // return userMapper.toResponse(user);
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public UserResponse getUserByEmail(String email) {
+    // User user = userRepository.findByEmail(email)
+    // .orElseThrow(() -> new ResourceNotFoundException("User not found with email:
+    // " + email));
+    // return userMapper.toResponse(user);
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public List<UserResponse> getAllUsers() {
+    // try {
+    // List<User> users = userRepository.findAll();
+    // return userMapper.toResponseList(users);
+    // } catch (DataAccessException e) {
+    // log.error("Database error retrieving all users: {}", e.getMessage(), e);
+    // throw new DatabaseOperationException(
+    // "Failed to retrieve all users due to a database issue. " + e.getMessage());
+    // }
+    // }
+
+    // @Override
+    // public void recordUserLogin(UUID userId) {
+    // userRepository.findById(userId).ifPresent(user -> {
+    // user.setLastLoginAt(LocalDateTime.now()); // This is fine as LocalDateTime
+    // // user.setUpdatedAt(LocalDateTime.now()); // Handled by @LastModifiedDate
+    // try {
+    // userRepository.save(user);
+    // log.info("Recorded login for user ID: {}", userId);
+    // // No Kafka event typically published for just a login record update
+    // } catch (DataAccessException e) {
+    // log.error("Database error recording login for user ID {}: {}", userId,
+    // e.getMessage(), e);
+    // }
+    // });
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public boolean existsById(UUID userId) {
+    // return userRepository.existsById(userId);
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public boolean existsByKeycloakUserId(String keycloakUserId) {
+    // return userRepository.existsByKeycloakUserId(keycloakUserId);
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public boolean existsByUsername(String username) {
+    // return userRepository.existsByUsername(username);
+    // }
+
+    // @Override
+    // @Transactional(readOnly = true)
+    // public boolean existsByEmail(String email) {
+    // return userRepository.existsByEmail(email);
+    // }
+
+    // public void assignRoleToKeycloakUser(String keycloakUserId, Role role) {
+    // try {
+    // UserResource userResource = keycloakAdminClient.realm(keycloakRealm)
+    // .users()
+    // .get(keycloakUserId);
+
+    // RoleRepresentation roleRep = keycloakAdminClient.realm(keycloakRealm)
+    // .roles()
+    // .get(role.name().toLowerCase()) // assuming role names match exactly in
+    // Keycloak
+    // .toRepresentation();
+
+    // if (roleRep == null) {
+    // throw new RuntimeException("Role " + role.name() + " not found in
+    // Keycloak.");
+    // }
+
+    // userResource.roles()
+    // .realmLevel()
+    // .add(Collections.singletonList(roleRep));
+
+    // log.info("Successfully assigned role {} to Keycloak user {}", role.name(),
+    // keycloakUserId);
+    // } catch (Exception e) {
+    // log.error("Failed to assign role {} to Keycloak user {}: {}", role.name(),
+    // keycloakUserId, e.getMessage(),
+    // e);
+    // throw new IntegrationException("Failed to assign role in Keycloak", e);
+    // }
+    // }
 
 }

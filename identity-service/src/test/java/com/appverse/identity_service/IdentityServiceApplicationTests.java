@@ -1,10 +1,10 @@
-package com.appverse.user_service;
+package com.appverse.identity_service;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class UserServiceApplicationTests {
+class IdentityServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

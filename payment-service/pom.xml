@@ -27,7 +27,7 @@
         <url/>
     </scm>
     <properties>
-        <java.version>17</java.version>
+        <java.version>21</java.version>
         <spring-cloud.version>2023.0.2</spring-cloud.version> <!-- UPDATED for compatibility with Boot 3.2.x -->
         <mapstruct.version>1.5.5.Final</mapstruct.version> <!-- Added MapStruct version property -->
         <!-- Lombok version is usually managed by Spring Boot parent, but can be specified if needed -->
@@ -196,8 +196,10 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
-                <!-- Version typically inherited from Spring Boot parent -->
+                <version>3.12.1</version>
                 <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
                     <annotationProcessorPaths>
                         <path>
                             <groupId>org.projectlombok</groupId>
