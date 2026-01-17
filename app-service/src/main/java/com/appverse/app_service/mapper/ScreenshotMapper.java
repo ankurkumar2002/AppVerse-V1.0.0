@@ -17,7 +17,6 @@ import java.util.List;
 )
 public interface ScreenshotMapper {
 
-
     ScreenshotResponse toResponse(Screenshot screenshot);
 
     List<ScreenshotResponse> toResponseList(List<Screenshot> screenshots);

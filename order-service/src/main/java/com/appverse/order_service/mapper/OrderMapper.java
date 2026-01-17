@@ -14,12 +14,11 @@ import java.util.List;
 @Mapper(componentModel = "spring", unmappedTargetPolicy = ReportingPolicy.IGNORE)
 public interface OrderMapper {
 
-    @Mapping(source = "items", target = "items")
+    
     OrderResponse toOrderResponse(CustomerOrder order);
 
     List<OrderResponse> toOrderResponseList(List<CustomerOrder> orders);
 
-    // @Mapping(target = "customerOrder", ignore = true) // Avoid circular mapping issues if OrderItem has CustomerOrder
     OrderItemResponse toOrderItemResponse(OrderItem orderItem);
 
     List<OrderItemResponse> toOrderItemResponseList(List<OrderItem> orderItems);

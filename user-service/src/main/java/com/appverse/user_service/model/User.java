@@ -83,4 +83,8 @@ public class User {
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
     }
+
+    @Column(name = "deleted_at")
+private LocalDateTime deletedAt;
+
 }
