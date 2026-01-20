@@ -1,29 +1,20 @@
 package com.appverse.developer_service.service;
 
+import java.nio.file.AccessDeniedException;
 import java.util.List;
 
 import com.appverse.developer_service.dto.DeveloperRequest;
 import com.appverse.developer_service.dto.DeveloperResponse;
 import com.appverse.developer_service.dto.MessageResponse;
 
-
-
 public interface DeveloperService {
 
     MessageResponse createDeveloper(DeveloperRequest request);
 
-    MessageResponse updateDeveloper(String id, DeveloperRequest request);
+    MessageResponse updateDeveloper(String id, DeveloperRequest request) throws AccessDeniedException;
 
-    void deleteDeveloper(String id);
+    void deleteDeveloper(String id) throws AccessDeniedException;
 
-    DeveloperResponse getDeveloperById(String id);
-
-    List<DeveloperResponse> getAll();
-
-    boolean existsById(String id);
-    boolean existsByKeycloakUserId(String keycloakUserId);
-
-    boolean isDeveloperProfileComplete(String keycloakUserId);
-    public DeveloperResponse getDeveloperByKeycloakUserId(String keycloakUserId);
+    DeveloperResponse getMyDeveloper();
 
 }

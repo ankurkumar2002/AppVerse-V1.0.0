@@ -42,10 +42,14 @@ public class Developer {
     @Column(nullable = false, unique = true) // MUST be unique and linked to Keycloak's ID
     private String keycloakUserId; // Stores the unique ID from Keycloak (e.g., the JWT 'sub')
 
-    @NotBlank(message = "Display name cannot be blank")
-    @Size(max = 150)
-    @Column(nullable = false, length = 150)
-    private String name; // Platform-specific display name (can default from Keycloak initially)
+    @Column(nullable = false, length = 100)
+    private String username;
+
+    @Column(nullable = false, length = 100)
+    private String firstName;
+
+    @Column(length = 100)
+    private String lastName;
 
     @NotBlank(message = "Email cannot be blank")
     @Email(message = "Invalid email format")

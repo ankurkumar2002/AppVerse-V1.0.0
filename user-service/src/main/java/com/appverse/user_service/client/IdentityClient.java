@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import com.appverse.user_service.dto.AssignRoleRequest;
 import com.appverse.user_service.dto.IdentityUserResponse;
 
-@FeignClient(name = "identity-service", url = "${services.identity-service.url}")
+@FeignClient(name = "identity-service", url = "${services.identity-service.url}", configuration = FeignServiceAuthInterceptor.class)
 public interface IdentityClient {
     @GetMapping("/api/identity/users/{userId}")
     IdentityUserResponse getUserById(@PathVariable String userId);
@@ -16,6 +16,8 @@ public interface IdentityClient {
     @PostMapping("/api/identity/users/{userId}/roles")
     void assignRoles(@PathVariable String userId, @RequestBody AssignRoleRequest request);
 
-        @PostMapping("/api/identity/users/{userId}/disable")
+    @PostMapping("/api/identity/users/{userId}/disable")
     void disableUser(@PathVariable String userId);
+
+    
 }

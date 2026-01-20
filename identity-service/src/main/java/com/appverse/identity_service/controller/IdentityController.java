@@ -4,6 +4,7 @@ import com.appverse.identity_service.dto.AssignRoleRequest;
 import com.appverse.identity_service.dto.IdentityUserResponse;
 import com.appverse.identity_service.service.IdentityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -12,6 +13,11 @@ public class IdentityController {
 
     @Autowired
     private IdentityService identityService;
+
+    @GetMapping("/me")
+    public IdentityUserResponse me(Authentication authentication){
+        return identityService.getCurrentUser(authentication);
+    }
 
     @GetMapping("/{keycloakUserId}")
     public IdentityUserResponse getUserById(@PathVariable String keycloakUserId) {

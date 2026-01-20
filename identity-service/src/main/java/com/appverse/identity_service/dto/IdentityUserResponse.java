@@ -5,5 +5,7 @@ public record IdentityUserResponse(
         String id,
         String username,
         String email,
-        Boolean emailVerified
+        Boolean emailVerified,
+        String firstName,
+        String lastName
 ) {}

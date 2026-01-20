@@ -4,5 +4,6 @@ public enum DeveloperStatus {
     ACTIVE,
     PENDING_VERIFICATION,
     SUSPENDED,
-    DELETED // Or INACTIVE
+    DELETED, // Or INACTIVE
+    DISABLED
 }
