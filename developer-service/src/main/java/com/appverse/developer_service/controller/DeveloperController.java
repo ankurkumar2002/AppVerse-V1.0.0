@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
+import java.nio.file.AccessDeniedException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,8 +31,6 @@ import java.util.Map;
 @Slf4j
 public class DeveloperController {
 
-    // private static final Logger log =
-    // LoggerFactory.getLogger(DeveloperController.class);
     private final DeveloperService developerService;
 
     @PostMapping
@@ -46,71 +45,23 @@ public class DeveloperController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('developer')")
     public ResponseEntity<MessageResponse> update(
             @PathVariable String id,
-            @Validated(OnUpdate.class) @RequestBody DeveloperRequest request) {
+            @Validated(OnUpdate.class) @RequestBody DeveloperRequest request) throws AccessDeniedException {
         return ResponseEntity.ok(developerService.updateDeveloper(id, request));
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('developer')")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
+    // @PreAuthorize("hasRole('developer')")
+    public ResponseEntity<Void> delete(@PathVariable String id) throws AccessDeniedException {
         developerService.deleteDeveloper(id);
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{id}")
-    @PreAuthorize("hasRole('developer')")
-    public ResponseEntity<DeveloperResponse> getById(@PathVariable String id) {
-        return ResponseEntity.ok(developerService.getDeveloperById(id));
-    }
-
-    @GetMapping
-    // @PreAuthorize("hasRole('DEVELOPER')")
-    public ResponseEntity<List<DeveloperResponse>> getAll() {
-        return ResponseEntity.ok(developerService.getAll());
-    }
-
-    @GetMapping("/exists")
-    public ResponseEntity<Boolean> exists(@RequestParam String id) {
-        return ResponseEntity.ok(developerService.existsById(id));
-    }
-
-    @GetMapping("/exists/by-keycloak-id/{keycloakUserId}")
-    public ResponseEntity<Boolean> checkExistsByKeycloakUserId(@PathVariable String keycloakUserId) {
-        boolean exists = developerService.existsByKeycloakUserId(keycloakUserId);
-        return ResponseEntity.ok(exists);
-    }
-
-    @GetMapping("/is-profile-complete")
-    public ResponseEntity<Map<String, Object>> checkProfile(
-            @AuthenticationPrincipal Jwt jwt) {
-
-        String keycloakUserId = jwt.getSubject(); // gets 'sub' from JWT
-
-        boolean isComplete = developerService.isDeveloperProfileComplete(keycloakUserId);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("profileComplete", isComplete);
-
-        return ResponseEntity.ok(response);
-    }
-
     @GetMapping("/me")
-public ResponseEntity<DeveloperResponse> getCurrentDeveloper(@AuthenticationPrincipal Jwt jwt) {
-    String keycloakUserId = jwt.getSubject();
-    DeveloperResponse developer = developerService.getDeveloperByKeycloakUserId(keycloakUserId);
-    return ResponseEntity.ok(developer);
-}
-
-@GetMapping("/is-developer/{id}")
-public ResponseEntity<Boolean> isDeveloperById(@PathVariable String id) {
-    boolean exists = developerService.existsById(id);
-    return ResponseEntity.ok(exists);
-}
-
-
+    public ResponseEntity<DeveloperResponse> getDeveloperDetails(){
+        return ResponseEntity.ok(developerService.getMyDeveloper());
+    }
     
 
 }

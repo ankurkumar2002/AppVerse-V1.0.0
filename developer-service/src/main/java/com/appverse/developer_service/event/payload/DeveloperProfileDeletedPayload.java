@@ -5,8 +5,8 @@ import java.time.Instant;
 
 public record DeveloperProfileDeletedPayload(
     String developerId,    // ID of the deleted developer profile
-    String keycloakUserId, // For context
-    String name,           // Name for context
-    String email,          // Email for context
+    String keycloakUserId,           // Email for context
     Instant deletedAt
 ) {}
+
+    
