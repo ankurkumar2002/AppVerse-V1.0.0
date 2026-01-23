@@ -11,7 +11,8 @@ import com.appverse.developer_service.dto.MessageResponse;
 import com.appverse.developer_service.enums.DeveloperStatus;
 import com.appverse.developer_service.enums.Role;
 import com.appverse.developer_service.event.payload.*;
-import com.appverse.developer_service.exception.*;
+import com.appverse.developer_service.exception.DuplicateResourceException;
+import com.appverse.developer_service.exception.ResourceNotFoundException;
 import com.appverse.developer_service.mapper.DeveloperMapper;
 import com.appverse.developer_service.model.Developer;
 import com.appverse.developer_service.repository.DeveloperRepository;
@@ -20,31 +21,14 @@ import com.appverse.developer_service.service.DeveloperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import org.apache.kafka.common.errors.DuplicateResourceException;
-import org.apache.kafka.common.errors.ResourceNotFoundException;
-import org.springframework.dao.DataAccessException;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.kafka.support.SendResult; // <<< IMPORT FOR COMPLETABLEFUTURE
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-
 import java.nio.file.AccessDeniedException;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.CompletableFuture; // <<< IMPORT FOR COMPLETABLEFUTURE
+import java.util.concurrent.CompletableFuture;
 
 @Service
 @RequiredArgsConstructor
@@ -69,8 +53,10 @@ public class DeveloperServiceImpl implements DeveloperService {
             throw new DuplicateResourceException("Developer profile already exists");
         }
 
+        
+
         Developer developer = developerMapper.toEntity(request);
-        log.info(me.firstName()+" "+me.lastName());
+        log.info(me.firstName() + " " + me.lastName());
 
         // identity-owned fields
         developer.setKeycloakUserId(me.id());
@@ -82,11 +68,15 @@ public class DeveloperServiceImpl implements DeveloperService {
 
         Developer savedDeveloper = developerRepository.save(developer);
 
-        identityClient.assignRoles(
-                me.id(),
-                new AssignRoleRequest(List.of("DEVELOPER")));
+        try {
+            identityClient.assignRoles(
+                    me.id(),
+                    new AssignRoleRequest(List.of("DEVELOPER")));
+        } catch (Exception ex) {
+            throw new RuntimeException("Failed to assign developer role", ex);
+        }
 
-        kafkaTemplate.send(
+        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
                 DEVELOPER_EVENTS_TOPIC,
                 savedDeveloper.getId(),
                 new DeveloperProfileCreatedPayload(
@@ -99,6 +89,12 @@ public class DeveloperServiceImpl implements DeveloperService {
                         savedDeveloper.getDeveloperType(),
                         savedDeveloper.getCompanyName(),
                         savedDeveloper.getCreatedAt()));
+
+        future.whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("Kafka publish failed for developer {}", savedDeveloper.getId(), ex);
+            }
+        });
 
         return new MessageResponse("Developer created successfully", savedDeveloper.getId());
     }
@@ -123,7 +119,7 @@ public class DeveloperServiceImpl implements DeveloperService {
 
         Developer updatedDeveloper = developerRepository.save(developer);
 
-        kafkaTemplate.send(
+        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
                 DEVELOPER_EVENTS_TOPIC,
                 updatedDeveloper.getId(),
                 new DeveloperProfileUpdatedPayload(
@@ -143,6 +139,11 @@ public class DeveloperServiceImpl implements DeveloperService {
                         updatedDeveloper.getLocation(),
 
                         updatedDeveloper.getUpdatedAt()));
+        future.whenComplete((result, ex) -> {
+            if (ex != null) {
+                log.error("Kafka publish failed for developer {}", updatedDeveloper.getId(), ex);
+            }
+        });
 
         return new MessageResponse("Developer updated successfully", updatedDeveloper.getId());
     }
@@ -150,23 +151,28 @@ public class DeveloperServiceImpl implements DeveloperService {
     @Override
     @Transactional
     public void deleteDeveloper(String developerId) throws AccessDeniedException {
+
         IdentityUserResponse me = currentUserProvider.getCurrentUser();
 
-        Developer developer = developerRepository.findByKeycloakUserId(developerId)
-                .orElseThrow(() -> new ResourceNotFoundException("Developer not found with ID: " + developerId));
+        Developer developer = developerRepository.findById(developerId)
+                .orElseThrow(() -> new ResourceNotFoundException("Developer not found"));
+
+        if (!developer.getKeycloakUserId().equals(me.id())) {
+            throw new AccessDeniedException("Not allowed to delete this developer");
+        }
 
         if (developer.getStatus() == DeveloperStatus.DISABLED) {
             return;
         }
 
-        developer.setStatus(DeveloperStatus.DISABLED);
-        developerRepository.save(developer);
-
         try {
             identityClient.disableUser(me.id());
         } catch (Exception ex) {
-            log.error("Failed to disable user {} in identity-service", me.id(), ex);
+            throw new RuntimeException("Failed to disable user in identity service", ex);
         }
+
+        developer.setStatus(DeveloperStatus.DISABLED);
+        developerRepository.save(developer);
 
         kafkaTemplate.send(
                 DEVELOPER_EVENTS_TOPIC,
@@ -174,11 +180,16 @@ public class DeveloperServiceImpl implements DeveloperService {
                 new DeveloperProfileDeletedPayload(
                         developer.getId(),
                         developer.getKeycloakUserId(),
-                        Instant.now()));
+                        Instant.now()))
+                .whenComplete((result, ex) -> {
+                    if (ex != null) {
+                        log.error("Kafka publish failed for developer {}", developer.getId(), ex);
+                    }
+                });
     }
 
     @Override
-    @Transactional
+    @Transactional(readOnly = true)
     public DeveloperResponse getMyDeveloper() {
         IdentityUserResponse me = currentUserProvider.getCurrentUser();
 

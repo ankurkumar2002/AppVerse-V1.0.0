@@ -5,6 +5,8 @@ import com.appverse.identity_service.dto.IdentityUserResponse;
 import com.appverse.identity_service.service.IdentityService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -15,8 +17,9 @@ public class IdentityController {
     private IdentityService identityService;
 
     @GetMapping("/me")
-    public IdentityUserResponse me(Authentication authentication){
-        return identityService.getCurrentUser(authentication);
+    public IdentityUserResponse me(
+            @AuthenticationPrincipal Jwt jwt) {
+        return identityService.getCurrentUser(jwt);
     }
 
     @GetMapping("/{keycloakUserId}")
@@ -30,10 +33,10 @@ public class IdentityController {
             @RequestBody AssignRoleRequest request) {
         identityService.assignRole(keycloakUserId, request.roles());
     }
-    @PostMapping("/{keycloakUserId}/disable")
-public void disableUser(@PathVariable String keycloakUserId) {
-    identityService.disableUser(keycloakUserId);
-}
 
+    @PostMapping("/{keycloakUserId}/disable")
+    public void disableUser(@PathVariable String keycloakUserId) {
+        identityService.disableUser(keycloakUserId);
+    }
 
 }
