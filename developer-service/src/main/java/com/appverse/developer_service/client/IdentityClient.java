@@ -13,13 +13,13 @@ import com.appverse.developer_service.dto.IdentityUserResponse;
 
 )
 public interface IdentityClient {
-    @GetMapping("/api/identity/users/{userId}")
-    IdentityUserResponse getUserById(@PathVariable String userId);
+    @GetMapping("/api/identity/users/{keycloakUserId}")
+    IdentityUserResponse getUserById(@PathVariable("keycloakUserId") String userId);
 
-    @PostMapping("/api/identity/users/{userId}/roles")
-    void assignRoles(@PathVariable String userId, @RequestBody AssignRoleRequest request);
+    @PostMapping("/api/identity/users/{keycloakUserId}/roles")
+    void assignRoles(@PathVariable("keycloakUserId") String userId, @RequestBody AssignRoleRequest request);
 
-    @PostMapping("/api/identity/users/{userId}/disable")
-    void disableUser(@PathVariable String userId);
+    @PostMapping("/api/identity/users/{keycloakUserId}/disable")
+    void disableUser(@PathVariable("keycloakUserId") String userId);
 
 }
