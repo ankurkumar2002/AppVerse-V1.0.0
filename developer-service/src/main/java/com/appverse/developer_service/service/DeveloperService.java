@@ -17,4 +17,7 @@ public interface DeveloperService {
 
     DeveloperResponse getMyDeveloper();
 
+    boolean existsByKeycloakUserId(String keycloakUserId);
+
+
 }

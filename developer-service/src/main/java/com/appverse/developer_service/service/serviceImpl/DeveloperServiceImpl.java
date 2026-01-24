@@ -53,8 +53,6 @@ public class DeveloperServiceImpl implements DeveloperService {
             throw new DuplicateResourceException("Developer profile already exists");
         }
 
-        
-
         Developer developer = developerMapper.toEntity(request);
         log.info(me.firstName() + " " + me.lastName());
 
@@ -198,6 +196,12 @@ public class DeveloperServiceImpl implements DeveloperService {
                 .orElseThrow(() -> new ResourceNotFoundException("Developer profile not found"));
 
         return developerMapper.toResponse(developer);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public boolean existsByKeycloakUserId(String keycloakUserId) {
+        return developerRepository.existsByKeycloakUserId(keycloakUserId);
     }
 
 }

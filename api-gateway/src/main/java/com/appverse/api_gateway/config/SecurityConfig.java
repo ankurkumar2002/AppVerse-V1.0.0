@@ -43,6 +43,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/payments/**").authenticated()
                 .requestMatchers("/api/v1/subscriptions/**").authenticated()
                 .requestMatchers("/actuator/**").permitAll()
+                .requestMatchers("/internal/**").denyAll()
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2

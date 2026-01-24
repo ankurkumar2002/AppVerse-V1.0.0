@@ -7,7 +7,7 @@ public record SubscriptionCancelledByUserPayload(
     String subscriptionId,
     String userId,
     String planId,
-    String reason, // Optional reason provided by user
+    String reason, 
     Instant cancelledAt,
-    Instant currentPeriodEndDate // When the subscription will actually become inactive
+    Instant currentPeriodEndDate 
 ) {}

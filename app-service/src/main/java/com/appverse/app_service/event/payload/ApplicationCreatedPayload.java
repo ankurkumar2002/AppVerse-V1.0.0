@@ -18,6 +18,5 @@ public record ApplicationCreatedPayload(
     List<String> platforms,
     String status,
     List<String> tags,
-    Instant createdAt,
-    List<String> associatedSubscriptionPlanIds
+    Instant createdAt
 ) {}

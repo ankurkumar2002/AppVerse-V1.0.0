@@ -56,7 +56,7 @@ public class Application {
     @NotNull(message = "Monetization type cannot be null")
     private MonetizationType monetizationType;
 
-    private List<String> associatedSubscriptionPlanIds;
+    
 
     @NotEmpty
     private List<@NotBlank String> platforms;
@@ -102,7 +102,7 @@ public class Application {
     @Min(0)
     private Integer ratingCount;
 
-    private List<String> applicationSpecificSubscriptionPlanIds;
+    
 
     public void ensureConsistency() {
         if (this.monetizationType == MonetizationType.FREE) {

@@ -1,33 +1,35 @@
-// === In Subscription Service Project ===
 package com.appverse.subscription_service.model;
 
 import com.appverse.subscription_service.enums.SubscriptionEventType;
+import com.appverse.subscription_service.event.payload.SubscriptionEventTrigger;
+
 import jakarta.persistence.*;
 import lombok.*;
-import org.springframework.data.annotation.CreatedDate; // Not strictly needed if using eventTimestamp
-import org.springframework.data.jpa.domain.support.AuditingEntityListener; // Only if using @CreatedDate
 
 import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "subscription_events", indexes = {
-    @Index(name = "idx_subevent_usersub_id", columnList = "userSubscriptionId"),
-    @Index(name = "idx_subevent_event_type", columnList = "eventType")
-})
+@Table(
+    name = "subscription_events",
+    indexes = {
+        @Index(name = "idx_subevent_usersub_id", columnList = "user_subscription_id"),
+        @Index(name = "idx_subevent_event_type", columnList = "event_type"),
+        @Index(name = "idx_subevent_usersub_ts", columnList = "user_subscription_id, event_timestamp")
+    }
+)
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-// @EntityListeners(AuditingEntityListener.class) // Only if using @CreatedDate/@LastModifiedDate
 public class SubscriptionEvent {
 
     @Id
-    @Column(length = 36) // For UUID string
+    @Column(length = 36)
     private String id;
 
     @Column(name = "user_subscription_id", nullable = false, length = 36)
-    private String userSubscriptionId; // FK to UserSubscription.id
+    private String userSubscriptionId;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "event_type", nullable = false, length = 50)
@@ -37,11 +39,12 @@ public class SubscriptionEvent {
     private Instant eventTimestamp;
 
     @Lob
-    @Column(columnDefinition = "TEXT") // For JSON string or longer text
-    private String details; // e.g., old status, new status, payment ID, plan change info
+    @Column(columnDefinition = "TEXT")
+    private String details;
 
-    @Column(name = "triggered_by", length = 100) // USER, SYSTEM_RENEWAL, ADMIN, GATEWAY_WEBHOOK
-    private String triggeredBy;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "triggered_by", nullable = false, length = 30)
+    private SubscriptionEventTrigger triggeredBy;
 
     @PrePersist
     protected void onCreate() {
