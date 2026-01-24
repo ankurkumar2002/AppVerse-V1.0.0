@@ -28,7 +28,6 @@ public record UpdateApplicationRequest(
     @URL String supportUrl,
     @NotBlank @URL String thumbnailUrl,
     @NotNull @Valid List<Screenshot> screenshots,
-    @NotBlank String developerId,
     List<@NotBlank String> tags,
     @NotBlank String status,
     Instant publishedAt,

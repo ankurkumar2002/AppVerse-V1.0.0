@@ -8,7 +8,7 @@ import com.appverse.app_service.dto.ApplicationRequest;
 
 @Component
 public class ApplicationCreateService {
-    public Application toEntity(ApplicationRequest request) {
+    public Application toEntity(ApplicationRequest request, String developerId) {
         boolean derivedIsFree = request.isFree();
         java.math.BigDecimal actualPrice = request.price();
 
@@ -26,7 +26,7 @@ public class ApplicationCreateService {
                 .accessUrl(request.accessUrl())
                 .websiteUrl(request.websiteUrl())
                 .supportUrl(request.supportUrl())
-                .developerId(request.developerId())
+                .developerId(developerId)
                 .tags(request.tags())
                 .status(request.status())
                 .publishedAt(request.publishedAt())

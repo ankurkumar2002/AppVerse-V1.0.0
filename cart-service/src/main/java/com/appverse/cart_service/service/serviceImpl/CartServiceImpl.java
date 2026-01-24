@@ -141,7 +141,7 @@ public class CartServiceImpl implements CartService {
                     savedItemForEvent.getApplicationId(),
                     savedItemForEvent.getApplicationName(),
                     quantityAdded, // The quantity from the request for this operation
-                    savedItemForEvent.getQuantity(), // The new total quantity of this item
+                    savedItemForEvent.getQuantity(), 
                     savedItemForEvent.getUnitPrice(),
                     savedItemForEvent.getCurrency(),
                     Instant.now()
@@ -178,7 +178,7 @@ public class CartServiceImpl implements CartService {
         } else {
             log.debug("Updating quantity for AppID {} from {} to {}.", applicationId, oldQuantity, updateRequest.newQuantity());
             itemToUpdate.setQuantity(updateRequest.newQuantity());
-            itemToUpdate.setAddedAt(Instant.now()); // Update timestamp of last interaction
+            itemToUpdate.setAddedAt(Instant.now());
         }
 
         try {

@@ -59,7 +59,7 @@ public class ApplicationController {
             @RequestPart("request") String requestJson,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
             @RequestPart(value = "screenshots", required = false) List<MultipartFile> screenshots,
-            @RequestPart(value = "metadata", required = false) String metadataJson) {
+            @RequestPart(value = "metadata", required = false) String metadataJson, @AuthenticationPrincipal Jwt jwt) {
 
         ApplicationRequest request;
         List<ScreenshotRequest> metadata = Collections.emptyList();
@@ -84,7 +84,7 @@ public class ApplicationController {
         System.out.println("Metadata list created: " + (metadata != null));
         System.out.println("Metadata list size: " + (metadata != null ? metadata.size() : 0));
 
-        return ResponseEntity.ok(applicationService.createApplication(request, thumbnail, screenshots, metadata));
+        return ResponseEntity.ok(applicationService.createApplication(request, thumbnail, screenshots, metadata, jwt.getSubject()));
     }
 
     @PutMapping("/{id}")
@@ -93,7 +93,7 @@ public class ApplicationController {
             @RequestPart("request") String requestJson, // Changed to String
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
             @RequestPart(value = "screenshots", required = false) List<MultipartFile> screenshots,
-            @RequestPart(value = "metadata", required = false) String metadataJson) { // Changed to String
+            @RequestPart(value = "metadata", required = false) String metadataJson, @AuthenticationPrincipal Jwt jwt ) { // Changed to String
 
         // --- Manually parse the JSON strings, just like in the create method ---
         UpdateApplicationRequest request;
@@ -112,12 +112,12 @@ public class ApplicationController {
         }
 
         // Call the service with the parsed objects
-        return ResponseEntity.ok(applicationService.updateApplication(id, request, thumbnail, screenshots, metadata));
+        return ResponseEntity.ok(applicationService.updateApplication(id, request, thumbnail, screenshots, metadata, jwt.getSubject()));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable String id) {
-        applicationService.deleteApplication(id);
+    public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
+        applicationService.deleteApplication(id, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }
 

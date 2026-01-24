@@ -27,7 +27,6 @@ public record ApplicationRequest(
     String accessUrl,
     String websiteUrl,
     String supportUrl,
-    String developerId,
     List<String> tags,
     String status,
     Instant publishedAt

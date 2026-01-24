@@ -13,14 +13,14 @@ import com.appverse.app_service.dto.UpdateApplicationRequest;
 
 public interface ApplicationService {
 
-    MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail, List<MultipartFile> screenshots, List<ScreenshotRequest> metadata);
+    MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail, List<MultipartFile> screenshots, List<ScreenshotRequest> metadata, String developerId);
 
     MessageResponse updateApplication(String id, UpdateApplicationRequest application,
     MultipartFile thumbnail,
     List<MultipartFile> screenshots,
-    List<ScreenshotRequest> metadata);
+    List<ScreenshotRequest> metadata, String developerId);
 
-    void deleteApplication(String id);
+    void deleteApplication(String id, String developerId);
 
     ApplicationResponse getApplicationById(String id);
 

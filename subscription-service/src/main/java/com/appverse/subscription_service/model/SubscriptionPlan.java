@@ -58,25 +58,10 @@ public class SubscriptionPlan {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private SubscriptionPlanStatus status = SubscriptionPlanStatus.INACTIVE; // ACTIVE, INACTIVE, ARCHIVED
+    private SubscriptionPlanStatus status = SubscriptionPlanStatus.INACTIVE; 
 
-    // This ID is from the payment gateway if the gateway manages the plan/price for recurring billing
-    // e.g., Stripe Price ID (price_xxxx) or Plan ID (plan_xxxx - older Stripe API)
     @Column(name = "gateway_plan_price_id", length = 255)
     private String gatewayPlanPriceId;
-
-    // How this plan grants access:
-    // Option A: List of specific application IDs this plan grants access to.
-    @ElementCollection(fetch = FetchType.LAZY) // Stores a collection of basic types
-    @CollectionTable(name = "subscription_plan_applications", joinColumns = @JoinColumn(name = "subscription_plan_id"))
-    @Column(name = "application_id", length = 255) // The IDs from app-service
-    private List<String> associatedApplicationIds;
-
-    // Option B: Or, a list of features/capabilities (more abstract)
-    // @ElementCollection(fetch = FetchType.LAZY)
-    // @CollectionTable(name = "subscription_plan_features", joinColumns = @JoinColumn(name = "subscription_plan_id"))
-    // @Column(name = "feature_key", length = 100)
-    // private List<String> features; // e.g., "ACCESS_ALL_APPS", "PREMIUM_SUPPORT", "NO_ADS"
 
     @CreatedDate
     @Column(nullable = false, updatable = false)
@@ -86,16 +71,16 @@ public class SubscriptionPlan {
     @Column(nullable = false)
     private Instant updatedAt;
 
-        @Column(name = "application_id", nullable = false, length = 36) // Or your app ID length
+        @Column(name = "application_id", nullable = false, length = 36) 
     private String applicationId;
 
-    @Column(name = "developer_id", nullable = false, length = 255) // Or your dev ID length
+    @Column(name = "developer_id", nullable = false, length = 255) 
     private String developerId;
 
     @PrePersist
     protected void onCreate() {
         if (this.id == null) {
-            this.id = UUID.randomUUID().toString(); // Or generate a slug based on name
+            this.id = UUID.randomUUID().toString(); 
         }
     }
 }

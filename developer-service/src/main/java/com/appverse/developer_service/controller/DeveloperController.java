@@ -37,7 +37,7 @@ public class DeveloperController {
     // @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> create(
             @Validated(OnCreate.class) @RequestBody DeveloperRequest request) {
-                log.error("🔥🔥 CONTROLLER HIT 🔥🔥");
+        log.error("🔥🔥 CONTROLLER HIT 🔥🔥");
         MessageResponse response = developerService.createDeveloper(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(response.id()).toUri();
@@ -59,9 +59,14 @@ public class DeveloperController {
     }
 
     @GetMapping("/me")
-    public ResponseEntity<DeveloperResponse> getDeveloperDetails(){
+    public ResponseEntity<DeveloperResponse> getDeveloperDetails() {
         return ResponseEntity.ok(developerService.getMyDeveloper());
     }
-    
+
+    @GetMapping("/exists/by-keycloak-id/{keycloakUserId}")
+    public ResponseEntity<Boolean> existsByKeycloakId(@PathVariable String keycloakUserId) {
+        return ResponseEntity.ok(
+                developerService.existsByKeycloakUserId(keycloakUserId));
+    }
 
 }
