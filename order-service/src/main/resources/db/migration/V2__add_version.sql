@@ -1,0 +1,2 @@
+ALTER TABLE customer_order
+ADD COLUMN version BIGINT NOT NULL DEFAULT 0;

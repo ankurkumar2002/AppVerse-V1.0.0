@@ -1,6 +1,5 @@
 package com.appverse.order_service.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -72,11 +71,15 @@ public class OrderItem {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-
     @PrePersist
     protected void ensureId() {
         if (this.id == null) {
             this.id = UUID.randomUUID().toString();
         }
     }
+
+    public BigDecimal getTotalPrice() {
+        return unitPrice.multiply(BigDecimal.valueOf(quantity));
+    }
+
 }
