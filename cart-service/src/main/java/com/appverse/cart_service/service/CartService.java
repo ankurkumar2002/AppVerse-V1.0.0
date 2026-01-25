@@ -25,7 +25,7 @@ public interface CartService {
      * @throws com.appverse.cart_service.exception.ResourceNotFoundException if the application to add is not found.
      * @throws com.appverse.cart_service.exception.ProductUnavailableException if the product cannot be added (e.g. out of stock, not for sale)
      */
-    CartResponse addItemToCart(String userId, AddItemToCartRequest addItemRequest);
+    CartResponse addItemTocart(String userId, AddItemToCartRequest addItemToRequest);
 
     /**
      * Updates the quantity of an existing item in the user's cart.

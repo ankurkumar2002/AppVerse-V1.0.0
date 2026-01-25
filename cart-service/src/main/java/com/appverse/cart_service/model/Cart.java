@@ -33,6 +33,9 @@ public class Cart {
     @Column(name = "user_id", nullable = false, unique = true, length = 255) // Assuming Keycloak user IDs are strings
     private String userId;  // Keycloak User ID (the 'sub' claim from JWT)
 
+    @Version
+    private Long version;
+
     // In a relational model, items are typically mapped via @OneToMany
     @OneToMany(
         mappedBy = "cart", // "cart" is the field in CartItem that owns the relationship

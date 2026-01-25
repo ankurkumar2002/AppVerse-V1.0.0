@@ -1,8 +1,5 @@
 package com.appverse.order_service.model;
 
-
-
-
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
@@ -27,11 +24,14 @@ import java.util.List;
 public class CustomerOrder { // Renamed to CustomerOrder to avoid SQL keyword conflict
 
     @Id
-    @Column(length = 36)  // Or GenerationType.UUID
+    @Column(length = 36) // Or GenerationType.UUID
     private String id;
 
     @Column(name = "user_id", nullable = false, length = 255)
     private String userId; // Keycloak User ID
+
+    @Version
+    private Long version;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "order_status", nullable = false, length = 50)
@@ -78,4 +78,17 @@ public class CustomerOrder { // Renamed to CustomerOrder to avoid SQL keyword co
         items.remove(item);
         item.setCustomerOrder(null);
     }
+
+    public void calculateTotals() {
+        this.orderTotal = this.items.stream()
+                .map(OrderItem::getTotalPrice)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        this.currency = this.items.stream()
+                .map(OrderItem::getCurrency)
+                .filter(c -> c != null && !c.isBlank())
+                .findFirst()
+                .orElse("USD");
+    }
+
 }

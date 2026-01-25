@@ -1,4 +1,5 @@
 package com.appverse.cart_service.exception;
+
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
@@ -6,6 +7,7 @@ import java.util.Map;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 
@@ -20,6 +22,17 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateResourceException.class)
     public ResponseEntity<?> handleDuplicateResource(DuplicateResourceException ex) {
         return buildResponseEntity(ex.getMessage(), HttpStatus.CONFLICT);
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<Map<String, String>> handleOptimisticLock(
+            ObjectOptimisticLockingFailureException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.CONFLICT)
+                .body(Map.of(
+                        "error", "CONCURRENT_UPDATE",
+                        "message", "Cart was updated by another request. Please retry."));
     }
 
     @ExceptionHandler(BadRequestException.class)
