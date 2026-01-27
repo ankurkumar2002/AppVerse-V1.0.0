@@ -242,7 +242,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         Application updatedApp = applicationRepository.save(existingApp);
         log.info("Application {} updated successfully in database.", updatedApp.getId());
 
-        applicationEventPublisher.publishUpdated(updatedApp);
+        // applicationEventPublisher.publishUpdated(updatedApp);
 
         log.info("Application {} update processing complete.", updatedApp.getId());
         return new MessageResponse("Application Updated Successfully!", updatedApp.getId());
@@ -260,7 +260,7 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         applicationRepository.deleteById(id);
-        applicationEventPublisher.publishDeleted(application);
+        // applicationEventPublisher.publishDeleted(application);
     }
 
     @Override

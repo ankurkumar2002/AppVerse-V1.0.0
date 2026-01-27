@@ -42,10 +42,16 @@ public class OrderServiceImpl implements OrderService {
     @Transactional
     public OrderResponse createOrder(String userId, CreateOrderRequest request) {
 
-        CustomerOrder order = orderFactory.create(userId, request);
-        CustomerOrder savedOrder = orderRepository.save(order);
+         log.info("▶️ createOrder started");
 
-        eventPublisher.publishOrderCreatedAfterCommit(savedOrder);
+    CustomerOrder order = orderFactory.create(userId, request);
+    log.info("✅ OrderFactory created order");
+
+    CustomerOrder savedOrder = orderRepository.save(order);
+    log.info("✅ Order saved with ID {}", savedOrder.getId());
+
+    eventPublisher.publishOrderCreatedAfterCommit(savedOrder);
+    log.info("📤 Order event registered");
 
         return orderMapper.toOrderResponse(savedOrder);
     }

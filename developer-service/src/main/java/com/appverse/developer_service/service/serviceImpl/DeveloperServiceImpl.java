@@ -4,6 +4,7 @@ package com.appverse.developer_service.service.serviceImpl;
 import com.appverse.developer_service.client.IdentityClient;
 import com.appverse.developer_service.config.CurrentUserProvider;
 import com.appverse.developer_service.dto.AssignRoleRequest;
+import com.appverse.developer_service.dto.DeveloperEmailResponse;
 import com.appverse.developer_service.dto.DeveloperRequest;
 import com.appverse.developer_service.dto.DeveloperResponse;
 import com.appverse.developer_service.dto.IdentityUserResponse;
@@ -202,6 +203,20 @@ public class DeveloperServiceImpl implements DeveloperService {
     @Transactional(readOnly = true)
     public boolean existsByKeycloakUserId(String keycloakUserId) {
         return developerRepository.existsByKeycloakUserId(keycloakUserId);
+    }
+
+    @Override
+    public DeveloperEmailResponse getDeveloperEmail(String developerId) {
+
+        Developer developer = developerRepository.findByKeycloakUserId(developerId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Developer not found with id: " + developerId));
+
+        log.info("Fetched email for developer {}", developerId);
+
+        return new DeveloperEmailResponse(
+                developer.getId(),
+                developer.getEmail());
     }
 
 }

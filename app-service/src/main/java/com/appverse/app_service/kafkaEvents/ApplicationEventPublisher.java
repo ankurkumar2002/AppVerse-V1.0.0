@@ -5,67 +5,50 @@ import java.time.Instant;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
-import com.appverse.app_service.event.payload.ApplicationCreatedPayload;
+import com.appverse.app_service.event.DomainEvent;
+import com.appverse.app_service.event.payload.ApplicationCreatedNotificationPayload;
 import com.appverse.app_service.event.payload.ApplicationDeletedPayload;
 import com.appverse.app_service.event.payload.ApplicationUpdatedPayload;
 import com.appverse.app_service.model.Application;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-
 @Component
 @RequiredArgsConstructor
 @Slf4j
 public class ApplicationEventPublisher {
-    private static final String APPLICATION_EVENTS_TOPIC = "application-events";
 
-    private final KafkaTemplate<String, Object> kafkaTemplate;
+    private static final String TOPIC = "application-events";
+
+    private final KafkaTemplate<String, String> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     public void publishCreated(Application app) {
-        ApplicationCreatedPayload payload = new ApplicationCreatedPayload(app.getId(),
-                app.getName(),
-                app.getDeveloperId(),
-                app.getCategoryId(),
-                app.getMonetizationType(),
-                app.getPrice(),
-                app.getCurrency(),
-                app.isFree(),
-                app.getPlatforms(),
-                app.getStatus(),
-                app.getTags(),
-                app.getCreatedAt());
+        try {
+            ApplicationCreatedNotificationPayload payload = new ApplicationCreatedNotificationPayload(
+                    app.getId(),
+                    app.getName(),
+                    app.getDeveloperId()
+            );
 
-        kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, app.getId(), payload);
-        log.info("Published ApplicationCreatedEvent for app ID: {}", app.getId());
-    }
+            DomainEvent<ApplicationCreatedNotificationPayload> event =
+                    new DomainEvent<>(
+                            "APPLICATION_CREATED",
+                            "app-service",
+                            Instant.now(),
+                            payload
+                    );
 
-    public void publishUpdated(Application app) {
-        ApplicationUpdatedPayload payload = new ApplicationUpdatedPayload(
-                app.getId(),
-                app.getName(),
-                app.getDeveloperId(),
-                app.getCategoryId(),
-                app.getMonetizationType(),
-                app.getPrice(),
-                app.getCurrency(),
-                app.isFree(),
-                app.getPlatforms(),
-                app.getStatus(),
-                app.getTags(),
-                app.getUpdatedAt());
+            String json = objectMapper.writeValueAsString(event);
 
-        kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, app.getId(), payload);
-        log.info("Published ApplicationUpdatedEvent for app ID: {}", app.getId());
-    }
+            kafkaTemplate.send(TOPIC, app.getId(), json);
 
-    public void publishDeleted(Application app) {
-        ApplicationDeletedPayload payload = new ApplicationDeletedPayload(
-                app.getId(),
-                app.getDeveloperId(),
-                app.getName(),
-                Instant.now());
+            log.info("Published APPLICATION_CREATED event for app {}", app.getId());
 
-        kafkaTemplate.send(APPLICATION_EVENTS_TOPIC, app.getId(), payload);
-        log.info("Published ApplicationDeletedEvent for app ID: {}", app.getId());
+        } catch (Exception e) {
+            log.error("Failed to publish application created event", e);
+            throw new RuntimeException(e);
+        }
     }
 }
