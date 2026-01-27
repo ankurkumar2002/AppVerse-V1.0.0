@@ -1,2 +1,2 @@
-ALTER TABLE customer_order
+ALTER TABLE customer_orders
 ADD COLUMN version BIGINT NOT NULL DEFAULT 0;

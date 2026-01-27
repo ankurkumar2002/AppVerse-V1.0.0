@@ -5,6 +5,6 @@ package com.appverse.order_service.enums; // Or your shared package
 public enum MonetizationType {
     FREE,
     ONE_TIME_PURCHASE,
-    SUBSCRIPTION_ONLY,
+    SUBSCRIPTION,
     ONE_TIME_OR_SUBSCRIPTION
 }

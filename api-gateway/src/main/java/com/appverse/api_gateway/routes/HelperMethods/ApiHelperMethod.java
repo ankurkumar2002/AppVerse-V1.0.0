@@ -62,13 +62,10 @@ public class ApiHelperMethod {
                     String traceId = UUID.randomUUID().toString();
 
                     ServerRequest tracedRequest = ServerRequest.from(request)
-                                    .header("X-Trace-Id", traceId)
-                                    .build();
-                    ServerResponse response = next.handle(tracedRequest);
-                        
-                            return ServerResponse.from(response)
                             .header("X-Trace-Id", traceId)
                             .build();
+
+                    return next.handle(tracedRequest);
                 })
 
                 /* ================= CIRCUIT BREAKER ================= */

@@ -1,5 +1,6 @@
 package com.appverse.developer_service.controller;
 
+import com.appverse.developer_service.dto.DeveloperEmailResponse;
 import com.appverse.developer_service.dto.DeveloperRequest;
 import com.appverse.developer_service.dto.DeveloperResponse;
 import com.appverse.developer_service.dto.MessageResponse;
@@ -67,6 +68,14 @@ public class DeveloperController {
     public ResponseEntity<Boolean> existsByKeycloakId(@PathVariable String keycloakUserId) {
         return ResponseEntity.ok(
                 developerService.existsByKeycloakUserId(keycloakUserId));
+    }
+
+    @GetMapping("/internal/{developerId}/email")
+    public ResponseEntity<DeveloperEmailResponse> getDeveloperEmail(
+            @PathVariable String developerId) {
+
+        return ResponseEntity.ok(
+                developerService.getDeveloperEmail(developerId));
     }
 
 }
