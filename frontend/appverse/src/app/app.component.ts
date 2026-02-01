@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { KeycloakService } from 'keycloak-angular';
+import { keycloak } from './auth/keycloak';
 
 @Component({
   selector: 'app-root',
@@ -13,22 +13,19 @@ export class AppComponent implements OnInit {
   title = 'appverse';
 
   constructor(
-    private keycloak: KeycloakService,
     private router: Router
   ) {}
 
-  async ngOnInit() {
-    const isLoggedIn = await this.keycloak.isLoggedIn();
-    console.log('Logged in?', isLoggedIn);
+  async ngOnInit(): Promise<void> {
+    if (!keycloak.authenticated) {
+      return;
+    }
 
-    if (isLoggedIn) {
-      const roles = this.keycloak.getUserRoles();
-      console.log('User roles:', roles);
+    const token = keycloak.tokenParsed as any;
+    const roles: string[] = token?.realm_access?.roles ?? [];
 
-      if (roles.includes('developer')) {
-        console.log('Redirecting to developer dashboard...');
-        this.router.navigate(['/developer/dashboard']);
-      }
+    if (roles.includes('DEVELOPER')) {
+      this.router.navigate(['/developer/dashboard']);
     }
   }
 }

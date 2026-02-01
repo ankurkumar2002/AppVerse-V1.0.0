@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { KeycloakService } from 'keycloak-angular';
 import { KeycloakInstance, KeycloakTokenParsed } from 'keycloak-js';
+import { keycloak } from '../../../auth/keycloak';
 
 interface ExtendedKeycloakToken extends KeycloakTokenParsed {
   preferred_username?: string;
@@ -11,14 +11,14 @@ interface ExtendedKeycloakToken extends KeycloakTokenParsed {
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-  private keycloakInstance: KeycloakInstance;
+  // private keycloakInstance: KeycloakInstance;
 
-  constructor(private keycloakService: KeycloakService) {
-    this.keycloakInstance = this.keycloakService.getKeycloakInstance();
-  }
+  // constructor(private keycloakService: KeycloakService) {
+  //   this.keycloakInstance = this.keycloakService.getKeycloakInstance();
+  // }
 
   get tokenParsed(): ExtendedKeycloakToken | undefined {
-    return this.keycloakInstance.tokenParsed as ExtendedKeycloakToken;
+    return keycloak.tokenParsed as ExtendedKeycloakToken;
   }
 
   /**
@@ -57,16 +57,18 @@ async register(role: 'user' | 'developer'): Promise<void> {
 
 
 
-  logout(): void {
-    this.keycloakService.logout(window.location.origin);
+  async logout(): Promise<void> {
+    await keycloak.logout({
+      redirectUri: window.location.origin,
+    })
   }
 
-  isLoggedIn(): Promise<boolean> {
-    return Promise.resolve(this.keycloakService.isLoggedIn());
+  isLoggedIn(): boolean {
+    return keycloak.authenticated ?? false;
   }
 
-  getToken(): Promise<string> {
-    return this.keycloakService.getToken();
+  getToken(): string | undefined{
+    return keycloak.token;
   }
 
   getUsername(): string | undefined {
@@ -74,10 +76,10 @@ async register(role: 'user' | 'developer'): Promise<void> {
   }
 
   getDeveloperId(): string | null {
-    return this.keycloakInstance.subject || null;
+    return keycloak.subject || null;
   }
 
   getUserRoles(): string[] {
-    return this.keycloakInstance.realmAccess?.roles || [];
+    return keycloak.realmAccess?.roles || [];
   }
 }

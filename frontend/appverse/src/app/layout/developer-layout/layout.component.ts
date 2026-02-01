@@ -1,17 +1,17 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, ViewChild } from '@angular/core';
-import { KeycloakService } from 'keycloak-angular';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
 import { MatSidenav, MatSidenavModule } from '@angular/material/sidenav';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { RouterModule } from '@angular/router';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { Subject, takeUntil } from 'rxjs';
+
 import { DeveloperService } from '../../core/services/developer/developer.service';
 import { DeveloperResponse } from '../../models/developer-response';
-import { CommonModule } from '@angular/common';
-import { Subject, takeUntil } from 'rxjs';
-// **** ADD THIS IMPORT ****
-import { MatTooltipModule } from '@angular/material/tooltip';
+import { keycloak } from '../../auth/keycloak';
 
 @Component({
   selector: 'app-layout',
@@ -24,7 +24,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
     MatListModule,
     MatIconModule,
     MatButtonModule,
-    // **** ADD THE MODULE HERE ****
     MatTooltipModule
   ],
   templateUrl: './layout.component.html',
@@ -34,17 +33,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
   @ViewChild('sidenav') sidenav!: MatSidenav;
 
   private destroy$ = new Subject<void>();
-  profileGradient: string;
   developer: DeveloperResponse | null = null;
   isSidenavCollapsed = false;
+  profileGradient = this.getDeterministicGradient('default');
 
   constructor(
-    private keycloakService: KeycloakService,
     private developerService: DeveloperService,
     private cdRef: ChangeDetectorRef
-  ) {
-    this.profileGradient = this.getDeterministicGradient('default');
-  }
+  ) {}
 
   ngOnInit(): void {
     this.loadDeveloperProfile();
@@ -63,27 +59,23 @@ export class LayoutComponent implements OnInit, OnDestroy {
     this.developerService.getMyDeveloperProfile()
       .pipe(takeUntil(this.destroy$))
       .subscribe({
-        next: (data) => {
-          this.developer = data;
-          this.profileGradient = this.getDeterministicGradient(data?.name || 'default');
+        next: dev => {
+          this.developer = dev;
+          this.profileGradient = this.getDeterministicGradient(dev?.name ?? 'default');
           this.cdRef.detectChanges();
-        },
-        error: (err) => console.error('Failed to load developer profile', err)
+        }
       });
   }
 
-  getDeterministicGradient(seed: string): string {
-    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#9A86E4', '#5A7E9A'];
-    const hash = seed.split('').reduce((acc, char) => char.charCodeAt(0) + acc, 0);
-    const color1 = colors[hash % colors.length];
-    const color2 = colors[(hash + 1) % colors.length];
-    return `linear-gradient(135deg, ${color1} 0%, ${color2} 100%)`;
+  async logout(): Promise<void> {
+    await keycloak.logout({
+      redirectUri: `${window.location.origin}/landing`,
+    });
   }
 
-  logout(): void {
-  localStorage.clear();
-  sessionStorage.clear();
-  this.keycloakService.logout('http://localhost:4200/landing');
-}
-
+  private getDeterministicGradient(seed: string): string {
+    const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#9A86E4', '#5A7E9A'];
+    const hash = seed.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+    return `linear-gradient(135deg, ${colors[hash % colors.length]} 0%, ${colors[(hash + 1) % colors.length]} 100%)`;
+  }
 }

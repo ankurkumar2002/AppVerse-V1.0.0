@@ -6,7 +6,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { KeycloakService } from 'keycloak-angular';
+import { keycloak } from '../../auth/keycloak';
 
 @Component({
   selector: 'app-user-layout',
@@ -26,21 +26,15 @@ import { KeycloakService } from 'keycloak-angular';
 export class UserLayoutComponent {
   isCollapsed = false;
 
-  constructor(private keycloakService: KeycloakService, private router: Router) {}
+  constructor(private router: Router) {}
 
-  toggleSidebar() {
+  toggleSidebar(): void {
     this.isCollapsed = !this.isCollapsed;
   }
 
-  async logout() {
-    try {
-      // Properly log out from Keycloak
-      await this.keycloakService.logout(window.location.origin + '/landing');
-    } catch (err) {
-      console.error('Logout failed:', err);
-      localStorage.clear();
-      sessionStorage.clear();
-      this.router.navigate(['/landing']);
-    }
+  async logout(): Promise<void> {
+    await keycloak.logout({
+      redirectUri: `${window.location.origin}/landing`,
+    });
   }
 }

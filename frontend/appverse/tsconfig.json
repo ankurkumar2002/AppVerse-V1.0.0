@@ -2,28 +2,33 @@
   "compileOnSave": false,
   "compilerOptions": {
     "outDir": "./dist/out-tsc",
+
     "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
+
     "skipLibCheck": true,
     "esModuleInterop": true,
+    "importHelpers": true,
+
+    "target": "ES2022",
+    "module": "ES2022",
+
+    // 🔥 THIS IS THE FIX
+    "moduleResolution": "bundler",
+
+    "useDefineForClassFields": false,
     "sourceMap": true,
     "declaration": false,
     "experimentalDecorators": true,
-    "moduleResolution": "node",       
-    "importHelpers": true,
-    "target": "ES2022",
-    "module": "es2022",               
-    "useDefineForClassFields": false,
-    "types": ["keycloak-js"],
-    "lib": [
-      "ES2022",
-      "dom"
-    ]
+
+    "lib": ["ES2022", "DOM"]
   },
-  "include": ["src/**/*", "src/types.d.ts"],
+
+  "include": ["src/**/*.ts"],
+
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,

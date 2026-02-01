@@ -7,8 +7,14 @@ import com.appverse.user_service.service.UserService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.Collections;
+import java.util.Map;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -46,6 +52,12 @@ public class UserController {
     public void deleteMyAccount() {
         userService.deleteMyAccount();
     }
+
+    @GetMapping("/exists")
+    public ResponseEntity<Map<String, Boolean>> verifyExistence(@AuthenticationPrincipal Jwt jwt) {
+        boolean exists = userService.checkUserExists(jwt.getSubject());
+        return ResponseEntity.ok(Collections.singletonMap("exists", exists));
+    } 
 
     
 }

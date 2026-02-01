@@ -1,36 +1,32 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { APP_INITIALIZER } from '@angular/core';
 import {
-  HTTP_INTERCEPTORS,
   provideHttpClient,
-  withInterceptorsFromDi
+  withInterceptors
 } from '@angular/common/http';
 import { provideRouter } from '@angular/router';
-import { importProvidersFrom, APP_INITIALIZER } from '@angular/core';
-import { KeycloakAngularModule, KeycloakService } from 'keycloak-angular';
+import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
-import { initializeKeycloak } from './app/keycloak-init.factory';
-import { AuthInterceptor } from './app/core/interceptor/auth.interceptor';
-import { provideAnimations } from '@angular/platform-browser/animations';
+import { initializeKeycloak } from './app/auth/keycloak-init.factory';
+import { authInterceptor } from './app/auth/auth.interceptor';
 
 bootstrapApplication(AppComponent, {
   providers: [
-    provideHttpClient(withInterceptorsFromDi()), // ✅ Add this to register HTTP_INTERCEPTORS
     provideRouter(routes),
-    importProvidersFrom(KeycloakAngularModule),
+    provideAnimations(),
+
+    // 🔐 Keycloak initialization (silent SSO)
     {
       provide: APP_INITIALIZER,
       useFactory: initializeKeycloak,
-      deps: [KeycloakService],
-      multi: true
+      multi: true,
     },
-    provideAnimations(),
-    {
-      provide: HTTP_INTERCEPTORS,
-      useClass: AuthInterceptor,
-      multi: true
-    }
-  ]
-}).catch(err => console.error(err));
 
+    // 🔐 Token attachment
+    provideHttpClient(
+      withInterceptors([authInterceptor])
+    ),
+  ],
+}).catch(err => console.error(err));
