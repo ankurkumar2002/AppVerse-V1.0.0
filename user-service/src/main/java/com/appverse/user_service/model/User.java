@@ -14,8 +14,8 @@ import com.appverse.user_service.enums.UserStatus;
     @UniqueConstraint(columnNames = {"email"}, name = "uk_user_email")
 })
 @Data
-@NoArgsConstructor // Keep this for JPA
-@AllArgsConstructor // Keep this if you need it for other purposes or for the builder to use
+@NoArgsConstructor 
+@AllArgsConstructor 
 @Builder
 public class User {
 
@@ -32,7 +32,7 @@ public class User {
     private String email;
 
     @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = false; // Initialize directly
+    private boolean emailVerified = false; 
 
     @Column(name = "first_name", length = 100)
     private String firstName;
@@ -49,10 +49,10 @@ public class User {
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserStatus status = UserStatus.ACTIVE; // Initialize directly
+    private UserStatus status = UserStatus.ACTIVE; 
 
     @Column(name = "deactivated_by_admin", nullable = false)
-    private boolean deactivatedByAdmin = false; // Initialize directly (boolean defaults to false anyway)
+    private boolean deactivatedByAdmin = false;
 
     @Column(name = "last_login_at")
     private LocalDateTime lastLoginAt;
@@ -71,10 +71,7 @@ public class User {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        // Defaults for status, emailVerified, deactivatedByAdmin are set at field level
-        // or should be set by service logic before persist if not using field init.
-        // If status is not set by builder, it will use the field initializer.
-        if (this.status == null) { // This check is good if field init isn't used and builder might skip it
+        if (this.status == null) { 
             this.status = UserStatus.ACTIVE;
         }
     }

@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+
 import { ApplicationService } from '../../../../core/services/application/application.service';
 import { CategoryService } from '../../../../core/services/categories/category.service';
 import { ApplicationResponse } from '../../../../models/application-response';
 import { Category } from '../../../../models/category';
-import { KeycloakService } from 'keycloak-angular';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { keycloak } from '../../../../auth/keycloak';
 
 @Component({
   selector: 'app-user-dashboard',
@@ -19,73 +20,49 @@ export class UserDashboardComponent implements OnInit {
   username = '';
   applications: (ApplicationResponse & { thumbnailBlobUrl?: SafeUrl })[] = [];
   categories: Category[] = [];
+
   loadingApps = true;
   loadingCategories = true;
 
   constructor(
     private appService: ApplicationService,
     private categoryService: CategoryService,
-    private keycloak: KeycloakService,
     private sanitizer: DomSanitizer,
-    public router: Router
+    private router: Router
   ) {}
 
-  async ngOnInit() {
-    // Load user profile from Keycloak
-    const profile = await this.keycloak.loadUserProfile();
-    this.username = profile.firstName || profile.username || 'User';
+  async ngOnInit(): Promise<void> {
+    const profile = await keycloak.loadUserProfile();
+    this.username = profile.firstName ?? profile.username ?? 'User';
 
-    // Load applications
-    this.appService.getAllApplications().subscribe({
-      next: (apps) => {
-        const topApps = apps.slice(0, 5);
-        this.applications = topApps;
-
-        // Fetch thumbnails as blob for each app
-        this.applications.forEach((app) => {
-          if (app.thumbnailUrl) {
-            const filename = this.extractFileName(app.thumbnailUrl);
-            this.appService.getImageAsBlob('thumbnails', filename).subscribe({
-              next: (blob) => {
-                const objectURL = URL.createObjectURL(blob);
-                app.thumbnailBlobUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
-              },
-              error: (err) => console.error(`Error fetching thumbnail for ${app.name}:`, err)
-            });
-          }
-        });
-
-        this.loadingApps = false;
-      },
-      error: (err) => {
-        console.error('Error loading apps:', err);
-        this.loadingApps = false;
-      }
+    this.appService.getAllApplications().subscribe(apps => {
+      this.applications = apps.slice(0, 5);
+      this.loadingApps = false;
     });
 
-    // Load categories
-    this.categoryService.getAll().subscribe({
-      next: (cats) => {
-        this.categories = cats;
-        this.loadingCategories = false;
-      },
-      error: (err) => {
-        console.error('Error loading categories:', err);
-        this.loadingCategories = false;
-      }
+    this.categoryService.getAll().subscribe(cats => {
+      this.categories = cats;
+      this.loadingCategories = false;
     });
   }
 
-  goToCategory(categoryId: string) {
-    this.router.navigate(['/apps'], { queryParams: { category: categoryId } });
+  goToApps(): void {
+    this.router.navigate(['/apps']);
   }
 
-  goToApp(appId: string) {
+  goToProfile(): void {
+    this.router.navigate(['/user/profile-completion']);
+  }
+
+  goToDashboard(): void {
+    this.router.navigate(['/user/dashboard']);
+  }
+
+  goToApp(appId: string): void {
     this.router.navigate(['/apps', appId]);
   }
 
-  extractFileName(fullPath: string): string {
-    if (!fullPath) return '';
-    return fullPath.split('/').pop() || '';
+  goToCategory(categoryId: string): void {
+    this.router.navigate(['/apps'], { queryParams: { category: categoryId } });
   }
 }

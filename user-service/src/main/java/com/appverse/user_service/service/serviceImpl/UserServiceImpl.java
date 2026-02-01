@@ -145,4 +145,8 @@ public class UserServiceImpl implements UserService {
 
     }
 
+    public boolean checkUserExists(String keycloakId) {
+        return userRepository.existsByKeycloakUserId(keycloakId);
+    }
+
 }

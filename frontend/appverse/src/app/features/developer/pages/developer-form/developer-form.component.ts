@@ -4,7 +4,7 @@ import { DeveloperService } from '../../../../core/services/developer/developer.
 import { Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
-import { KeycloakService } from 'keycloak-angular';
+import { keycloak } from '../../../../auth/keycloak';
 
 @Component({
   selector: 'app-developer-form',
@@ -18,12 +18,11 @@ export class DeveloperFormComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private keycloakService: KeycloakService,
     private developerService: DeveloperService,
     private http: HttpClient,
     private router: Router
   ) {
-    const keycloak = this.keycloakService.getKeycloakInstance();
+    const token = keycloak.tokenParsed as any;
 
     interface KeycloakTokenParsed {
       given_name?: string;
@@ -51,9 +50,8 @@ export class DeveloperFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    const role = sessionStorage.getItem('registeringAs'); // e.g., 'developer' or 'user'
-    const keycloak = this.keycloakService.getKeycloakInstance();
-    const keycloakUserId = keycloak.tokenParsed?.sub;
+    const role = sessionStorage.getItem('registeringAs'); 
+    const keycloakUserId = keycloak.subject;
 
     // Assign role immediately on init
     if (role && keycloakUserId) {
@@ -74,13 +72,9 @@ export class DeveloperFormComponent implements OnInit {
      this.developerService.createDeveloper(payload).subscribe({
       next: async () => {
         try {
-          console.log('Developer created successfully');
-
-          // 🔹 Immediately log out and redirect to login
-          await this.keycloakService.login();
-
-          // NOTE: This will redirect the user out of the app,
-          // so nothing after this line will run.
+          await keycloak.login({
+            redirectUri: `${window.location.origin}/developer/dashboard`,
+          })
         } catch (err) {
           console.error('Error during logout:', err);
         }

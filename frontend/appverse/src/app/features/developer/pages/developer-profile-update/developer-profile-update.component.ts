@@ -1,17 +1,14 @@
-// src/app/pages/developer-dashboard/developer-profile-update.component.ts
-
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, Validators, ReactiveFormsModule } from '@angular/forms';
-import { trigger, style, animate, transition } from '@angular/animations'; // For animations
-import { DeveloperService } from '../../../../core/services/developer/developer.service';
-import { KeycloakService } from 'keycloak-angular';
-import { MessageService } from 'primeng/api';
-import { DeveloperResponse } from '../../../../models/developer-response'; // Assuming this path is correct
+import { trigger, style, animate, transition } from '@angular/animations';
 
-// PrimeNG Modules
+import { DeveloperService } from '../../../../core/services/developer/developer.service';
+import { MessageService } from 'primeng/api';
+import { keycloak } from '../../../../auth/keycloak';
+
+// PrimeNG
 import { InputTextModule } from 'primeng/inputtext';
-// ✅ FIX: The separate 'InputTextareaModule' is no longer needed. Removed import.
 import { DropdownModule } from 'primeng/dropdown';
 import { ButtonModule } from 'primeng/button';
 import { ToastModule } from 'primeng/toast';
@@ -25,8 +22,7 @@ import { TabViewModule } from 'primeng/tabview';
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    InputTextModule, // This module now includes the directive for <textarea pInputTextarea>
-    // ✅ FIX: Removed InputTextareaModule from here.
+    InputTextModule,
     DropdownModule,
     TabViewModule,
     ButtonModule,
@@ -58,7 +54,6 @@ export class DeveloperProfileUpdateComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private developerService: DeveloperService,
-    private keycloakService: KeycloakService,
     private messageService: MessageService
   ) {
     this.developerForm = this.fb.group({
@@ -83,32 +78,43 @@ export class DeveloperProfileUpdateComponent implements OnInit {
 
   loadDeveloperProfile(): void {
     this.loading = true;
+
     this.developerService.getMyDeveloperProfile().subscribe({
-      next: (developer) => {
+      next: developer => {
         this.developerForm.patchValue(developer);
         this.logoPreviewUrl = developer.logoUrl ?? null;
         this.loading = false;
       },
-      error: () => {
+      error: async () => {
         this.messageService.add({
           severity: 'info',
           summary: 'Welcome!',
           detail: 'Please complete your developer profile to continue.'
         });
-        this.loadKeycloakFallbacks();
+
+        await this.loadKeycloakFallbacks();
         this.loading = false;
-      },
+      }
     });
   }
 
-  loadKeycloakFallbacks(): void {
-    this.keycloakService.loadUserProfile().then(profile => {
-      const formName = this.developerForm.get('name')?.value;
-      if (!formName) {
-        this.developerForm.patchValue({ name: `${profile.firstName || ''} ${profile.lastName || ''}`.trim() });
+  private async loadKeycloakFallbacks(): Promise<void> {
+    try {
+      const profile = await keycloak.loadUserProfile();
+
+      const currentName = this.developerForm.get('name')?.value;
+      if (!currentName) {
+        this.developerForm.patchValue({
+          name: `${profile.firstName ?? ''} ${profile.lastName ?? ''}`.trim()
+        });
       }
-      this.developerForm.patchValue({ email: profile.email || '' });
-    }).catch(err => console.error('Failed to load Keycloak profile', err));
+
+      this.developerForm.patchValue({
+        email: profile.email ?? ''
+      });
+    } catch (err) {
+      console.error('Failed to load Keycloak profile', err);
+    }
   }
 
   updateDeveloperProfile(): void {
@@ -122,16 +128,27 @@ export class DeveloperProfileUpdateComponent implements OnInit {
     }
 
     this.loading = true;
-    this.developerService.updateMyProfile(this.developerForm.getRawValue()).subscribe({
-      next: () => {
-        this.messageService.add({ severity: 'success', summary: 'Success', detail: 'Profile updated successfully!' });
-        this.loading = false;
-      },
-      error: (err) => {
-        console.error('Update failed:', err);
-        this.messageService.add({ severity: 'error', summary: 'Update Failed', detail: 'Could not save your profile. Please try again.' });
-        this.loading = false;
-      },
-    });
+
+    this.developerService
+      .updateMyProfile(this.developerForm.getRawValue())
+      .subscribe({
+        next: () => {
+          this.messageService.add({
+            severity: 'success',
+            summary: 'Success',
+            detail: 'Profile updated successfully!'
+          });
+          this.loading = false;
+        },
+        error: err => {
+          console.error('Update failed:', err);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Update Failed',
+            detail: 'Could not save your profile. Please try again.'
+          });
+          this.loading = false;
+        }
+      });
   }
 }

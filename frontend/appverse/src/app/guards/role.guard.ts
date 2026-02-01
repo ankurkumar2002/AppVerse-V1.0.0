@@ -1,45 +1,31 @@
-import { Injectable } from '@angular/core';
-import { CanActivate, ActivatedRouteSnapshot, Router } from '@angular/router';
-import { KeycloakService } from 'keycloak-angular';
+import { CanActivateFn, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { keycloak } from '../auth/keycloak';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class RoleGuard implements CanActivate {
-  constructor(private keycloak: KeycloakService, private router: Router) {}
+export const roleGuard = (expectedRoles: string[]): CanActivateFn => {
+  return () => {
+    const router = inject(Router);
 
-  async canActivate(route: ActivatedRouteSnapshot): Promise<boolean> {
-    console.log('RoleGuard: Checking roles...');
-
-    const isLoggedIn = await this.keycloak.isLoggedIn();
-    console.log('RoleGuard: isLoggedIn =', isLoggedIn);
-
-    if (!isLoggedIn) {
-      console.warn('RoleGuard: Not logged in → redirecting');
-      this.router.navigate(['/landing']);
+    if (!keycloak.authenticated) {
+      router.navigate(['/landing']);
       return false;
     }
 
-    const expectedRoles = route.data['expectedRoles'] || [];
-    console.log('RoleGuard: expectedRoles =', expectedRoles);
+    const token = keycloak.tokenParsed as any;
 
-    const userRoles = this.keycloak.getUserRoles();
-    console.log('RoleGuard: userRoles from Keycloak =', userRoles);
+    // ✅ Realm roles (recommended)
+    const userRoles: string[] =
+      token?.realm_access?.roles ?? [];
 
-    const hasRole: boolean = expectedRoles.some((role: string) =>
-  userRoles.map((r: string) => r.toLowerCase()).includes(role.toLowerCase())
-);
-
-    console.log('RoleGuard: hasRole =', hasRole);
+    const hasRole = expectedRoles.some(role =>
+      userRoles.map(r => r.toLowerCase()).includes(role.toLowerCase())
+    );
 
     if (!hasRole) {
-      console.log('RoleGuard: hasRole =', hasRole);
-      console.warn('RoleGuard: User missing required role → redirecting');
-      this.router.navigate(['/landing']);
+      router.navigate(['/landing']);
       return false;
     }
 
-    console.log('RoleGuard: Role check passed ✅');
     return true;
-  }
-}
+  };
+};

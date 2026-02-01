@@ -1,45 +1,42 @@
-import { Injectable } from '@angular/core';
-import { CanActivate, Router } from '@angular/router';
-import { Observable, of } from 'rxjs';
-import { catchError, map } from 'rxjs/operators';
+import { CanActivateFn, Router } from '@angular/router';
+import { inject } from '@angular/core';
+import { firstValueFrom } from 'rxjs';
+
+import { keycloak } from '../auth/keycloak';
 import { UserAuthService } from '../core/services/user/user-auth.service';
-import { KeycloakService } from 'keycloak-angular';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class ProfileCompletionGuard implements CanActivate {
-  constructor(
-    private userAuthService: UserAuthService,
-    private keycloakService: KeycloakService,
-    private router: Router
-  ) {}
+export const profileCompletionGuard: CanActivateFn = async () => {
+  const router = inject(Router);
+  const userAuthService = inject(UserAuthService);
 
-  async canActivate(): Promise<boolean> {
-  const profile = await this.keycloakService.loadUserProfile();
-  const keycloakId = profile.id;
-
-  if (!keycloakId) {
-    this.router.navigate(['/profile-completion']);
+  // At this point, authGuard has already run
+  if (!keycloak.authenticated) {
+    router.navigate(['/landing']);
     return false;
   }
 
-  return new Promise((resolve) => {
-    this.userAuthService.getUserByKeycloakId(keycloakId).pipe(
-      map((user) => {
-        if (user && user.username) {
-          return true; // ✅ Profile exists
-        } else {
-          this.router.navigate(['/user/profile-completion']);
-          return false;
-        }
-      }),
-      catchError(() => {
-        this.router.navigate(['/user/profile-completion']);
-        return of(false);
-      })
-    ).subscribe(resolve);
-  });
-}
+  // Load profile from Keycloak
+  const profile = await keycloak.loadUserProfile();
+  const keycloakId = profile?.id;
 
-}
+  if (!keycloakId) {
+    router.navigate(['/user/profile-completion']);
+    return false;
+  }
+
+  try {
+    const user = await firstValueFrom(
+      userAuthService.getUserByKeycloakId(keycloakId)
+    );
+
+    if (user && user.username) {
+      return true; // ✅ profile complete
+    }
+
+    router.navigate(['/user/profile-completion']);
+    return false;
+  } catch {
+    router.navigate(['/user/profile-completion']);
+    return false;
+  }
+};
