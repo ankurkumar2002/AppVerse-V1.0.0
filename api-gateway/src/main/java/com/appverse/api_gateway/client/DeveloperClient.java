@@ -13,11 +13,6 @@ import io.micrometer.observation.annotation.Observed;
 @FeignClient(name = "developerClient", url = "http://localhost:8081")
 public interface DeveloperClient {
 
-    @GetMapping("/api/developers/exists")
-    boolean isDeveloperById(@RequestParam("id") String id);
-
-    
-
     @GetMapping("/api/developers/exists/by-keycloak-id/{keycloakUserId}")
     boolean isDeveloperByKeycloakId(@PathVariable("keycloakUserId") String keycloakUserId);
 

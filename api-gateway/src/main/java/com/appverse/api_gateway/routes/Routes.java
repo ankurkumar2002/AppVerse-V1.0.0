@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
 
+import com.appverse.api_gateway.config.RoutePolicy;
 import com.appverse.api_gateway.config.ServiceConfig;
 import com.appverse.api_gateway.routes.HelperMethods.ApiDocsHelperMethod;
 import com.appverse.api_gateway.routes.HelperMethods.ApiHelperMethod;
@@ -24,84 +25,120 @@ public class Routes {
     /* ===================== API ROUTES ===================== */
 
     @Bean
-    RouterFunction<ServerResponse> applicationServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "application-service-api",
-                "/api/apps/**",
-                "http://localhost:8080",
-                "applicationServiceCB"));
+    RouterFunction<ServerResponse> applicationServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "application-service-api",
+                        "/api/apps/**",
+                        "http://localhost:8080",
+                        "applicationServiceCB"
+                ),
+                RoutePolicy.userAndDeveloper()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> categoryServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "category-service-api",
-                "/api/categories/**",
-                "http://localhost:8080",
-                "categoryServiceCB"));
+    RouterFunction<ServerResponse> categoryServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "category-service-api",
+                        "/api/categories/**",
+                        "http://localhost:8080",
+                        "categoryServiceCB"
+                ),
+                RoutePolicy.userAndDeveloper()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> developerServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "developer-service-api",
-                "/api/developers/**",
-                "http://localhost:8081",
-                "developerServiceCB"));
+    RouterFunction<ServerResponse> developerServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "developer-service-api",
+                        "/api/developers/**",
+                        "http://localhost:8081",
+                        "developerServiceCB"
+                ),
+                RoutePolicy.developerOnly()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> userServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "user-service-api",
-                "/api/v1/users/**",
-                "http://localhost:8082",
-                "userServiceCB"));
+    RouterFunction<ServerResponse> userServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "user-service-api",
+                        "/api/v1/users/**",
+                        "http://localhost:8082",
+                        "userServiceCB"
+                ),
+                RoutePolicy.userOnly()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> cartServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "cart-service-api",
-                "/api/v1/carts/**",
-                "http://localhost:8083",
-                "cartServiceCB"));
+    RouterFunction<ServerResponse> cartServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "cart-service-api",
+                        "/api/v1/carts/**",
+                        "http://localhost:8083",
+                        "cartServiceCB"
+                ),
+                RoutePolicy.userOnly()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> orderServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "order-service-api",
-                "/api/v1/orders/**",
-                "http://localhost:8084",
-                "orderServiceCB"));
+    RouterFunction<ServerResponse> orderServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "order-service-api",
+                        "/api/v1/orders/**",
+                        "http://localhost:8084",
+                        "orderServiceCB"
+                ),
+                RoutePolicy.userOnly()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> paymentServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "payment-service-api",
-                "/api/v1/payments/**",
-                "http://localhost:8085",
-                "paymentServiceCB"));
+    RouterFunction<ServerResponse> paymentServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "payment-service-api",
+                        "/api/v1/payments/**",
+                        "http://localhost:8085",
+                        "paymentServiceCB"
+                ),
+                RoutePolicy.userOnly()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> subscriptionServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "subscription-service-api",
-                "/api/v1/subscriptions/**",
-                "http://localhost:8086",
-                "subscriptionServiceCB"));
+    RouterFunction<ServerResponse> subscriptionServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "subscription-service-api",
+                        "/api/v1/subscriptions/**",
+                        "http://localhost:8086",
+                        "subscriptionServiceCB"
+                ),
+                RoutePolicy.userOnly()
+        );
     }
 
     @Bean
-    RouterFunction<ServerResponse> subscriptionPlanServiceApi() {
-        return apiHelper.apiRoute(new ServiceConfig(
-                "subscription-plan-service-api",
-                "/api/v1/subscription-plans/**",
-                "http://localhost:8086",
-                "subscriptionPlanServiceCB"));
+    RouterFunction<ServerResponse> subscriptionPlanServiceApi() throws Exception {
+        return apiHelper.apiRoute(
+                new ServiceConfig(
+                        "subscription-plan-service-api",
+                        "/api/v1/subscription-plans/**",
+                        "http://localhost:8086",
+                        "subscriptionPlanServiceCB"
+                ),
+                RoutePolicy.userOnly()
+        );
     }
 
     /* ===================== API DOC ROUTES ===================== */
