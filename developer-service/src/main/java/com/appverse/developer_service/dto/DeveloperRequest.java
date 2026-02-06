@@ -10,23 +10,16 @@ import com.appverse.developer_service.validation.OnUpdate;
 
 public record DeveloperRequest(
 
-    @URL(message = "Website must be a valid URL")
-    @Size(max = 255)
-    String website,
+        @URL(message = "Website must be a valid URL") @Size(max = 255) String website,
 
-    @Size(max = 150)
-    String companyName,
+        @Size(max = 150) String companyName,
 
-    String bio,
+        String bio,
 
-    @URL(message = "Logo URL must be a valid URL")
-    @Size(max = 255)
-    String logoUrl,
+        @URL(message = "Logo URL must be a valid URL") @Size(max = 255) String logoUrl,
 
-    @Size(max = 100)
-    String location,
+        @Size(max = 100) String location,
 
-    @NotNull(message = "Developer type is required",
-             groups = { OnCreate.class, OnUpdate.class })
-    DeveloperType developerType
-) {}
+        @NotNull(message = "Developer type is required", groups = {
+                OnCreate.class, OnUpdate.class }) DeveloperType developerType) {
+}

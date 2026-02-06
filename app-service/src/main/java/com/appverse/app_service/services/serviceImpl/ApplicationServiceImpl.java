@@ -59,9 +59,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final Executor applicationTaskExecutor;
     private final ApplicationValidator applicationValidator;
 
-    // NOTE:
-    // If any async media upload fails, orphan files may remain.
-    // This can be handled later via a cleanup job or outbox-based workflow.
+
     @Override
     public MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail,
             List<MultipartFile> screenshots, List<ScreenshotRequest> metadata, String developerId) {

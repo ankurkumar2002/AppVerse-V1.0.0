@@ -8,13 +8,11 @@ import com.appverse.developer_service.enums.DeveloperType;
 public record DeveloperResponse(
     String id,
 
-    // identity-derived (read-only)
     String username,
     String firstName,
     String lastName,
     String email,
 
-    // developer-specific
     String website,
     String companyName,
     String bio,

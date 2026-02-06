@@ -57,7 +57,6 @@ public class DeveloperServiceImpl implements DeveloperService {
         Developer developer = developerMapper.toEntity(request);
         log.info(me.firstName() + " " + me.lastName());
 
-        // identity-owned fields
         developer.setKeycloakUserId(me.id());
         developer.setUsername(me.username());
         developer.setFirstName(me.firstName());

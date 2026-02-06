@@ -9,7 +9,6 @@ public class WebClientConfig {
 
     @Bean
     public WebClient webClient(WebClient.Builder builder) {
-        // You can also configure base URLs or default headers here
         return builder.build();
     }
 }
