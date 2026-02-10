@@ -22,8 +22,14 @@ import com.appverse.developer_service.service.DeveloperService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.nio.file.AccessDeniedException;
@@ -45,6 +51,7 @@ public class DeveloperServiceImpl implements DeveloperService {
     private final IdentityClient identityClient;
 
     @Override
+    @CacheEvict(value = { "developerByUser", "developerEmailById" }, allEntries = true)
     @Transactional
     public MessageResponse createDeveloper(DeveloperRequest request) {
 
@@ -98,6 +105,7 @@ public class DeveloperServiceImpl implements DeveloperService {
     }
 
     @Override
+    @CacheEvict(value = { "developerByUser", "developerEmailById" }, allEntries = true)
     @Transactional
     public MessageResponse updateDeveloper(String developerId, DeveloperRequest request) throws AccessDeniedException {
         IdentityUserResponse me = currentUserProvider.getCurrentUser();
@@ -147,6 +155,7 @@ public class DeveloperServiceImpl implements DeveloperService {
     }
 
     @Override
+    @CacheEvict(value = { "developerByUser", "developerEmailById" }, allEntries = true)
     @Transactional
     public void deleteDeveloper(String developerId) throws AccessDeniedException {
 
@@ -187,6 +196,7 @@ public class DeveloperServiceImpl implements DeveloperService {
     }
 
     @Override
+    @Cacheable(value = "developerByUser", key = "#root.target.currentUserProvider.getCurrentUser().id()")
     @Transactional(readOnly = true)
     public DeveloperResponse getMyDeveloper() {
         IdentityUserResponse me = currentUserProvider.getCurrentUser();
@@ -205,6 +215,7 @@ public class DeveloperServiceImpl implements DeveloperService {
     }
 
     @Override
+    @Cacheable(value = "developerEmailById", key = "#developerId")
     public DeveloperEmailResponse getDeveloperEmail(String developerId) {
 
         Developer developer = developerRepository.findByKeycloakUserId(developerId)
@@ -216,6 +227,27 @@ public class DeveloperServiceImpl implements DeveloperService {
         return new DeveloperEmailResponse(
                 developer.getId(),
                 developer.getEmail());
+    }
+
+    @Override
+    @Cacheable(value = "developerByUser", key = "#jwt.subject")
+    @Transactional(readOnly = true)
+    public DeveloperResponse getDeveloper() throws AccessDeniedException {
+
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+
+        if (!(auth instanceof JwtAuthenticationToken jwtAuth)) {
+            throw new AccessDeniedException("Unauthenticated request");
+        }
+
+        Jwt jwt = jwtAuth.getToken(); // ✅ correct way
+        String keycloakUserId = jwt.getSubject();
+
+        Developer developer = developerRepository
+                .findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Developer profile not found"));
+
+        return developerMapper.toResponse(developer);
     }
 
 }

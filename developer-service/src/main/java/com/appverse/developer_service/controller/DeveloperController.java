@@ -57,7 +57,15 @@ public class DeveloperController {
     @GetMapping("/me")
     @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<DeveloperResponse> getDeveloperDetails() {
+        log.info(developerService.getMyDeveloper()+"");
         return ResponseEntity.ok(developerService.getMyDeveloper());
+    }
+
+    @GetMapping("/profile")
+    @PreAuthorize("hasRole('DEVELOPER')")
+    public ResponseEntity<DeveloperResponse> getDeveloperProfile() throws AccessDeniedException {
+        log.info(developerService.getMyDeveloper()+"");
+        return ResponseEntity.ok(developerService.getDeveloper());
     }
 
     @GetMapping("/exists/by-keycloak-id/{keycloakUserId}")

@@ -6,7 +6,7 @@ import com.appverse.cart_service.dto.AddItemToCartRequest;
 import com.appverse.cart_service.dto.ApplicationDetails;
 import com.appverse.cart_service.dto.CartResponse;
 import com.appverse.cart_service.dto.UpdateCartItemQuantityRequest;
-import com.appverse.cart_service.event.payload.*; 
+import com.appverse.cart_service.event.payload.*;
 import com.appverse.cart_service.exception.DatabaseOperationException;
 import com.appverse.cart_service.exception.ProductUnavailableException;
 import com.appverse.cart_service.exception.ResourceNotFoundException;
@@ -20,20 +20,23 @@ import com.appverse.cart_service.service.CartService;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 import java.time.Instant;
-import java.util.List; 
+import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors; 
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Transactional
-@Slf4j 
+@Slf4j
 public class CartServiceImpl implements CartService {
 
         private final CartRepository cartRepository;
@@ -41,9 +44,10 @@ public class CartServiceImpl implements CartService {
         private final CartMapper cartMapper;
         private final KafkaEventPublisher kafkaEventPublisher;
 
-        private static final String CART_EVENTS_TOPIC = "cart-events"; 
+        private static final String CART_EVENTS_TOPIC = "cart-events";
 
         @Override
+        @Cacheable(value = "cartByUser", key = "#userId")
         @Transactional(readOnly = true)
         public CartResponse getOrCreateCartByUserId(String userId) {
                 Cart cart = cartRepository.findByUserId(userId)
@@ -63,16 +67,15 @@ public class CartServiceImpl implements CartService {
                 }
         }
 
-        
-
         @Override
+        @CacheEvict(value = "cartByUser", key = "#userId")
+        @Transactional
         public CartResponse addItemTocart(String userId, AddItemToCartRequest addItemToRequest) {
                 log.info("User {} attempting to add item (AppID: {}, Qty: {}) to cart.",
                                 userId, addItemToRequest.applicationId(), addItemToRequest.quantity());
 
                 ApplicationDetails appDetails = fetchApplicationDetails(
                                 addItemToRequest.applicationId());
-
 
                 return addItemToCartInternal(userId, addItemToRequest, appDetails);
         }
@@ -158,6 +161,7 @@ public class CartServiceImpl implements CartService {
         }
 
         @Override
+        @CacheEvict(value = "cartByUser", key = "#userId")
         @Transactional
         public CartResponse updateCartItemQuantity(
                         String userId,
@@ -221,6 +225,7 @@ public class CartServiceImpl implements CartService {
         }
 
         @Override
+        @CacheEvict(value = "cartByUser", key = "#userId")
         @Transactional
         public CartResponse removeItemFromCart(String userId, String applicationId) {
 
@@ -258,6 +263,7 @@ public class CartServiceImpl implements CartService {
         }
 
         @Override
+        @CacheEvict(value = "cartByUser", key = "#userId")
         @Transactional
         public CartResponse clearCart(String userId) {
                 log.info("User {} clearing their cart.", userId);
@@ -271,10 +277,10 @@ public class CartServiceImpl implements CartService {
 
                 if (numberOfItemsCleared == 0) {
                         log.info("Cart for user {} was already empty. No action taken.", userId);
-                        return cartMapper.toCartResponse(cart); 
+                        return cartMapper.toCartResponse(cart);
                 }
 
-                cart.getItems().clear(); 
+                cart.getItems().clear();
 
                 try {
                         Cart updatedCart = cartRepository.save(cart);
@@ -287,7 +293,8 @@ public class CartServiceImpl implements CartService {
                                         numberOfItemsCleared,
                                         clearedApplicationIds,
                                         Instant.now());
-                        kafkaEventPublisher.publishAfterCommit(CART_EVENTS_TOPIC, updatedCart.getId().toString(), payload);
+                        kafkaEventPublisher.publishAfterCommit(CART_EVENTS_TOPIC, updatedCart.getId().toString(),
+                                        payload);
                         log.info("Published CartClearedEvent for Cart ID: {}", updatedCart.getId());
 
                         return cartMapper.toCartResponse(updatedCart);

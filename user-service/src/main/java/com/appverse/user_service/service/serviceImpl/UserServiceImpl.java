@@ -22,6 +22,8 @@ import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -40,6 +42,7 @@ public class UserServiceImpl implements UserService {
     private final CurrentUserProvider currentUserProvider;
 
     @Override
+    @CacheEvict(value = "userProfileByKeycloakId", key = "#root.target.currentUserProvider.getCurrentUser().id()")
     public UserResponse updateUserProfile(UpdateUserProfileRequest userRequest) {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         User user = userRepository.findByKeycloakUserId(keycloakUserId)
@@ -52,6 +55,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @CacheEvict(value = "userProfileByKeycloakId", key = "#root.target.currentUserProvider.getCurrentUser().id()")
     @Transactional
     public void deleteMyAccount() {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
@@ -79,6 +83,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "userProfileByKeycloakId", key = "#root.target.currentUserProvider.getCurrentUser().id()")
     public UserResponse getMyprofile() {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         log.info(keycloakUserId + " - keycloak user Id");
@@ -93,6 +98,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
+    @CacheEvict(value = "userProfileByKeycloakId", key = "#keycloakUserId", condition = "#result != null")
+
     public UserResponse createUser(UserRequest userRequest) {
 
         log.info("🔥 createUser() started");

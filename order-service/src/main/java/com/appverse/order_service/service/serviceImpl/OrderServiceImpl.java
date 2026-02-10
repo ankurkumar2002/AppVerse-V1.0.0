@@ -15,6 +15,9 @@ import com.appverse.order_service.service.OrderService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,10 +38,11 @@ public class OrderServiceImpl implements OrderService {
 
     private static final String ORDER_EVENTS_TOPIC = "order-events";
 
-    /* ======================================================
-       CREATE ORDER
-       ====================================================== */
     @Override
+    @CacheEvict(
+        value = "ordersByUser",
+        key = "#userId"
+    )
     @Transactional
     public OrderResponse createOrder(String userId, CreateOrderRequest request) {
 
@@ -56,10 +60,11 @@ public class OrderServiceImpl implements OrderService {
         return orderMapper.toOrderResponse(savedOrder);
     }
 
-    /* ======================================================
-       PAYMENT UPDATE
-       ====================================================== */
     @Override
+    @CacheEvict(
+        value = {"orderById", "ordersByUser"},
+        allEntries = true
+    )
     @Transactional
     public OrderResponse processPaymentUpdate(PaymentUpdateDto dto) {
 
@@ -99,11 +104,13 @@ public class OrderServiceImpl implements OrderService {
                 && order.getOrderStatus().isFinal();
     }
 
-    /* ======================================================
-       CANCEL ORDER
-       ====================================================== */
+
     @Override
     @Transactional
+    @CacheEvict(
+        value = {"orderById", "ordersByUser"},
+        allEntries = true
+    )
     public OrderResponse cancelOrder(String orderId, String userId) {
 
         CustomerOrder order = orderRepository.findByIdAndUserId(orderId, userId)
@@ -131,14 +138,23 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+        value = "orderById",
+        key = "#orderId"
+    )
     public OrderResponse getOrderById(String orderId) {
         CustomerOrder order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
         return orderMapper.toOrderResponse(order);
     }
 
+
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(
+        value = "ordersByUser",
+        key = "#userId"
+    )
     public List<OrderResponse> getOrdersByUserId(String userId) {
         return orderRepository.findByUserIdOrderByCreatedAtDesc(userId)
                 .stream()

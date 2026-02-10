@@ -46,12 +46,7 @@ public class SecurityConfig {
         return http.build();
     }
 
-    /**
-     * 🔥 THIS IS THE IMPORTANT PART
-     * Combines:
-     * - Keycloak realm roles → ROLE_*
-     * - OAuth scopes → SCOPE_*
-     */
+    
     @Bean
     public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();

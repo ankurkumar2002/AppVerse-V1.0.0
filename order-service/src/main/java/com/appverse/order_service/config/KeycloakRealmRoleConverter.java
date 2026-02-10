@@ -24,7 +24,7 @@ public class KeycloakRealmRoleConverter implements Converter<Jwt, Collection<Gra
         var roles = (List<String>) realmAccess.get("roles");
 
         return roles.stream()
-                .map(roleName -> "ROLE_" + roleName) // Important: Spring expects roles prefixed with ROLE_
+                .map(roleName -> "ROLE_" + roleName.toUpperCase()) // Important: Spring expects roles prefixed with ROLE_
                 .map(SimpleGrantedAuthority::new)
                 .collect(Collectors.toList());
     }

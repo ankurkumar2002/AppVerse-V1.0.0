@@ -29,15 +29,8 @@ public class OrderController {
 
     private final OrderService orderService;
 
-    /**
-     * Creates a new order for the authenticated user.
-     *
-     * @param createOrderRequest The request body containing order items.
-     * @param jwt                The JWT token of the authenticated user.
-     * @return ResponseEntity with the created order and HTTP status 201 (Created).
-     */
     @PostMapping
-    // @PreAuthorize("isAuthenticated()") // Or specific role like "ROLE_USER"
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderResponse> createOrder(
             @Valid @RequestBody CreateOrderRequest createOrderRequest,
             @AuthenticationPrincipal Jwt jwt) {
@@ -47,7 +40,7 @@ public class OrderController {
 
         OrderResponse createdOrder = orderService.createOrder(userId, createOrderRequest);
 
-        // Create location URI for the newly created resource
+        
         URI location = ServletUriComponentsBuilder
                 .fromCurrentRequest()
                 .path("/{id}")
@@ -58,15 +51,9 @@ public class OrderController {
         return ResponseEntity.created(location).body(createdOrder);
     }
 
-    /**
-     * Retrieves a specific order by its ID, ensuring it belongs to the authenticated user.
-     *
-     * @param orderId The ID of the order to retrieve.
-     * @param jwt     The JWT token of the authenticated user.
-     * @return ResponseEntity with the order details.
-     */
+   
     @GetMapping("/{orderId}")
-    // @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderResponse> getOrderById(
             @PathVariable String orderId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -74,31 +61,18 @@ public class OrderController {
         String userId = jwt.getSubject();
         log.info("Received request to get order ID: {} for user ID: {}", orderId, userId);
 
-        // Fetch the order. The service layer should ideally handle authorization
-        // (i.e., check if the order belongs to the userId), or you can do a preliminary check here.
-        // For simplicity, we'll assume the service layer handles it or it's an admin endpoint.
-        // If strict user ownership is required for this specific endpoint path:
-        // OrderResponse order = orderService.getOrderByIdAndUserId(orderId, userId);
+        
         OrderResponse order = orderService.getOrderById(orderId);
 
-        // Optional: Explicitly check if the fetched order's userId matches the JWT's userId
-        // if (!order.userId().equals(userId)) {
-        //     log.warn("User {} attempted to access order {} which does not belong to them.", userId, orderId);
-        //     throw new AccessDeniedException("You do not have permission to access this order.");
-        // }
+        
 
         log.info("Returning order ID: {} for user ID: {}", orderId, userId);
         return ResponseEntity.ok(order);
     }
 
-    /**
-     * Retrieves all orders for the authenticated user.
-     *
-     * @param jwt The JWT token of the authenticated user.
-     * @return ResponseEntity with a list of orders.
-     */
+   
     @GetMapping("/mine")
-    // @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<List<OrderResponse>> getMyOrders(@AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         log.info("Received request to get all orders for user ID: {}", userId);
@@ -107,18 +81,9 @@ public class OrderController {
         return ResponseEntity.ok(orders);
     }
 
-    /**
-     * Endpoint to receive payment status updates.
-     * This endpoint should be secured, typically callable only by the Payment Service
-     * (e.g., using client credentials or a pre-shared secret if not using user context for this call).
-     * For simplicity, showing it here. In a real system, this might be a separate controller
-     * or use a different authentication mechanism if called system-to-system.
-     *
-     * @param paymentUpdateDto The payment update details.
-     * @return ResponseEntity with the updated order.
-     */
-    @PostMapping("/internal/payment-update") // Using a distinct path for internal updates
-    @PreAuthorize("hasAuthority('SCOPE_INTERNAL_SERVICE') or hasRole('SYSTEM')") // Example for service-to-service auth
+    
+    @PostMapping("/internal/payment-update")
+    @PreAuthorize("hasAuthority('SCOPE_INTERNAL_SERVICE') or hasRole('SYSTEM')") 
     public ResponseEntity<OrderResponse> handlePaymentUpdate(
             @Valid @RequestBody PaymentUpdateDto paymentUpdateDto) {
         log.info("Received payment update for order ID: {}", paymentUpdateDto.orderId());
@@ -127,15 +92,9 @@ public class OrderController {
         return ResponseEntity.ok(updatedOrder);
     }
 
-    /**
-     * Allows an authenticated user to cancel their own order if it's in a cancellable state.
-     *
-     * @param orderId The ID of the order to cancel.
-     * @param jwt The JWT token of the authenticated user.
-     * @return ResponseEntity with the cancelled order.
-     */
+    
     @PostMapping("/{orderId}/cancel")
-    // @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<OrderResponse> cancelMyOrder(
             @PathVariable String orderId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -146,14 +105,7 @@ public class OrderController {
         return ResponseEntity.ok(cancelledOrder);
     }
 
-    // --- Admin Endpoints (Example - secure these appropriately with ADMIN roles) ---
-
-    /**
-     * Admin endpoint to get any order by ID.
-     *
-     * @param orderId The ID of the order.
-     * @return The order details.
-     */
+   
     @GetMapping("/admin/{orderId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<OrderResponse> getAnyOrderByIdForAdmin(@PathVariable String orderId) {
@@ -162,12 +114,7 @@ public class OrderController {
         return ResponseEntity.ok(order);
     }
 
-    /**
-     * Admin endpoint to get all orders for a specific user.
-     *
-     * @param userId The ID of the user.
-     * @return List of orders for the user.
-     */
+    
     @GetMapping("/admin/user/{userId}")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<OrderResponse>> getAllOrdersByUserIdForAdmin(@PathVariable String userId) {
