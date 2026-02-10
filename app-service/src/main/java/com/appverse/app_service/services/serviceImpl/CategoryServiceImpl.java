@@ -16,6 +16,9 @@ import com.appverse.app_service.services.CategoryService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j; // <<< IMPORT FOR LOGGING
+
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.kafka.core.KafkaTemplate; // <<< IMPORT
 import org.springframework.stereotype.Service;
@@ -34,9 +37,11 @@ public class CategoryServiceImpl implements CategoryService {
     private final KafkaTemplate<String, Object> kafkaTemplate; // <<< INJECT KAFKA TEMPLATE
 
     private static final String CATEGORY_EVENTS_TOPIC = "category-events"; // Define Kafka topic
-    // private static final String SERVICE_NAME = "app-service"; // If using EventMetaData
+    // private static final String SERVICE_NAME = "app-service"; // If using
+    // EventMetaData
 
     @Override
+    @CacheEvict(value = { "categoryById", "allCategories" }, allEntries = true)
     @Transactional
     public MessageResponse createCategory(CategoryRequest request) {
         log.info("Attempting to create category with name: '{}' and slug: '{}'", request.name(), request.slug());
@@ -55,8 +60,10 @@ public class CategoryServiceImpl implements CategoryService {
 
         try {
             Category category = categoryMapper.toEntity(request);
-            // Assuming Category entity has @CreatedDate and @LastModifiedDate handled by auditing
-            // If not, set them: category.setCreatedAt(Instant.now()); category.setUpdatedAt(Instant.now());
+            // Assuming Category entity has @CreatedDate and @LastModifiedDate handled by
+            // auditing
+            // If not, set them: category.setCreatedAt(Instant.now());
+            // category.setUpdatedAt(Instant.now());
 
             Category savedCategory = categoryRepository.save(category);
             log.info("Category '{}' created successfully with ID: {}", savedCategory.getName(), savedCategory.getId());
@@ -65,8 +72,7 @@ public class CategoryServiceImpl implements CategoryService {
             CategoryCreatedPayload payload = new CategoryCreatedPayload(
                     savedCategory.getId(),
                     savedCategory.getName(),
-                    savedCategory.getSlug()
-            );
+                    savedCategory.getSlug());
             // EventMetaData meta = new EventMetaData("CategoryCreated", SERVICE_NAME);
             kafkaTemplate.send(CATEGORY_EVENTS_TOPIC, savedCategory.getId(), payload); // Key by category ID
             log.info("Published CategoryCreatedEvent for category ID: {}", savedCategory.getId());
@@ -75,14 +81,16 @@ public class CategoryServiceImpl implements CategoryService {
 
         } catch (DataAccessException ex) { // More specific catch for DB issues during save
             log.error("Database error while creating category with name '{}': {}", request.name(), ex.getMessage(), ex);
-            throw new DatabaseOperationException("Failed to create category due to a database issue."+ ex);
+            throw new DatabaseOperationException("Failed to create category due to a database issue." + ex);
         } catch (RuntimeException ex) { // Catch other runtime issues from mapper or unexpected
-            log.error("Unexpected error while creating category with name '{}': {}", request.name(), ex.getMessage(), ex);
-            throw new CreationException("Failed to create category: " + ex.getMessage()+ ex);
+            log.error("Unexpected error while creating category with name '{}': {}", request.name(), ex.getMessage(),
+                    ex);
+            throw new CreationException("Failed to create category: " + ex.getMessage() + ex);
         }
     }
 
     @Override
+    @CacheEvict(value = { "categoryById", "allCategories" }, allEntries = true)
     @Transactional
     public MessageResponse updateCategory(String id, CategoryRequest request) {
         log.info("Attempting to update category with ID: {}", id);
@@ -91,31 +99,32 @@ public class CategoryServiceImpl implements CategoryService {
 
         // Check for name conflict only if name is changing
         if (request.name() != null && !request.name().isBlank() &&
-            !existingCategory.getName().equalsIgnoreCase(request.name()) &&
-            categoryRepository.existsByNameIgnoreCase(request.name())) {
+                !existingCategory.getName().equalsIgnoreCase(request.name()) &&
+                categoryRepository.existsByNameIgnoreCase(request.name())) {
             throw new DuplicateResourceException("Another category with name '" + request.name() + "' already exists.");
         }
 
         // Check for slug conflict only if slug is changing
         if (request.slug() != null && !request.slug().isBlank() &&
-            !existingCategory.getSlug().equalsIgnoreCase(request.slug()) &&
-            categoryRepository.existsBySlugIgnoreCase(request.slug())) {
+                !existingCategory.getSlug().equalsIgnoreCase(request.slug()) &&
+                categoryRepository.existsBySlugIgnoreCase(request.slug())) {
             throw new DuplicateResourceException("Another category with slug '" + request.slug() + "' already exists.");
         }
 
         try {
             categoryMapper.updateFromDto(request, existingCategory); // This updates fields on existingCategory
-            // existingCategory.setUpdatedAt(Instant.now()); // Usually handled by @LastModifiedDate
+            // existingCategory.setUpdatedAt(Instant.now()); // Usually handled by
+            // @LastModifiedDate
 
             Category updatedCategory = categoryRepository.save(existingCategory);
-            log.info("Category ID {} updated successfully. New name: '{}'", updatedCategory.getId(), updatedCategory.getName());
+            log.info("Category ID {} updated successfully. New name: '{}'", updatedCategory.getId(),
+                    updatedCategory.getName());
 
             // --- Publish CategoryUpdatedEvent ---
             CategoryUpdatedPayload payload = new CategoryUpdatedPayload(
                     updatedCategory.getId(),
                     updatedCategory.getName(),
-                    updatedCategory.getSlug()
-            );
+                    updatedCategory.getSlug());
             // EventMetaData meta = new EventMetaData("CategoryUpdated", SERVICE_NAME);
             kafkaTemplate.send(CATEGORY_EVENTS_TOPIC, updatedCategory.getId(), payload);
             log.info("Published CategoryUpdatedEvent for category ID: {}", updatedCategory.getId());
@@ -124,19 +133,21 @@ public class CategoryServiceImpl implements CategoryService {
 
         } catch (DataAccessException ex) {
             log.error("Database error while updating category ID {}: {}", id, ex.getMessage(), ex);
-            throw new DatabaseOperationException("Failed to update category due to a database issue."+ ex);
+            throw new DatabaseOperationException("Failed to update category due to a database issue." + ex);
         } catch (RuntimeException ex) {
             log.error("Unexpected error while updating category ID {}: {}", id, ex.getMessage(), ex);
-            throw new UpdateOperationException("Unexpected error updating category: " + ex.getMessage()+ ex);
+            throw new UpdateOperationException("Unexpected error updating category: " + ex.getMessage() + ex);
         }
     }
 
     @Override
+    @CacheEvict(value = { "categoryById", "allCategories" }, allEntries = true)
     @Transactional
     public void deleteCategory(String id) {
         log.info("Attempting to delete category with ID: {}", id);
         Category categoryToDelete = categoryRepository.findById(id) // Fetch to get details for event
-                .orElseThrow(() -> new ResourceNotFoundException("Category not found with ID: " + id + ", cannot delete."));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException("Category not found with ID: " + id + ", cannot delete."));
 
         try {
             categoryRepository.deleteById(id);
@@ -155,11 +166,12 @@ public class CategoryServiceImpl implements CategoryService {
 
         } catch (DataAccessException ex) {
             log.error("Database error while deleting category ID {}: {}", id, ex.getMessage(), ex);
-            throw new DatabaseOperationException("Database error while deleting category."+ ex);
+            throw new DatabaseOperationException("Database error while deleting category." + ex);
         }
     }
 
     @Override
+    @Cacheable(value = "categoryById", key = "#id")
     @Transactional(readOnly = true)
     public CategoryResponse getCategoryById(String id) {
         log.debug("Fetching category by ID: {}", id);
@@ -169,6 +181,7 @@ public class CategoryServiceImpl implements CategoryService {
     }
 
     @Override
+    @Cacheable("allCategories")
     @Transactional(readOnly = true)
     public List<CategoryResponse> getAll() {
         log.debug("Fetching all categories.");

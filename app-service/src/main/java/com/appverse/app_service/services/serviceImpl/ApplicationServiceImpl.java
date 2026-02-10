@@ -7,6 +7,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -59,10 +61,8 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final Executor applicationTaskExecutor;
     private final ApplicationValidator applicationValidator;
 
-    // NOTE:
-    // If any async media upload fails, orphan files may remain.
-    // This can be handled later via a cleanup job or outbox-based workflow.
     @Override
+    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
     public MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail,
             List<MultipartFile> screenshots, List<ScreenshotRequest> metadata, String developerId) {
 
@@ -189,6 +189,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     // }
 
     @Override
+    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
     @Transactional
     public MessageResponse updateApplication(String id, UpdateApplicationRequest request,
             MultipartFile thumbnail,
@@ -249,6 +250,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
     @Transactional
     public void deleteApplication(String id, String developerId) {
         log.info("Attempting to delete application with ID: {}", id);
@@ -264,6 +266,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    @Cacheable(value = "applicationById", key = "#id")
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationById(String id) {
         log.debug("Fetching application by ID: {}", id);
@@ -273,6 +276,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    @Cacheable("allApplications")
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getAllApplications() {
         log.debug("Fetching all applications.");

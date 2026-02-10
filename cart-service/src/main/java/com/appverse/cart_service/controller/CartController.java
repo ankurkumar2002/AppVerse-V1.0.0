@@ -26,7 +26,7 @@ public class CartController {
 
     
     @GetMapping("/mine")
-    // @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CartResponse> getMyCart(@AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         log.info("Request to get or create cart for user ID: {}", userId);
@@ -36,7 +36,7 @@ public class CartController {
 
  
     @PostMapping("/mine/items")
-    // @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CartResponse> addItemToMyCart(
             @Valid @RequestBody AddItemToCartRequest addItemRequest,
             @AuthenticationPrincipal Jwt jwt) {
@@ -49,7 +49,7 @@ public class CartController {
 
 
     @PutMapping("/mine/items/{applicationId}")
-    // @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CartResponse> updateMyCartItemQuantity(
             @PathVariable String applicationId,
             @Valid @RequestBody UpdateCartItemQuantityRequest updateQuantityRequest,
@@ -63,7 +63,7 @@ public class CartController {
 
 
     @DeleteMapping("/mine/items/{applicationId}")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CartResponse> removeItemFromMyCart(
             @PathVariable String applicationId,
             @AuthenticationPrincipal Jwt jwt) {
@@ -75,7 +75,7 @@ public class CartController {
 
 
     @DeleteMapping("/mine")
-    @PreAuthorize("isAuthenticated()")
+    @PreAuthorize("hasRole('USER')")
     public ResponseEntity<CartResponse> clearMyCart(@AuthenticationPrincipal Jwt jwt) {
         String userId = jwt.getSubject();
         log.info("Request to clear cart for user ID: {}", userId);

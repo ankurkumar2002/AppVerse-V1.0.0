@@ -54,7 +54,7 @@ public class ApplicationController {
     private final ObjectMapper objectMapper;
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    @PreAuthorize("hasRole('developer')")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<MessageResponse> create(
             @RequestPart("request") String requestJson,
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
@@ -88,6 +88,7 @@ public class ApplicationController {
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<MessageResponse> update(
             @PathVariable String id,
             @RequestPart("request") String requestJson, // Changed to String
@@ -116,17 +117,20 @@ public class ApplicationController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<Void> delete(@PathVariable String id, @AuthenticationPrincipal Jwt jwt) {
         applicationService.deleteApplication(id, jwt.getSubject());
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER', 'DEVELOPER')")
     public ResponseEntity<ApplicationResponse> getById(@PathVariable String id) {
         return ResponseEntity.ok(applicationService.getApplicationById(id));
     }
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('USER', 'DEVELOPER')")
     public ResponseEntity<?> getAll() {
         logger.info("APP-SERVICE: /api/apps getAll() called. Attempting repository.findAll().");
         try {
@@ -142,6 +146,7 @@ public class ApplicationController {
     }
 
     @GetMapping("/my-apps")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<?> getMyApplications(@AuthenticationPrincipal Jwt jwt) {
         String developerId = jwt.getSubject(); // or another claim like preferred_username or email
 
@@ -157,25 +162,25 @@ public class ApplicationController {
         }
     }
 
-    @GetMapping("/api/apps/test")
-    public String testEndpoint() {
-        return "App service test endpoint is working!";
-    }
+    // @GetMapping("/api/apps/test")
+    // public String testEndpoint() {
+    //     return "App service test endpoint is working!";
+    // }
 
-    @GetMapping("/test")
-    public ResponseEntity<?> test(@AuthenticationPrincipal Jwt jwt) {
-        if (jwt != null) {
-            return ResponseEntity.ok(jwt.getClaims());
-        } else {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No JWT token present");
-        }
-    }
+    // @GetMapping("/test")
+    // public ResponseEntity<?> test(@AuthenticationPrincipal Jwt jwt) {
+    //     if (jwt != null) {
+    //         return ResponseEntity.ok(jwt.getClaims());
+    //     } else {
+    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No JWT token present");
+    //     }
+    // }
 
-    @GetMapping("/test-auth")
-    public ResponseEntity<String> testAuth(Authentication authentication) {
-        System.out.println("Authorities: " + authentication.getAuthorities());
-        return ResponseEntity.ok("Auth OK");
-    }
+    // @GetMapping("/test-auth")
+    // public ResponseEntity<String> testAuth(Authentication authentication) {
+    //     System.out.println("Authorities: " + authentication.getAuthorities());
+    //     return ResponseEntity.ok("Auth OK");
+    // }
 
     
     @GetMapping("/images/{type}/{filename:.+}")

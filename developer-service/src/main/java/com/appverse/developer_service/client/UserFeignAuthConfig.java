@@ -7,8 +7,10 @@ import org.springframework.security.oauth2.jwt.Jwt;
 
 import feign.RequestInterceptor;
 import feign.RequestTemplate;
+import lombok.extern.slf4j.Slf4j;
 
 @Configuration
+@Slf4j
 public class UserFeignAuthConfig {
     
     @Bean
@@ -18,6 +20,7 @@ public class UserFeignAuthConfig {
             System.out.println("AUTH IN FEIGN: "+auth);
 
             if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
+                log.info(jwt.getTokenValue());
                 template.header("Authorization", "Bearer "+jwt.getTokenValue());
             }
         };

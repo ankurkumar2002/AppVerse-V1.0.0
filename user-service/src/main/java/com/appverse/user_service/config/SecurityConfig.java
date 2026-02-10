@@ -1,11 +1,17 @@
 package com.appverse.user_service.config;
 
+import java.util.*;
+import java.util.stream.Stream;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
@@ -14,7 +20,6 @@ import org.springframework.security.web.SecurityFilterChain;
 @EnableMethodSecurity
 public class SecurityConfig {
 
-    // Define common paths for SpringDoc/Swagger UI
     private static final String[] SWAGGER_UI_PATHS = {
             "/swagger-ui.html",
             "/swagger-ui/**",
@@ -29,30 +34,48 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-            .authorizeHttpRequests(authorize -> authorize
-                // Allow access to Swagger UI and API docs without authentication
+            .authorizeHttpRequests(auth -> auth
                 .requestMatchers(SWAGGER_UI_PATHS).permitAll()
-
-                // Secure your cart service API endpoints
-                .requestMatchers("/api/v1/carts/**").authenticated() // Assuming this is your cart API base path
-
-                // All other requests (if any not covered above) should be authenticated
                 .anyRequest().authenticated()
             )
             .oauth2ResourceServer(oauth2 -> oauth2
-                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter())) // Your custom converter
-                // OR if you don't need custom role mapping from JWT in this service immediately:
-                // .jwt(Customizer.withDefaults()) // Simpler default JWT validation
+                .jwt(jwt -> jwt.jwtAuthenticationConverter(jwtAuthenticationConverter()))
             )
-            .csrf(AbstractHttpConfigurer::disable); // Disable CSRF for stateless APIs
+            .csrf(AbstractHttpConfigurer::disable);
 
         return http.build();
     }
 
-    private JwtAuthenticationConverter jwtAuthenticationConverter() {
+    
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        // Make sure KeycloakRealmRoleConverter is accessible here (e.g., in a shared module or copied)
-        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRealmRoleConverter());
+        converter.setJwtGrantedAuthoritiesConverter(this::extractAuthorities);
         return converter;
+    }
+
+    private Collection<GrantedAuthority> extractAuthorities(Jwt jwt) {
+        Set<GrantedAuthority> authorities = new HashSet<>();
+
+        /* ========= REALM ROLES ========= */
+        Map<String, Object> realmAccess =
+                (Map<String, Object>) jwt.getClaims().get("realm_access");
+
+        if (realmAccess != null && realmAccess.get("roles") instanceof List<?> roles) {
+            roles.forEach(role ->
+                authorities.add(new SimpleGrantedAuthority(
+                        "ROLE_" + role.toString().toUpperCase()))
+            );
+        }
+
+        /* ========= SCOPES ========= */
+        Object scopeClaim = jwt.getClaims().get("scope");
+        if (scopeClaim != null) {
+            Stream.of(scopeClaim.toString().split(" "))
+                .map(scope -> new SimpleGrantedAuthority("SCOPE_" + scope))
+                .forEach(authorities::add);
+        }
+
+        return authorities;
     }
 }

@@ -18,8 +18,10 @@ public interface DeveloperService {
 
     DeveloperResponse getMyDeveloper();
 
+    DeveloperResponse getDeveloper() throws AccessDeniedException;
+
     boolean existsByKeycloakUserId(String keycloakUserId);
-    
+
     DeveloperEmailResponse getDeveloperEmail(String developerId);
 
 }

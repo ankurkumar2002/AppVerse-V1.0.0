@@ -17,9 +17,11 @@ import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class ServiceTokenProvider {
 
     private final WebClient webClient;
@@ -51,6 +53,7 @@ public class ServiceTokenProvider {
 
             CachedToken newToken = fetchNewToken();
             cachedToken.set(newToken);
+            log.info("Token: "+newToken);
             return newToken.token();
         }
 
@@ -61,6 +64,7 @@ public class ServiceTokenProvider {
         formData.add("grant_type", "client_credentials");
         formData.add("client_id", clientId);
         formData.add("client_secret", clientSecret);
+        formData.add("scope", "internal");
 
         JsonNode body = webClient.post()
                 .uri(tokenUri)

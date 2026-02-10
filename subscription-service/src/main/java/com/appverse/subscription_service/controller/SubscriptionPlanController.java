@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -22,6 +23,7 @@ public class SubscriptionPlanController {
     private final SubscriptionPlanService subscriptionPlanService;
 
     @PostMapping("/internal")
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<SubscriptionPlanResponse> createDeveloperSubscriptionPlan(
             @Valid @RequestBody InternalPlanCreationRequest request) {
 
@@ -35,18 +37,21 @@ public class SubscriptionPlanController {
     }
 
     @PostMapping("/{planId}/activate")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<Void> activatePlan(@PathVariable String planId) {
         subscriptionPlanService.activatePlan(planId);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/{planId}/deactivate")
+    @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<Void> deactivatePlan(@PathVariable String planId) {
         subscriptionPlanService.deactivatePlan(planId);
         return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/application/{applicationId}")
+    @PreAuthorize("hasAnyRole('USER', 'DEVELOPER')")
     public ResponseEntity<List<SubscriptionPlanResponse>> getPlansByApplication(
             @PathVariable String applicationId) {
 

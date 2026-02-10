@@ -2,6 +2,8 @@ package com.appverse.subscription_service.services.serviceImpl;
 
 import java.util.List;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,11 +28,12 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     private final SubscriptionMapper mapper;
 
     @Override
+    @CacheEvict(value = "plansByApplication", key = "#request.applicationId()")
     @Transactional
     public SubscriptionPlanResponse createDeveloperPlan(InternalPlanCreationRequest request) {
 
-        SubscriptionPlanBillingInterval interval =
-                SubscriptionPlanBillingInterval.valueOf(request.billingInterval().toUpperCase());
+        SubscriptionPlanBillingInterval interval = SubscriptionPlanBillingInterval
+                .valueOf(request.billingInterval().toUpperCase());
 
         SubscriptionPlan plan = SubscriptionPlan.builder()
                 .name(request.displayName())
@@ -49,6 +52,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
+    @CacheEvict(value = "plansByApplication", allEntries = true)
     public void activatePlan(String planId) {
         SubscriptionPlan plan = getPlan(planId);
         plan.setStatus(SubscriptionPlanStatus.ACTIVE);
@@ -63,6 +67,7 @@ public class SubscriptionPlanServiceImpl implements SubscriptionPlanService {
     }
 
     @Override
+    @Cacheable(value = "plansByApplication", key = "#applicationId")
     public List<SubscriptionPlanResponse> getPlansByApplicationId(String applicationId) {
         return planRepository.findByApplicationIdAndStatus(applicationId, SubscriptionPlanStatus.ACTIVE)
                 .stream()
