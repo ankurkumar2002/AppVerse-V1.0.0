@@ -1,6 +1,5 @@
 package com.appverse.api_gateway.client;
 
-
 import java.time.Instant;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -20,11 +19,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Component
-@RequiredArgsConstructor
-@Slf4j
 public class ServiceTokenProvider {
 
     private final WebClient webClient;
+
+    public ServiceTokenProvider(WebClient webClient) {
+        this.webClient = webClient;
+    }
 
     @Value("${keycloak.token-uri}")
     private String tokenUri;
@@ -53,7 +54,6 @@ public class ServiceTokenProvider {
 
             CachedToken newToken = fetchNewToken();
             cachedToken.set(newToken);
-            log.info("Token: "+newToken);
             return newToken.token();
         }
 
