@@ -20,11 +20,16 @@ import com.appverse.api_gateway.client.UserClient;
 import lombok.RequiredArgsConstructor;
 
 @Component
-@RequiredArgsConstructor
 public class GatewayAuthorizationFilter {
 
     private final UserClient userClient;
     private final DeveloperClient developerClient;
+
+    public GatewayAuthorizationFilter(UserClient userClient,
+                                      DeveloperClient developerClient) {
+        this.userClient = userClient;
+        this.developerClient = developerClient;
+    }
 
     public ServerResponse authorize(
             ServerRequest request,

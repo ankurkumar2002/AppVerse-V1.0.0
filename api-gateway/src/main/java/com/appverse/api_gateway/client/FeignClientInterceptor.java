@@ -7,13 +7,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 @Component
-@RequiredArgsConstructor
 public class FeignClientInterceptor implements RequestInterceptor {
 
     private static final String AUTH_HEADER = "Authorization";
     private static final String BEARER = "Bearer ";
 
     private final ServiceTokenProvider serviceTokenProvider;
+
+     public FeignClientInterceptor(ServiceTokenProvider serviceTokenProvider) {
+        this.serviceTokenProvider = serviceTokenProvider;
+    }
 
     @Override
     public void apply(RequestTemplate template) {
