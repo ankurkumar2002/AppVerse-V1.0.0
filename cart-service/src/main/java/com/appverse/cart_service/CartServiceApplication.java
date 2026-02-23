@@ -6,7 +6,6 @@ import org.springframework.cloud.openfeign.EnableFeignClients;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
-@EnableFeignClients // ****** ADD THIS ANNOTATION ******
 @EnableJpaAuditing // Keep this if you were using it for JPA Auditing
 public class CartServiceApplication {
 
