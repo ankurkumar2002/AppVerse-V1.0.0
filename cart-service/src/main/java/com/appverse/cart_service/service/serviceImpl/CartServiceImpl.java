@@ -304,7 +304,7 @@ public class CartServiceImpl implements CartService {
                 }
         }
 
-        private void publishAfterCommit(Runnable action) {
+        public void publishAfterCommit(Runnable action) {
                 TransactionSynchronizationManager.registerSynchronization(
                                 new TransactionSynchronization() {
                                         @Override

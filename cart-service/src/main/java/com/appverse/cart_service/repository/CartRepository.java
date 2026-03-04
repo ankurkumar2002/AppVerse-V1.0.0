@@ -11,13 +11,6 @@ import java.util.UUID;
 @Repository
 public interface CartRepository extends JpaRepository<Cart, UUID> {
 
-    /**
-     * Finds a cart by the user's ID (Keycloak User ID).
-     * Since userId is unique in the Cart entity, this should return at most one cart.
-     *
-     * @param userId The Keycloak User ID.
-     * @return An Optional containing the Cart if found, or an empty Optional otherwise.
-     */
     Optional<Cart> findByUserId(String userId);
 
 }
