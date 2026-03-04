@@ -33,6 +33,7 @@ import com.appverse.cart_service.model.Cart;
 import com.appverse.cart_service.publisher.KafkaEventPublisher;
 import com.appverse.cart_service.repository.CartRepository;
 import com.appverse.cart_service.service.serviceImpl.CartServiceImpl;
+import com.appverse.cart_service.model.CartItem;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
@@ -114,4 +115,20 @@ public class CartServiceImplTest {
 
         verify(cartRepository).save(cart);
     }
+
+    @Test
+    void shouldUpdateCartItemQuantity(){
+        String userId = "user123";
+        String appId = "app1";
+        String cartId = "cart1";
+        String cartItemId = "cartItemId1";
+        UUID id = new UUID(2, 3);
+        
+        Cart cart = new Cart(id, userId, null,new ArrayList<>(),null, null);
+        CartItem cartItem = new CartItem(id, cart, appId, "Test app", 1, new BigDecimal("500"), "INR", false, "http://google.com", Instant.now());
+
+        
+    }
+
+
 }
