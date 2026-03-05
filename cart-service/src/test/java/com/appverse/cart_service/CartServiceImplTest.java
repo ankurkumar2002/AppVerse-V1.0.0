@@ -92,12 +92,12 @@ public class CartServiceImplTest {
                 Instant.now(),
                 Double.valueOf(4.5),
                 Integer.valueOf(10));
-        
+
         Cart cart = Cart.builder()
-                    .id(UUID.randomUUID())
-                    .userId(userId)
-                    .items(new ArrayList<>())
-                    .build();
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .items(new ArrayList<>())
+                .build();
 
         when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
 
@@ -117,18 +117,73 @@ public class CartServiceImplTest {
     }
 
     @Test
-    void shouldUpdateCartItemQuantity(){
+    void shouldUpdateCartItemQuantity() {
+
         String userId = "user123";
         String appId = "app1";
-        String cartId = "cart1";
-        String cartItemId = "cartItemId1";
-        UUID id = new UUID(2, 3);
-        
-        Cart cart = new Cart(id, userId, null,new ArrayList<>(),null, null);
-        CartItem cartItem = new CartItem(id, cart, appId, "Test app", 1, new BigDecimal("500"), "INR", false, "http://google.com", Instant.now());
 
-        
+        AddItemToCartRequest request = new AddItemToCartRequest(appId, 2);
+
+        Cart cart = Cart.builder()
+                .id(UUID.randomUUID())
+                .userId(userId)
+                .items(new ArrayList<>())
+                .build();
+
+        CartItem cartItem = CartItem.builder()
+                .id(UUID.randomUUID())
+                .cart(cart)
+                .applicationId(appId)
+                .applicationName("Test App")
+                .quantity(1)
+                .unitPrice(new BigDecimal("500"))
+                .currency("INR")
+                .isFree(false)
+                .thumbnailUrl("http://google.com")
+                .addedAt(Instant.now())
+                .build();
+
+        cart.addItem(cartItem);
+
+        ApplicationDetails appDetails = new ApplicationDetails(
+                appId,
+                "Test App",
+                null,
+                null,
+                null,
+                null,
+                new BigDecimal("500"),
+                "INR",
+                false,
+                List.of(),
+                null,
+                null,
+                null,
+                "thumb.jpg",
+                List.of(),
+                null,
+                null,
+                null,
+                List.of(),
+                "ACTIVE",
+                Instant.now(),
+                Instant.now(),
+                Instant.now(),
+                4.5,
+                10);
+
+        when(cartRepository.findByUserId(userId)).thenReturn(Optional.of(cart));
+        when(applicationServiceClient.getApplicationDetails(appId)).thenReturn(appDetails);
+        when(cartRepository.save(any())).thenAnswer(i -> i.getArgument(0));
+        when(cartMapper.toCartResponse(any())).thenReturn(mock(CartResponse.class));
+
+        CartResponse response = cartServiceImpl.addItemTocart(userId, request);
+
+        assertNotNull(response);
+        assertEquals(1, cart.getItems().size());
+        assertEquals(3, cart.getItems().get(0).getQuantity());
+
+        verify(cartRepository).save(cart);
+
     }
-
-
 }
