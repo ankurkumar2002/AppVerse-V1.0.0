@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
-import { KeycloakInstance, KeycloakTokenParsed } from 'keycloak-js';
-import { keycloak } from '../../../auth/keycloak';
+import { KeycloakTokenParsed } from 'keycloak-js';
+import { getKeycloak } from '../../auth/keycloak';
 
 interface ExtendedKeycloakToken extends KeycloakTokenParsed {
   preferred_username?: string;
@@ -9,66 +9,74 @@ interface ExtendedKeycloakToken extends KeycloakTokenParsed {
   family_name?: string;
 }
 
-@Injectable({ providedIn: 'root' })
+@Injectable({
+  providedIn: 'root'
+})
 export class AuthService {
-  // private keycloakInstance: KeycloakInstance;
-
-  // constructor(private keycloakService: KeycloakService) {
-  //   this.keycloakInstance = this.keycloakService.getKeycloakInstance();
-  // }
 
   get tokenParsed(): ExtendedKeycloakToken | undefined {
-    return keycloak.tokenParsed as ExtendedKeycloakToken;
+    return getKeycloak().tokenParsed as ExtendedKeycloakToken;
   }
 
-  /**
-   * Login depending on role (user or developer)
-   */
   async login(role: 'user' | 'developer'): Promise<void> {
-  const clientId = role === 'developer' ? 'developer-client-frontend' : 'user-client-frontend';
-  const redirectUri =
-    role === 'developer'
-      ? `${window.location.origin}/developer/dashboard`
-      : `${window.location.origin}/user/dashboard`;
+    const clientId =
+      role === 'developer'
+        ? 'developer-client-frontend'
+        : 'user-client-frontend';
 
-  const url = `http://localhost:8181/realms/appverse/protocol/openid-connect/auth?` +
-    `client_id=${clientId}` +   // 👈 use role-specific clientId
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&response_type=code&scope=openid`;
+    localStorage.setItem('auth_client', clientId);
 
-  window.location.href = url;
-}
+    const redirectUri =
+      role === 'developer'
+        ? `${window.location.origin}/developer/dashboard`
+        : `${window.location.origin}/user/dashboard`;
 
-async register(role: 'user' | 'developer'): Promise<void> {
-  const clientId = role === 'developer' ? 'developer-client-frontend' : 'user-client-frontend';
-  const redirectUri =
-    role === 'developer'
-      ? `${window.location.origin}/developer/create`
-      : `${window.location.origin}/post-register?mode=${role}`;
+    const authUrl =
+      `http://localhost:8181/realms/appverse/protocol/openid-connect/auth` +
+      `?client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=openid`;
 
-  const url = `http://localhost:8181/realms/appverse/protocol/openid-connect/registrations?` +
-    `client_id=${clientId}` +   // 👈 role-specific clientId
-    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-    `&response_type=code&scope=openid`;
+    window.location.href = authUrl;
+  }
 
-  window.location.href = url;
-}
+  async register(role: 'user' | 'developer'): Promise<void> {
+    const clientId =
+      role === 'developer'
+        ? 'developer-client-frontend'
+        : 'user-client-frontend';
 
+    localStorage.setItem('auth_client', clientId);
 
+    const redirectUri =
+      role === 'developer'
+        ? `${window.location.origin}/developer/create`
+        : `${window.location.origin}/user/profile-completion`;
 
+    const authUrl =
+      `http://localhost:8181/realms/appverse/protocol/openid-connect/auth` +
+      `?client_id=${clientId}` +
+      `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+      `&response_type=code` +
+      `&scope=openid` +
+      `&register=true`;
+
+    window.location.href = authUrl;
+  }
 
   async logout(): Promise<void> {
-    await keycloak.logout({
-      redirectUri: window.location.origin,
-    })
+    await getKeycloak().logout({
+      redirectUri: window.location.origin
+    });
   }
 
   isLoggedIn(): boolean {
-    return keycloak.authenticated ?? false;
+    return getKeycloak().authenticated ?? false;
   }
 
-  getToken(): string | undefined{
-    return keycloak.token;
+  getToken(): string | undefined {
+    return getKeycloak().token;
   }
 
   getUsername(): string | undefined {
@@ -76,10 +84,10 @@ async register(role: 'user' | 'developer'): Promise<void> {
   }
 
   getDeveloperId(): string | null {
-    return keycloak.subject || null;
+    return getKeycloak().subject || null;
   }
 
   getUserRoles(): string[] {
-    return keycloak.realmAccess?.roles || [];
+    return getKeycloak().realmAccess?.roles || [];
   }
 }

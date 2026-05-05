@@ -38,11 +38,6 @@ class GatewayAuthorizationFilterTest {
 
     private GatewayAuthorizationFilter filter;
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        filter = new GatewayAuthorizationFilter(userClient, developerClient);
-    }
 
     private ServerRequest createRequestWithPrincipal(JwtAuthenticationToken auth) {
 

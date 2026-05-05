@@ -40,26 +40,27 @@ public class ApplicationValidator {
     }
 
     public void validateDeveloper(String developerId) {
-        String keycloakUserId  = developerId;
-        if (keycloakUserId  == null || keycloakUserId .isBlank()) {
-            log.warn("Developer ID is missing or empty. Attempting to use authenticated user context.");
+        if (developerId == null || developerId.isBlank()) {
             throw new BadRequestException("Developer ID is required for application creation.");
         }
 
         try {
-            log.debug("Validating developer ID: {}", keycloakUserId );
-            if (!developerClient.isDeveloperByKeycloakId(keycloakUserId )) {
-                throw new ResourceNotFoundException("Invalid or non-existent developer ID: " + keycloakUserId );
+            log.debug("Validating developer ID: {}", developerId);
+
+            boolean exists = developerClient.isDeveloperByKeycloakId(developerId);
+
+            if (!exists) {
+                throw new ResourceNotFoundException(
+                        "Invalid or non-existent developer ID: " + developerId);
             }
-            log.debug("Developer ID {} validated successfully.", keycloakUserId );
+
+            log.debug("Developer ID {} validated successfully.", developerId);
+
         } catch (FeignException ex) {
-            log.error("FeignException while validating developer ID {}: Status {}, Message: {}", keycloakUserId ,
-                    ex.status(), ex.getMessage(), ex);
+            log.error("Feign failure validating developer {}: {}", developerId, ex.getMessage(), ex);
+
             throw new BadRequestException(
-                    "Failed to validate developer ID. External service may be unavailable or ID is invalid.");
-        } catch (Exception e) {
-            log.error("Unexpected error while validating developer ID {}: {}", keycloakUserId , e.getMessage(), e);
-            throw new CreationException("Unexpected error during developer validation for ID: " + keycloakUserId );
+                    "Developer validation service unavailable or request failed.");
         }
     }
 

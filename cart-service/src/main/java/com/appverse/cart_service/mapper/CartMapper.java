@@ -11,7 +11,7 @@ import java.util.List;
 
 @Mapper(componentModel = "spring")
 public interface CartMapper {
-    // If Cart.id is UUID, this is fine. If it's String, adjust.
+    
     @Mapping(source = "id", target = "cartId")
     CartResponse toCartResponse(Cart cart);
     List<CartResponse> toCartResponseList(List<Cart> carts);

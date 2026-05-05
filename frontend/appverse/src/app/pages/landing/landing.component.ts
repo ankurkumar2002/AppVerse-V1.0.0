@@ -5,7 +5,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatMenuModule } from '@angular/material/menu';
-import { keycloak } from '../../auth/keycloak';
+import { AuthService } from '../../core/services/auth/auth.service';
 
 @Component({
   selector: 'app-landing',
@@ -24,34 +24,20 @@ import { keycloak } from '../../auth/keycloak';
 export class LandingComponent {
   isDarkMode = true;
 
+  constructor(private authService: AuthService) {
+  console.log('Landing loaded');
+}
+
   toggleTheme(): void {
     this.isDarkMode = !this.isDarkMode;
     document.body.classList.toggle('light-theme', !this.isDarkMode);
   }
 
-  // auth.service.ts
   login(role: 'user' | 'developer') {
-    const redirectUri =
-      role === 'developer'
-        ? `${window.location.origin}/developer/dashboard`
-        : `${window.location.origin}/user/dashboard`;
-
-    keycloak.login({ redirectUri });
+    this.authService.login(role);
   }
 
   register(role: 'user' | 'developer') {
-    const redirectUri =
-      role === 'developer'
-        ? `${window.location.origin}/developer/create`
-        : `${window.location.origin}/user/profile-completion`;
-
-    keycloak.login({
-      action: 'register',
-      redirectUri
-    });
+    this.authService.register(role);
   }
-
 }
-
-
-

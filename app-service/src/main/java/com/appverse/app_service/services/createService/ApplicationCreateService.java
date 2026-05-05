@@ -5,6 +5,7 @@ import com.appverse.app_service.model.Application;
 import org.springframework.stereotype.Component;
 
 import com.appverse.app_service.dto.ApplicationRequest;
+import com.appverse.app_service.enums.ApplicationStatus;
 
 @Component
 public class ApplicationCreateService {
@@ -28,8 +29,8 @@ public class ApplicationCreateService {
                 .supportUrl(request.supportUrl())
                 .developerId(developerId)
                 .tags(request.tags())
-                .status(request.status())
-                .publishedAt(request.publishedAt())
+                .status(ApplicationStatus.DRAFT)
+                .publishedAt(null)
                 .build();
     }
 }

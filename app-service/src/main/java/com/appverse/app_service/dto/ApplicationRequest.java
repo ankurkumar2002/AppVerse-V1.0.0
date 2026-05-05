@@ -1,6 +1,7 @@
 // === In app-service Project ===
 package com.appverse.app_service.dto;
 
+import com.appverse.app_service.enums.ApplicationStatus;
 import com.appverse.app_service.enums.MonetizationType;
 import jakarta.validation.Valid; // For validating nested DTOs
 import jakarta.validation.constraints.NotNull;
@@ -15,19 +16,14 @@ public record ApplicationRequest(
     String description,
     String version,
     String categoryId,
-    BigDecimal price, // Price for ONE_TIME_PURCHASE
+    BigDecimal price,
     String currency,
     boolean isFree,
     @NotNull MonetizationType monetizationType,
-
-
     List<@Valid DeveloperOfferedSubscriptionPlanDto> offeredSubscriptionPlans,
-
     List<String> platforms,
     String accessUrl,
     String websiteUrl,
     String supportUrl,
-    List<String> tags,
-    String status,
-    Instant publishedAt
+    List<String> tags
 ) {}

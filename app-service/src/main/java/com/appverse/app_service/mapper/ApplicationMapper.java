@@ -6,6 +6,7 @@ import com.appverse.app_service.dto.UpdateApplicationRequest;
 import com.appverse.app_service.model.Application;
 
 import org.mapstruct.Mapper;
+import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
 import org.mapstruct.ReportingPolicy;
@@ -23,10 +24,12 @@ import java.util.List;
 )
 public interface ApplicationMapper {
 
-ApplicationResponse toResponse(Application application);
+    ApplicationResponse toResponse(Application application);
 
     List<ApplicationResponse> toResponseList(List<Application> applications);
 
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "publishedAt", ignore = true)
     Application toEntity(ApplicationRequest request);
 
     void updateFromDto(UpdateApplicationRequest dto, @MappingTarget Application entity);

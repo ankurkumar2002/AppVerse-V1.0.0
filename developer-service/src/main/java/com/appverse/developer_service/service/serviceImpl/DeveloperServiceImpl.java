@@ -53,55 +53,66 @@ public class DeveloperServiceImpl implements DeveloperService {
     @Override
     @CacheEvict(value = { "developerByUser", "developerEmailById" }, allEntries = true)
     @Transactional
-    public MessageResponse createDeveloper(DeveloperRequest request) {
-
-        IdentityUserResponse me = currentUserProvider.getCurrentUser();
-
-        if (developerRepository.existsByKeycloakUserId(me.id())) {
-            throw new DuplicateResourceException("Developer profile already exists");
-        }
-
-        Developer developer = developerMapper.toEntity(request);
-        log.info(me.firstName() + " " + me.lastName());
-
-        developer.setKeycloakUserId(me.id());
-        developer.setUsername(me.username());
-        developer.setFirstName(me.firstName());
-        developer.setLastName(me.lastName());
-        developer.setEmail(me.email());
-        developer.setRole(Role.DEVELOPER);
-
-        Developer savedDeveloper = developerRepository.save(developer);
+    public MessageResponse createDeveloper(DeveloperRequest request) throws Exception {
 
         try {
-            identityClient.assignRoles(
-                    me.id(),
-                    new AssignRoleRequest(List.of("DEVELOPER")));
-        } catch (Exception ex) {
-            throw new RuntimeException("Failed to assign developer role", ex);
-        }
+            Authentication auth = SecurityContextHolder.getContext().getAuthentication();
 
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
-                DEVELOPER_EVENTS_TOPIC,
-                savedDeveloper.getId(),
-                new DeveloperProfileCreatedPayload(
-                        savedDeveloper.getId(),
-                        savedDeveloper.getKeycloakUserId(),
-                        savedDeveloper.getUsername(),
-                        savedDeveloper.getFirstName(),
-                        savedDeveloper.getLastName(),
-                        savedDeveloper.getEmail(),
-                        savedDeveloper.getDeveloperType(),
-                        savedDeveloper.getCompanyName(),
-                        savedDeveloper.getCreatedAt()));
+            System.out.println("AUTH IN CREATE DEVELOPER: " + auth);
+            System.out.println("PRINCIPAL: " + auth.getPrincipal());
 
-        future.whenComplete((result, ex) -> {
-            if (ex != null) {
-                log.error("Kafka publish failed for developer {}", savedDeveloper.getId(), ex);
+            IdentityUserResponse me = currentUserProvider.getCurrentUser();
+            System.out.println(me);
+
+            if (developerRepository.existsByKeycloakUserId(me.id())) {
+                throw new DuplicateResourceException("Developer profile already exists");
             }
-        });
 
-        return new MessageResponse("Developer created successfully", savedDeveloper.getId());
+            Developer developer = developerMapper.toEntity(request);
+            log.info(me.firstName() + " " + me.lastName());
+
+            developer.setKeycloakUserId(me.id());
+            developer.setUsername(me.username());
+            developer.setFirstName(me.firstName());
+            developer.setLastName(me.lastName());
+            developer.setEmail(me.email());
+            developer.setRole(Role.DEVELOPER);
+
+            Developer savedDeveloper = developerRepository.save(developer);
+
+            try {
+                identityClient.assignRoles(
+                        me.id(),
+                        new AssignRoleRequest(List.of("DEVELOPER")));
+            } catch (Exception ex) {
+                throw new RuntimeException("Failed to assign developer role", ex);
+            }
+
+            // CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
+            // DEVELOPER_EVENTS_TOPIC,
+            // savedDeveloper.getId(),
+            // new DeveloperProfileCreatedPayload(
+            // savedDeveloper.getId(),
+            // savedDeveloper.getKeycloakUserId(),
+            // savedDeveloper.getUsername(),
+            // savedDeveloper.getFirstName(),
+            // savedDeveloper.getLastName(),
+            // savedDeveloper.getEmail(),
+            // savedDeveloper.getDeveloperType(),
+            // savedDeveloper.getCompanyName(),
+            // savedDeveloper.getCreatedAt()));
+
+            // future.whenComplete((result, ex) -> {
+            // if (ex != null) {
+            // log.error("Kafka publish failed for developer {}", savedDeveloper.getId(),
+            // ex);
+            // }
+            // });
+
+            return new MessageResponse("Developer created successfully", savedDeveloper.getId());
+        } catch (Exception e) {
+            throw new Exception(e.getMessage());
+        }
     }
 
     @Override
@@ -125,31 +136,31 @@ public class DeveloperServiceImpl implements DeveloperService {
 
         Developer updatedDeveloper = developerRepository.save(developer);
 
-        CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
-                DEVELOPER_EVENTS_TOPIC,
-                updatedDeveloper.getId(),
-                new DeveloperProfileUpdatedPayload(
-                        updatedDeveloper.getId(),
-                        updatedDeveloper.getKeycloakUserId(),
+        // CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
+        //         DEVELOPER_EVENTS_TOPIC,
+        //         updatedDeveloper.getId(),
+        //         new DeveloperProfileUpdatedPayload(
+        //                 updatedDeveloper.getId(),
+        //                 updatedDeveloper.getKeycloakUserId(),
 
-                        updatedDeveloper.getUsername(),
-                        updatedDeveloper.getFirstName(),
-                        updatedDeveloper.getLastName(),
-                        updatedDeveloper.getEmail(),
+        //                 updatedDeveloper.getUsername(),
+        //                 updatedDeveloper.getFirstName(),
+        //                 updatedDeveloper.getLastName(),
+        //                 updatedDeveloper.getEmail(),
 
-                        updatedDeveloper.getDeveloperType(),
-                        updatedDeveloper.getWebsite(),
-                        updatedDeveloper.getCompanyName(),
-                        updatedDeveloper.getBio(),
-                        updatedDeveloper.getLogoUrl(),
-                        updatedDeveloper.getLocation(),
+        //                 updatedDeveloper.getDeveloperType(),
+        //                 updatedDeveloper.getWebsite(),
+        //                 updatedDeveloper.getCompanyName(),
+        //                 updatedDeveloper.getBio(),
+        //                 updatedDeveloper.getLogoUrl(),
+        //                 updatedDeveloper.getLocation(),
 
-                        updatedDeveloper.getUpdatedAt()));
-        future.whenComplete((result, ex) -> {
-            if (ex != null) {
-                log.error("Kafka publish failed for developer {}", updatedDeveloper.getId(), ex);
-            }
-        });
+        //                 updatedDeveloper.getUpdatedAt()));
+        // future.whenComplete((result, ex) -> {
+        //     if (ex != null) {
+        //         log.error("Kafka publish failed for developer {}", updatedDeveloper.getId(), ex);
+        //     }
+        // });
 
         return new MessageResponse("Developer updated successfully", updatedDeveloper.getId());
     }
@@ -195,14 +206,15 @@ public class DeveloperServiceImpl implements DeveloperService {
                 });
     }
 
-    @Override
-    @Cacheable(value = "developerByUser", key = "#root.target.currentUserProvider.getCurrentUser().id()")
-    @Transactional(readOnly = true)
     public DeveloperResponse getMyDeveloper() {
         IdentityUserResponse me = currentUserProvider.getCurrentUser();
+        return getDeveloperByKeycloakId(me.id());
+    }
 
+    @Cacheable(value = "developerByUser", key = "#keycloakUserId")
+    public DeveloperResponse getDeveloperByKeycloakId(String keycloakUserId) {
         Developer developer = developerRepository
-                .findByKeycloakUserId(me.id())
+                .findByKeycloakUserId(keycloakUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("Developer profile not found"));
 
         return developerMapper.toResponse(developer);

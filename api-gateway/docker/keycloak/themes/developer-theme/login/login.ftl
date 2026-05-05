@@ -1,96 +1,125 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
-    <title>Login</title>
+    <title>Developer Login</title>
 
     <style>
         body {
-            background: #0d1117;
-            color: #e6edf3;
-            font-family: 'Segoe UI', sans-serif;
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: radial-gradient(circle at top left, #1f2937, #0f172a);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
         }
+
+        .card {
+            width: 420px;
+            padding: 40px;
+            background: rgba(17,24,39,0.92);
+            border: 1px solid #334155;
+            border-radius: 18px;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+        }
+
         h2 {
-            color: #58a6ff;
             text-align: center;
-            margin-bottom: 20px;
+            color: #60a5fa;
+            margin-bottom: 8px;
         }
-        .container {
-            width: 400px;
-            margin: 100px auto;
-            padding: 30px;
-            background: #161b22;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+
+        p {
+            text-align: center;
+            color: #94a3b8;
+            margin-bottom: 24px;
         }
-        .form-group {
-            margin-bottom: 15px;
-        }
-        .form-group input {
+
+        input {
             width: 100%;
-            padding: 8px;
-            border-radius: 4px;
-            border: 1px solid #30363d;
-            background: #0d1117;
-            color: #e6edf3;
+            padding: 14px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            border: 1px solid #334155;
+            background: #0f172a;
+            color: white;
+            box-sizing: border-box;
         }
-        .form-buttons {
-            text-align: center;
-            margin-top: 20px;
-        }
-        .form-buttons input[type="submit"] {
-            background-color: #238636;
+
+        input[type="submit"] {
+            background: #2563eb;
             border: none;
-            padding: 10px 20px;
-            color: #ffffff;
-            font-weight: bold;
-            border-radius: 4px;
             cursor: pointer;
+            font-weight: 600;
         }
-        .form-buttons input[type="submit"]:hover {
-            background-color: #2ea043;
-        }
+
         a {
-            color: #58a6ff;
+            color: #60a5fa;
             text-decoration: none;
         }
-        a:hover {
-            text-decoration: underline;
+
+        .footer {
+            text-align: center;
+            margin-top: 14px;
         }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h2>Developer Login</h2>
-            <#if message?has_content>
-      <div class="alert" style="
+
+        .error-box {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
             background: #2d333b;
             border: 1px solid #da3633;
             color: #f85149;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            text-align: center;">
-        Invalid Username or Password
-      </div>
-    </#if>
-        <form id="kc-form-login" onsubmit="login.disabled = true; return true;" action="${url.loginAction}" method="post">
-            <div class="form-group">
-                <input tabindex="1" id="username" name="username" type="text" placeholder="Username" value="${(login.username!'')}" autofocus autocomplete="off"/>
-            </div>
-            <div class="form-group">
-                <input tabindex="2" id="password" name="password" type="password" placeholder="Password" autocomplete="off"/>
-            </div>
-            <div class="form-buttons">
-                <input tabindex="3" name="login" id="kc-login" type="submit" value="Log In"/>
-            </div>
-        </form>
+        }
+    </style>
+</head>
 
-        <#if realm.resetPasswordAllowed>
-            <div style="text-align:center; margin-top:10px;">
-                <a href="${url.loginResetCredentialsUrl}">Forgot Password?</a>
-            </div>
-        </#if>
+<body style="visibility:hidden;">
+
+<div class="card">
+    <h2>Developer Portal</h2>
+    <p>Build. Publish. Manage your apps.</p>
+
+    <#if message?has_content>
+        <div class="error-box">
+            ${kcSanitize(message.summary)?no_esc}
+        </div>
+    </#if>
+
+    <form action="${url.loginAction}" method="post">
+        <input name="username"
+               placeholder="Username"
+               value="${(login.username!'')}"
+               required />
+
+        <input name="password"
+               type="password"
+               placeholder="Password"
+               required />
+
+        <input type="submit" value="Sign In" />
+    </form>
+
+    <div class="footer">
+        <a id="register-link" href="${url.registrationUrl}">
+            New developer? Create account
+        </a>
     </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('register') === 'true') {
+        window.onload = () => {
+            document.getElementById('register-link')?.click();
+        };
+    } else {
+        document.body.style.visibility = 'visible';
+    }
+</script>
+
 </body>
 </html>

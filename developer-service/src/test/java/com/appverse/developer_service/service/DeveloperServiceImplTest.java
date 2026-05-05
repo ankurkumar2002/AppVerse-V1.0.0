@@ -77,7 +77,7 @@ public class DeveloperServiceImplTest {
     }
 
     @Test
-    void createDeveloper_success(){
+    void createDeveloper_success() throws Exception{
 
         CompletableFuture<SendResult<String, Object>> future = CompletableFuture.completedFuture(null);
 
@@ -105,6 +105,8 @@ public class DeveloperServiceImplTest {
         when(currentUserProvider.getCurrentUser()).thenReturn(currentUser);
         when(developerRepository.findById("dev-1")).thenReturn(Optional.of(developer));
         when(null);
+
+        
     }
 
 }

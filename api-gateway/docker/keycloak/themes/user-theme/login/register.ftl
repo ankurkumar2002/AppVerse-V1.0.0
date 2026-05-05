@@ -1,86 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>User Portal 👤 - Register</title>
+    <meta charset="UTF-8">
+    <title>User Register</title>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1d3557, #457b9d);
-            color: #f1faee;
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
         }
-        .container {
-            background: #ffffff;
-            color: #333;
-            padding: 2rem;
-            border-radius: 10px;
+
+        .card {
             width: 400px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            padding: 36px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
         }
+
         h2 {
-            margin-bottom: 1rem;
             text-align: center;
-            color: #1d3557;
+            color: #1e3a8a;
+            margin-bottom: 8px;
         }
-        label {
-            display: block;
-            margin: 0.5rem 0 0.2rem;
-            font-size: 0.9rem;
-            color: #555;
+
+        p {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 24px;
         }
+
         input {
             width: 100%;
-            padding: 0.6rem;
-            margin-bottom: 1rem;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            font-size: 0.95rem;
+            padding: 14px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            box-sizing: border-box;
         }
-        button {
-            width: 100%;
-            padding: 0.7rem;
-            background: #457b9d;
+
+        input[type="submit"] {
+            background: #2563eb;
             color: white;
-            font-size: 1rem;
             border: none;
-            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
         }
-        button:hover {
-            background: #1d3557;
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 14px;
+        }
+
+        .error-box {
+            margin-top: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #ffe5e5;
+            border: 1px solid #ff4d4d;
+            color: #cc0000;
         }
     </style>
 </head>
 <body>
-<div class="container">
-    <h2>Create Your User Account</h2>
-    <form id="kc-register-form" action="${url.registrationAction}" method="post">
 
-        <label for="firstName">First Name</label>
-        <input id="firstName" name="firstName" type="text" value="${(register.formData.firstName!'')}" required>
+<div class="card">
+    <h2>Create User Account</h2>
+    <p>Join AppVerse and explore applications.</p>
 
-        <label for="lastName">Last Name</label>
-        <input id="lastName" name="lastName" type="text" value="${(register.formData.lastName!'')}" required>
+    <form action="${url.registrationAction}" method="post">
 
-        <label for="email">Email</label>
-        <input id="email" name="email" type="email" value="${(register.formData.email!'')}" required>
+        <input name="firstName" placeholder="First Name" value="${(register.formData.firstName!'')}" required />
+        <input name="lastName" placeholder="Last Name" value="${(register.formData.lastName!'')}" required />
+        <input name="username" placeholder="Username" value="${(register.formData.username!'')}" required />
+        <input type="email" name="email" placeholder="Email" value="${(register.formData.email!'')}" required />
+        <input type="password" name="password" placeholder="Password" required />
+        <input type="password" name="password-confirm" placeholder="Confirm Password" required />
 
-        <label for="username">Username</label>
-        <input id="username" name="username" type="text" value="${(register.formData.username!'')}" required>
-
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" required>
-
-        <label for="password-confirm">Confirm Password</label>
-        <input id="password-confirm" name="password-confirm" type="password" required>
-
-        <button type="submit">Register</button>
+        <input type="submit" value="Create User Account" />
     </form>
+
+    <#if messagesPerField.existsError('username','firstName','lastName','email','password','password-confirm')>
+        <div class="error-box">
+            <#list ['username','firstName','lastName','email','password','password-confirm'] as field>
+                <#if messagesPerField.existsError(field)>
+                    <div>${kcSanitize(messagesPerField.getFirstError(field))?no_esc}</div>
+                </#if>
+            </#list>
+        </div>
+    </#if>
+
+    <div class="footer">
+        <a href="${url.loginUrl}">Already have an account? Sign In</a>
+    </div>
 </div>
+
 </body>
 </html>

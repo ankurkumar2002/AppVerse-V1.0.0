@@ -1,6 +1,7 @@
 package com.appverse.app_service.services.serviceImpl;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -9,10 +10,8 @@ import java.util.concurrent.Executor;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.dao.DataAccessException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -25,6 +24,7 @@ import com.appverse.app_service.dto.DeveloperOfferedSubscriptionPlanDto;
 import com.appverse.app_service.dto.MessageResponse;
 import com.appverse.app_service.dto.ScreenshotRequest;
 import com.appverse.app_service.dto.UpdateApplicationRequest;
+import com.appverse.app_service.enums.ApplicationStatus;
 import com.appverse.app_service.exception.BadRequestException;
 import com.appverse.app_service.exception.CreationException;
 import com.appverse.app_service.exception.DatabaseOperationException;
@@ -72,26 +72,55 @@ public class ApplicationServiceImpl implements ApplicationService {
         applicationValidator.validateMonetizationAndPlans(request);
 
         Application application = applicationCreateService.toEntity(request, developerId);
+        application.setStatus(ApplicationStatus.DRAFT);
+        application.setPublishedAt(null);
         adjustPricingAndFlags(application);
+        log.info("Process moving forward");
+        CompletableFuture<Void> developerValidationFuture = CompletableFuture.runAsync(() -> {
+            try {
+                log.info("Async validation task started");
 
-        CompletableFuture<Void> developerValidationFuture = CompletableFuture.runAsync(
-                () -> applicationValidator.validateDeveloper(developerId), applicationTaskExecutor);
+                applicationValidator.validateDeveloper(developerId);
 
-        CompletableFuture<String> thumbnailUploadFuture = CompletableFuture.supplyAsync(
-                () -> applicationMediaService.uploadThumbnail(thumbnail, request.name()), applicationTaskExecutor);
+                log.info("Async validation task COMPLETED");
+            } catch (Exception e) {
+                log.error("Async validation task FAILED", e);
+                throw e;
+            }
+        }, applicationTaskExecutor);
 
-        CompletableFuture<List<Screenshot>> screenshotUploadFuture = CompletableFuture.supplyAsync(
-                () -> applicationMediaService.uploadScreenshots(screenshots, metadata, request.name()),
-                applicationTaskExecutor);
+        log.info("Thumbnail filename: {}", thumbnail.getOriginalFilename());
 
-        waitFor(developerValidationFuture, thumbnailUploadFuture, screenshotUploadFuture);
+        for (MultipartFile file : screenshots) {
+            log.info("Screenshot filename: {}", file.getOriginalFilename());
+        }
 
-        application.setThumbnailUrl(thumbnailUploadFuture.join());
-        application.setScreenshots(screenshotUploadFuture.join());
+        String thumbnailUrl = applicationMediaService.uploadThumbnail(thumbnail, request.name());
+
+        List<Screenshot> screenshotEntities = applicationMediaService.uploadScreenshots(screenshots, metadata,
+                request.name());
+
+        log.info("Before waitFor");
+        waitFor(developerValidationFuture);
+        log.info("After waitFor");
+
+        // waitFor(developerValidationFuture, thumbnailUploadFuture,
+        // screenshotUploadFuture);
+
+        application.setThumbnailUrl(thumbnailUrl);
+        application.setScreenshots(screenshotEntities);
+
+        log.info("Data is going to be pushed");
+
+        log.info(application.toString());
 
         Application savedApplication = applicationRepository.save(application);
 
-        applicationEventPublisher.publishCreated(savedApplication);
+        log.info(savedApplication.toString());
+
+        log.info(savedApplication + " data is pushed");
+
+        // applicationEventPublisher.publishCreated(savedApplication);
 
         log.info("Application processing complete for ID: {}", savedApplication.getId());
         return new MessageResponse("Application created successfully", savedApplication.getId());
@@ -282,5 +311,95 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.debug("Fetching all applications.");
         List<Application> applications = applicationRepository.findAll();
         return applicationMapper.toResponseList(applications);
+    }
+
+    @Override
+    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
+    @Transactional
+    public MessageResponse updateApplicationStatus(
+            String appId,
+            ApplicationStatus newStatus,
+            String developerId) {
+
+        log.info("Updating status of application {} to {}", appId, newStatus);
+
+        Application app = applicationRepository.findById(appId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Application not found with ID: " + appId));
+
+        if (!app.getDeveloperId().equals(developerId)) {
+            throw new AccessDeniedException("You do not own this application");
+        }
+
+        validateStatusTransition(app.getStatus(), newStatus);
+
+        app.setStatus(newStatus);
+
+        if (newStatus == ApplicationStatus.PUBLISHED) {
+            validateReadyForPublish(app);
+
+            if (app.getPublishedAt() == null) {
+                app.setPublishedAt(Instant.now());
+            }
+        }
+
+        applicationRepository.save(app);
+
+        log.info("Application {} status updated to {}", appId, newStatus);
+
+        return new MessageResponse(
+                "Application status updated to " + newStatus,
+                appId);
+    }
+
+    private void validateStatusTransition(
+            ApplicationStatus current,
+            ApplicationStatus target) {
+
+        if (current == target) {
+            throw new BadRequestException(
+                    "Application is already in status: " + target);
+        }
+
+        switch (current) {
+            case DRAFT -> {
+                if (target != ApplicationStatus.PUBLISHED &&
+                        target != ApplicationStatus.ARCHIVED) {
+                    throw new BadRequestException(
+                            "Invalid transition from DRAFT to " + target);
+                }
+            }
+
+            case PUBLISHED -> {
+                if (target != ApplicationStatus.UNPUBLISHED &&
+                        target != ApplicationStatus.ARCHIVED) {
+                    throw new BadRequestException(
+                            "Invalid transition from PUBLISHED to " + target);
+                }
+            }
+
+            case UNPUBLISHED -> {
+                if (target != ApplicationStatus.PUBLISHED &&
+                        target != ApplicationStatus.ARCHIVED) {
+                    throw new BadRequestException(
+                            "Invalid transition from UNPUBLISHED to " + target);
+                }
+            }
+        }
+    }
+
+    private void validateReadyForPublish(Application app) {
+        if (app.getThumbnailUrl() == null || app.getThumbnailUrl().isBlank()) {
+            throw new BadRequestException("Thumbnail required before publishing.");
+        }
+
+        if (app.getScreenshots() == null || app.getScreenshots().isEmpty()) {
+            throw new BadRequestException("At least one screenshot required.");
+        }
+
+        if (app.getDescription() == null || app.getDescription().isBlank()) {
+            throw new BadRequestException("Description required before publishing.");
+        }
+
     }
 }

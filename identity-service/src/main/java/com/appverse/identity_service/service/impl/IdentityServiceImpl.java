@@ -3,6 +3,9 @@ package com.appverse.identity_service.service.impl;
 import com.appverse.identity_service.dto.IdentityUserResponse;
 import com.appverse.identity_service.keycloakClient.KeycloakClient;
 import com.appverse.identity_service.service.IdentityService;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,6 +17,7 @@ import java.util.List;
 import java.util.logging.Logger;
 
 @Service
+@Slf4j
 public class IdentityServiceImpl implements IdentityService {
 
     @Autowired
@@ -22,12 +26,13 @@ public class IdentityServiceImpl implements IdentityService {
     @Value("${keycloak.realm}")
     private String realm = "";
 
-    private static final Logger log = Logger.getLogger(IdentityServiceImpl.class.getName());
 
     @Override
     public IdentityUserResponse getUserById(String keycloakUserId) {
+        System.out.println(keycloakUserId);
 
         UserRepresentation user = keycloak.getUser(keycloakUserId);
+        System.out.println(user.getEmail());
 
         return new IdentityUserResponse(
                 user.getId(),
@@ -40,6 +45,7 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Override
     public void assignRole(String keycloakUserId, List<String> roles) {
+        System.out.println(roles);
         if (roles == null || roles.isEmpty()) {
             return;
         }
@@ -56,19 +62,33 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Override
     public IdentityUserResponse getCurrentUser(Jwt jwt) {
-        if (jwt == null) {
-            throw new IllegalStateException("Invalid authentication context");
+        try {
+            System.out.println(jwt);
+            if (jwt == null) {
+                throw new IllegalStateException("Invalid authentication context");
+            }
+
+            log.info("===== CURRENT JWT CLAIMS =====");
+            log.info("SUB: " + jwt.getSubject());
+            log.info("preferred_username: " + jwt.getClaim("preferred_username"));
+            log.info("email: " + jwt.getClaim("email"));
+            log.info("given_name: " + jwt.getClaim("given_name"));
+            log.info("family_name: " + jwt.getClaim("family_name"));
+            log.info("azp/client_id: " + jwt.getClaim("azp"));
+            log.info("ALL CLAIMS: " + jwt.getClaims());
+
+            return new IdentityUserResponse(
+                    jwt.getSubject(),
+                    jwt.getClaim("preferred_username"),
+                    jwt.getClaim("email"),
+                    Boolean.TRUE.equals(jwt.getClaim("email_verified")),
+                    jwt.getClaim("given_name"),
+                    jwt.getClaim("family_name"));
+
+        } catch (Exception e) {
+            log.error("Create developer failed", e);
+            throw e;
         }
-
-        return new IdentityUserResponse(
-                jwt.getSubject(),
-                jwt.getClaim("preferred_username"),
-                jwt.getClaim("email"),
-                Boolean.TRUE.equals(jwt.getClaim("email_verified")),
-                jwt.getClaim("given_name"),
-                jwt.getClaim("family_name"));
     }
-
-    
 
 }

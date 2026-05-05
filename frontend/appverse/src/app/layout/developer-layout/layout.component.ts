@@ -8,10 +8,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { Subject, takeUntil } from 'rxjs';
+import { getKeycloak } from '../../core/auth/keycloak';
+import { DeveloperResponse } from '../../features/developer/models/developer-response';
+import { DeveloperService } from '../../features/developer/services/developer.service';
 
-import { DeveloperService } from '../../core/services/developer/developer.service';
-import { DeveloperResponse } from '../../models/developer-response';
-import { keycloak } from '../../auth/keycloak';
+
 
 @Component({
   selector: 'app-layout',
@@ -61,14 +62,14 @@ export class LayoutComponent implements OnInit, OnDestroy {
       .subscribe({
         next: dev => {
           this.developer = dev;
-          this.profileGradient = this.getDeterministicGradient(dev?.name ?? 'default');
+          this.profileGradient = this.getDeterministicGradient(dev?.firstName ?? 'default');
           this.cdRef.detectChanges();
         }
       });
   }
 
   async logout(): Promise<void> {
-    await keycloak.logout({
+    await getKeycloak().logout({
       redirectUri: `${window.location.origin}/landing`,
     });
   }

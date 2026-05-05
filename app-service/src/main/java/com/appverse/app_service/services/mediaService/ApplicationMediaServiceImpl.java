@@ -58,7 +58,6 @@ public class ApplicationMediaServiceImpl implements ApplicationMediaService {
         if (newScreenshotFiles == null) {
             return null;
         }
-
         List<CompletableFuture<?>> allFutures = new ArrayList<>();
 
         if (oldScreenshots != null && !oldScreenshots.isEmpty()) {
@@ -72,6 +71,7 @@ public class ApplicationMediaServiceImpl implements ApplicationMediaService {
         }
 
         List<CompletableFuture<Screenshot>> uploadFutures = new ArrayList<>();
+
         if (!newScreenshotFiles.isEmpty()) {
             log.debug("Scheduling upload of {} new screenshots for app '{}'", newScreenshotFiles.size(), appName);
             for (int i = 0; i < newScreenshotFiles.size(); i++) {
@@ -171,34 +171,47 @@ public class ApplicationMediaServiceImpl implements ApplicationMediaService {
 
     public List<Screenshot> uploadScreenshots(List<MultipartFile> screenshots, List<ScreenshotRequest> metadata,
             String applicationName) {
+        log.info("Entered uploadScreenshots");
         List<Screenshot> screenshotEntities = new ArrayList<>();
         if (screenshots == null || screenshots.isEmpty()) {
+            log.info("No screenshots provided");
             return screenshotEntities;
         }
 
         for (int i = 0; i < screenshots.size(); i++) {
+            log.info("Processing screenshot index {}", i);
             MultipartFile screenshotFile = screenshots.get(i);
             if (screenshotFile != null && !screenshotFile.isEmpty()) {
                 try {
+                    log.info("About to copy screenshot index {}", i);
                     String newFileName = UUID.randomUUID() + "_" + System.currentTimeMillis() + "_"
                             + Paths.get(screenshotFile.getOriginalFilename()).getFileName();
                     Path path = Paths.get(uploadDir, "screenshots", newFileName);
                     Files.createDirectories(path.getParent());
                     Files.copy(screenshotFile.getInputStream(), path);
+                    log.info("Copied screenshot index {}", i);
 
                     String screenshotUrl = "/uploads/screenshots/" + newFileName;
                     ScreenshotRequest meta = (metadata != null && i < metadata.size()) ? metadata.get(i) : null;
 
+                    log.info("Metadata extracted for screenshot {}: {}", i, meta);
+
+                    log.info("Before building screenshot object");
                     Screenshot screenshotObj = Screenshot.builder()
                             .id(UUID.randomUUID().toString())
                             .imageUrl(screenshotUrl)
-                            .order(meta != null ? meta.order() : i)
+                            .order(meta != null && meta.order() != null ? meta.order() : i)
                             .caption(meta != null ? meta.caption() : null)
                             .build();
 
+                    log.info("After building screenshot object");
+
                     screenshotEntities.add(screenshotObj);
+
+                    log.info("Added screenshot object");
                     log.debug("Screenshot {} uploaded to: {} and DB URL set to: {}", i + 1, path.toAbsolutePath(),
                             screenshotUrl);
+                            log.info("Returning uploadScreenshots with {} screenshots", screenshotEntities.size());
                 } catch (IOException e) {
                     log.error("Failed to upload screenshot #{} for application {}: {}", i + 1, applicationName,
                             e.getMessage(), e);

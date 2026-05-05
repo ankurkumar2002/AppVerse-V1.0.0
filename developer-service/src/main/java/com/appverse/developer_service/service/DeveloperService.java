@@ -10,13 +10,13 @@ import com.appverse.developer_service.dto.MessageResponse;
 
 public interface DeveloperService {
 
-    MessageResponse createDeveloper(DeveloperRequest request);
+    MessageResponse createDeveloper(DeveloperRequest request) throws Exception;
 
     MessageResponse updateDeveloper(String id, DeveloperRequest request) throws AccessDeniedException;
 
     void deleteDeveloper(String id) throws AccessDeniedException;
 
-    DeveloperResponse getMyDeveloper();
+    DeveloperResponse getMyDeveloper() throws Exception;
 
     DeveloperResponse getDeveloper() throws AccessDeniedException;
 
