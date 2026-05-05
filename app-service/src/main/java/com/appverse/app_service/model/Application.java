@@ -1,6 +1,7 @@
 package com.appverse.app_service.model;
 
-import com.appverse.app_service.enums.MonetizationType; 
+import com.appverse.app_service.enums.ApplicationStatus;
+import com.appverse.app_service.enums.MonetizationType;
 import lombok.Data;
 import lombok.Builder;
 import lombok.NoArgsConstructor;
@@ -56,8 +57,6 @@ public class Application {
     @NotNull(message = "Monetization type cannot be null")
     private MonetizationType monetizationType;
 
-    
-
     @NotEmpty
     private List<@NotBlank String> platforms;
 
@@ -84,8 +83,8 @@ public class Application {
 
     private List<@NotBlank String> tags;
 
-    @NotBlank
-    private String status;
+    @Builder.Default
+    private ApplicationStatus status = ApplicationStatus.DRAFT;
 
     private Instant publishedAt;
 
@@ -101,8 +100,6 @@ public class Application {
 
     @Min(0)
     private Integer ratingCount;
-
-    
 
     public void ensureConsistency() {
         if (this.monetizationType == MonetizationType.FREE) {

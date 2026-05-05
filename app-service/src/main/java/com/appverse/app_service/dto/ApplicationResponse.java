@@ -1,6 +1,7 @@
 // === In app-service Project ===
 package com.appverse.app_service.dto;
 
+import com.appverse.app_service.enums.ApplicationStatus;
 import com.appverse.app_service.enums.MonetizationType; // <<< IMPORT ADDED
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -28,7 +29,7 @@ public record ApplicationResponse(
     String developerName,
     String categoryName,
     List<String> tags,
-    String status,
+    ApplicationStatus status,
     Instant publishedAt,
     Instant createdAt,
     Instant updatedAt,

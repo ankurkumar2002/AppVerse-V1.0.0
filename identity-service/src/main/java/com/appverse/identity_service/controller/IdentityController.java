@@ -18,9 +18,10 @@ public class IdentityController {
     private IdentityService identityService;
 
     @GetMapping("/me")
-    @PreAuthorize("hasAuthority('SCOPE_internal')")
+    @PreAuthorize("isAuthenticated()")
     public IdentityUserResponse me(
             @AuthenticationPrincipal Jwt jwt) {
+                System.out.println(jwt);
         return identityService.getCurrentUser(jwt);
     }
 

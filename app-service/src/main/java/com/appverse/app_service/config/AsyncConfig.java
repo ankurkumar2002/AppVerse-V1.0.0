@@ -20,6 +20,6 @@ public class AsyncConfig {
         executor.setQueueCapacity(25);
         executor.setThreadNamePrefix("AppCreate-");
         executor.initialize();
-        return new DelegatingSecurityContextAsyncTaskExecutor(executor);
+        return executor;
     }
 }

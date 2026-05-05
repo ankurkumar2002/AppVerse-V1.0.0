@@ -1,98 +1,122 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <title>User Portal 👤 - Login</title>
+    <meta charset="UTF-8">
+    <title>User Login</title>
+
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(135deg, #1d3557, #457b9d);
-            color: #f1faee;
+            margin: 0;
+            font-family: Inter, sans-serif;
+            background: linear-gradient(135deg, #dbeafe, #bfdbfe);
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
-            margin: 0;
+            min-height: 100vh;
         }
-        .container {
-            background: #ffffff;
-            color: #333;
-            padding: 2rem;
-            border-radius: 10px;
-            width: 350px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+
+        .card {
+            width: 400px;
+            padding: 36px;
+            background: white;
+            border-radius: 18px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.12);
         }
+
         h2 {
-            margin-bottom: 1rem;
             text-align: center;
-            color: #1d3557;
+            color: #1e3a8a;
+            margin-bottom: 8px;
         }
-        label {
-            display: block;
-            margin: 0.5rem 0 0.2rem;
-            font-size: 0.9rem;
-            color: #555;
+
+        p {
+            text-align: center;
+            color: #64748b;
+            margin-bottom: 24px;
         }
+
         input {
             width: 100%;
-            padding: 0.6rem;
-            margin-bottom: 1rem;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            font-size: 0.95rem;
+            padding: 14px;
+            margin-bottom: 14px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            box-sizing: border-box;
         }
-        button {
-            width: 100%;
-            padding: 0.7rem;
-            background: #457b9d;
+
+        input[type="submit"] {
+            background: #2563eb;
             color: white;
-            font-size: 1rem;
             border: none;
-            border-radius: 6px;
+            font-weight: 600;
             cursor: pointer;
         }
-        button:hover {
-            background: #1d3557;
-        }
-        .extra-links {
-            text-align: center;
-            margin-top: 1rem;
-        }
-        .extra-links a {
-            color: #457b9d;
+
+        a {
+            color: #2563eb;
             text-decoration: none;
-            font-size: 0.85rem;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 14px;
+        }
+
+        .error-box {
+            margin-bottom: 16px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #ffe5e5;
+            border: 1px solid #ff4d4d;
+            color: #cc0000;
         }
     </style>
 </head>
-<body>
-<div class="container">
-    <h2>User Login</h2>
+
+<body style="visibility:hidden;">
+
+<div class="card">
+    <h2>User Portal</h2>
+    <p>Discover and use amazing applications.</p>
+
     <#if message?has_content>
-      <div class="alert" style="
-            background: #2d333b;
-            border: 1px solid #da3633;
-            color: #f85149;
-            padding: 10px;
-            margin-bottom: 15px;
-            border-radius: 4px;
-            text-align: center;">
-        ${message.summary}
-      </div>
+        <div class="error-box">
+            ${kcSanitize(message.summary)?no_esc}
+        </div>
     </#if>
+
     <form action="${url.loginAction}" method="post">
-        <label for="username">Username or Email</label>
-        <input id="username" name="username" type="text" autofocus required>
+        <input name="username"
+               placeholder="Username or Email"
+               value="${(login.username!'')}"
+               required />
 
-        <label for="password">Password</label>
-        <input id="password" name="password" type="password" required>
+        <input name="password"
+               type="password"
+               placeholder="Password"
+               required />
 
-        <button type="submit">Login</button>
+        <input type="submit" value="Sign In" />
     </form>
 
-    <div class="extra-links">
-        <a href="${url.registrationUrl}">New user? Register here</a>
+    <div class="footer">
+        <a id="register-link" href="${url.registrationUrl}">
+            New user? Register here
+        </a>
     </div>
 </div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.get('register') === 'true') {
+        window.onload = () => {
+            document.getElementById('register-link')?.click();
+        };
+    } else {
+        document.body.style.visibility = 'visible';
+    }
+</script>
+
 </body>
 </html>

@@ -57,10 +57,10 @@
     <!-- Bottom Profile -->
     <div class="profile-section">
       <div class="profile-pic" [style.background]="profileGradient">
-        {{ developer?.name?.charAt(0) || 'U' }}
+        {{ developer?.firstName?.charAt(0) || 'U' }}
       </div>
       <div class="profile-info">
-        <span class="profile-name">{{ developer?.name || 'User' }}</span>
+        <span class="profile-name">{{ developer?.firstName || 'User' }}</span>
         <span class="profile-email">{{ developer?.email || 'user@example.com' }}</span>
       </div>
     </div>

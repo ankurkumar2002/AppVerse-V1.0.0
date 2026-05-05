@@ -6,7 +6,7 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatListModule } from '@angular/material/list';
 import { MatIconModule } from '@angular/material/icon';
 import { MatButtonModule } from '@angular/material/button';
-import { keycloak } from '../../auth/keycloak';
+import { getKeycloak } from '../../core/auth/keycloak';
 
 @Component({
   selector: 'app-user-layout',
@@ -33,7 +33,7 @@ export class UserLayoutComponent {
   }
 
   async logout(): Promise<void> {
-    await keycloak.logout({
+    await getKeycloak().logout({
       redirectUri: `${window.location.origin}/landing`,
     });
   }

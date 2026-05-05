@@ -31,7 +31,7 @@ public class DeveloperController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<MessageResponse> create(
-            @Validated(OnCreate.class) @RequestBody DeveloperRequest request) {
+            @Validated(OnCreate.class) @RequestBody DeveloperRequest request) throws Exception {
         log.error("🔥🔥 CONTROLLER HIT 🔥🔥");
         MessageResponse response = developerService.createDeveloper(request);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
@@ -56,14 +56,15 @@ public class DeveloperController {
 
     @GetMapping("/me")
     @PreAuthorize("hasRole('DEVELOPER')")
-    public ResponseEntity<DeveloperResponse> getDeveloperDetails() {
+    public ResponseEntity<DeveloperResponse> getDeveloperDetails() throws Exception {
+        log.info("CONTROLLER /me HIT");
         log.info(developerService.getMyDeveloper()+"");
         return ResponseEntity.ok(developerService.getMyDeveloper());
     }
 
     @GetMapping("/profile")
     @PreAuthorize("hasRole('DEVELOPER')")
-    public ResponseEntity<DeveloperResponse> getDeveloperProfile() throws AccessDeniedException {
+    public ResponseEntity<DeveloperResponse> getDeveloperProfile() throws Exception {
         log.info(developerService.getMyDeveloper()+"");
         return ResponseEntity.ok(developerService.getDeveloper());
     }
@@ -71,6 +72,7 @@ public class DeveloperController {
     @GetMapping("/exists/by-keycloak-id/{keycloakUserId}")
     @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<Boolean> existsByKeycloakId(@PathVariable String keycloakUserId) {
+        log.info("request is coming here in developer service");
         return ResponseEntity.ok(
                 developerService.existsByKeycloakUserId(keycloakUserId));
     }

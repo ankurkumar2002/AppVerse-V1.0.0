@@ -5,6 +5,7 @@ import com.appverse.app_service.dto.ApplicationResponse;
 import com.appverse.app_service.dto.MessageResponse;
 import com.appverse.app_service.dto.ScreenshotRequest;
 import com.appverse.app_service.dto.UpdateApplicationRequest;
+import com.appverse.app_service.enums.ApplicationStatus;
 import com.appverse.app_service.model.Application;
 import com.appverse.app_service.repository.ApplicationRepository;
 import com.appverse.app_service.services.ApplicationService;
@@ -65,7 +66,11 @@ public class ApplicationController {
         List<ScreenshotRequest> metadata = Collections.emptyList();
 
         try {
+            logger.info("RAW requestJson: {}", requestJson);
+
             request = objectMapper.readValue(requestJson, ApplicationRequest.class);
+
+            logger.info("Parsed request successfully: {}", request);
 
             if (metadataJson != null && !metadataJson.isBlank()) {
                 metadata = objectMapper.readValue(metadataJson, new TypeReference<List<ScreenshotRequest>>() {
@@ -84,7 +89,8 @@ public class ApplicationController {
         System.out.println("Metadata list created: " + (metadata != null));
         System.out.println("Metadata list size: " + (metadata != null ? metadata.size() : 0));
 
-        return ResponseEntity.ok(applicationService.createApplication(request, thumbnail, screenshots, metadata, jwt.getSubject()));
+        return ResponseEntity
+                .ok(applicationService.createApplication(request, thumbnail, screenshots, metadata, jwt.getSubject()));
     }
 
     @PutMapping("/{id}")
@@ -94,7 +100,9 @@ public class ApplicationController {
             @RequestPart("request") String requestJson, // Changed to String
             @RequestPart(value = "thumbnail", required = false) MultipartFile thumbnail,
             @RequestPart(value = "screenshots", required = false) List<MultipartFile> screenshots,
-            @RequestPart(value = "metadata", required = false) String metadataJson, @AuthenticationPrincipal Jwt jwt ) { // Changed to String
+            @RequestPart(value = "metadata", required = false) String metadataJson, @AuthenticationPrincipal Jwt jwt) { // Changed
+                                                                                                                        // to
+                                                                                                                        // String
 
         // --- Manually parse the JSON strings, just like in the create method ---
         UpdateApplicationRequest request;
@@ -113,7 +121,8 @@ public class ApplicationController {
         }
 
         // Call the service with the parsed objects
-        return ResponseEntity.ok(applicationService.updateApplication(id, request, thumbnail, screenshots, metadata, jwt.getSubject()));
+        return ResponseEntity.ok(
+                applicationService.updateApplication(id, request, thumbnail, screenshots, metadata, jwt.getSubject()));
     }
 
     @DeleteMapping("/{id}")
@@ -164,28 +173,28 @@ public class ApplicationController {
 
     // @GetMapping("/api/apps/test")
     // public String testEndpoint() {
-    //     return "App service test endpoint is working!";
+    // return "App service test endpoint is working!";
     // }
 
     // @GetMapping("/test")
     // public ResponseEntity<?> test(@AuthenticationPrincipal Jwt jwt) {
-    //     if (jwt != null) {
-    //         return ResponseEntity.ok(jwt.getClaims());
-    //     } else {
-    //         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No JWT token present");
-    //     }
+    // if (jwt != null) {
+    // return ResponseEntity.ok(jwt.getClaims());
+    // } else {
+    // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No JWT token
+    // present");
+    // }
     // }
 
     // @GetMapping("/test-auth")
     // public ResponseEntity<String> testAuth(Authentication authentication) {
-    //     System.out.println("Authorities: " + authentication.getAuthorities());
-    //     return ResponseEntity.ok("Auth OK");
+    // System.out.println("Authorities: " + authentication.getAuthorities());
+    // return ResponseEntity.ok("Auth OK");
     // }
 
-    
     @GetMapping("/images/{type}/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String type, @PathVariable String filename) {
-        
+
         if (!"thumbnails".equals(type) && !"screenshots".equals(type)) {
             logger.warn("Invalid image type requested: {}", type);
             return ResponseEntity.badRequest().build();
@@ -220,6 +229,21 @@ public class ApplicationController {
             logger.error("Image not found or not readable at: {}", file.toAbsolutePath());
             return ResponseEntity.notFound().build();
         }
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<MessageResponse> updateStatus(
+            @PathVariable String id,
+            @RequestParam ApplicationStatus status,
+            @AuthenticationPrincipal Jwt jwt) {
+
+        String developerId = jwt.getSubject();
+
+        return ResponseEntity.ok(
+                applicationService.updateApplicationStatus(
+                        id,
+                        status,
+                        developerId));
     }
 
 }

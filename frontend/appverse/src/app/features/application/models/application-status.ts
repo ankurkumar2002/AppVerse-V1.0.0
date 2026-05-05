@@ -1,0 +1,6 @@
+export enum ApplicationStatus {
+  DRAFT = 'DRAFT',
+  PUBLISHED = 'PUBLISHED',
+  UNPUBLISHED = 'UNPUBLISHED',
+  ARCHIVED = 'ARCHIVED'
+}

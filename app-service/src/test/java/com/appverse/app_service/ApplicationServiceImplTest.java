@@ -68,8 +68,23 @@ public class ApplicationServiceImplTest {
 
 	@Test
 	void createApplication_success() {
-		ApplicationRequest request = new ApplicationRequest(null, "Test App", null, "desc", "1.0", "cat1",
-				BigDecimal.ZERO, null, true, MonetizationType.FREE, null, null, null, null, null, null, null, null);
+		ApplicationRequest request = new ApplicationRequest(
+				null,
+				"Test",
+				null,
+				"desc",
+				"1.0",
+				"cat",
+				new BigDecimal("-10"),
+				"USD",
+				false,
+				MonetizationType.ONE_TIME_PURCHASE,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null);
 
 		Application app = new Application();
 		app.setId("app123");
@@ -94,7 +109,7 @@ public class ApplicationServiceImplTest {
 	void createApplication_negativePrice_shouldThrow() {
 		ApplicationRequest request = new ApplicationRequest(null, "Test", null, "desc", "1.0", "cat",
 				new BigDecimal("-10"), "USD", false, MonetizationType.ONE_TIME_PURCHASE, null, null, null, null, null,
-				null, null, null);
+				null);
 
 		Application app = new Application();
 		app.setMonetizationType(MonetizationType.ONE_TIME_PURCHASE);

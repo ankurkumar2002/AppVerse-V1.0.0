@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 import { Router, RouterOutlet } from '@angular/router';
-import { keycloak } from './auth/keycloak';
+import { getKeycloak } from './core/auth/keycloak';
 
 @Component({
   selector: 'app-root',
@@ -14,18 +14,9 @@ export class AppComponent implements OnInit {
 
   constructor(
     private router: Router
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
-    if (!keycloak.authenticated) {
-      return;
-    }
-
-    const token = keycloak.tokenParsed as any;
-    const roles: string[] = token?.realm_access?.roles ?? [];
-
-    if (roles.includes('DEVELOPER')) {
-      this.router.navigate(['/developer/dashboard']);
-    }
+    
   }
 }

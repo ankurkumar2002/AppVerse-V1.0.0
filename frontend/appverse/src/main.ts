@@ -9,8 +9,8 @@ import { provideAnimations } from '@angular/platform-browser/animations';
 
 import { AppComponent } from './app/app.component';
 import { routes } from './app/app.routes';
-import { initializeKeycloak } from './app/auth/keycloak-init.factory';
-import { authInterceptor } from './app/auth/auth.interceptor';
+import { initializeKeycloak } from './app/core/auth/keycloak-init.factory';
+import { authInterceptor } from './app/core/auth/auth.interceptor';
 
 bootstrapApplication(AppComponent, {
   providers: [
