@@ -43,12 +43,14 @@
               This prevents the rendering crash, allowing the table and paginator to display correctly.
             -->
             @if (app.status) {
-              <span class="status-badge" [ngClass]="'status-' + app.status.toLowerCase()">
-                {{ app.status }}
-              </span>
-              <button class="status-badge" [ngClass]="'status-' + app.status.toLowerCase()" type="submit">{{app.status}}</button>
+              <button class="status-badge" [ngClass]="'status-' + app.status.toLowerCase()" type="submit" (click)="updateApplicationStatus(app.id,app.status)">{{app.status}}</button>
+              <select name="application-status"  id="application-status" [value]="app.status" (change)="updateApplicationStatus($event, app)">
+                <option value="PUBLISHED">PUBLISH</option>
+                <option value="UNPUBLISHED">UNPUBLISH</option>
+                <option value="ARCHIVED">ARCHIVE</option>
+                <option value="PUBLISHED">PUBLISH</option>
+              </select>
             } @else {
-              <!-- This block will be displayed as a fallback if app.status is null -->
               <span class="status-badge status-unknown">
                 Unknown
               </span>

@@ -389,17 +389,21 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private void validateReadyForPublish(Application app) {
+        log.info("Checking publish readiness");
         if (app.getThumbnailUrl() == null || app.getThumbnailUrl().isBlank()) {
+            log.error("Thumbnail missing");
             throw new BadRequestException("Thumbnail required before publishing.");
         }
 
         if (app.getScreenshots() == null || app.getScreenshots().isEmpty()) {
+             log.error("Screenshots missing");
             throw new BadRequestException("At least one screenshot required.");
         }
 
-        if (app.getDescription() == null || app.getDescription().isBlank()) {
-            throw new BadRequestException("Description required before publishing.");
-        }
+        // if (app.getDescription() == null || app.getDescription().isBlank()) {
+        //     log.error("Description missing");
+        //     throw new BadRequestException("Description required before publishing.");
+        // }
 
     }
 }
