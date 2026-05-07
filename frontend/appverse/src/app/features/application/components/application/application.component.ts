@@ -8,12 +8,13 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatDialogModule, MatDialog } from '@angular/material/dialog';
 import { ApplicationService } from '../../services/application.service';
 import { ApplicationResponse } from '../../models/application-response';
-import { Router, RouterModule } from '@angular/router';
+import {  Router, RouterModule } from '@angular/router';
 
 // Imports for the new AdminLTE look
 import { MatCardModule } from '@angular/material/card';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatTooltipModule } from '@angular/material/tooltip';
+import { ApplicationStatus } from '../../models/application-status';
 
 @Component({
   selector: 'app-application',
@@ -86,5 +87,35 @@ export class ApplicationComponent implements OnInit {
         }
       });
     }
+  }
+
+  updateApplicationStatus(event: Event, app: ApplicationResponse): void {
+    const selectElement = event.target as HTMLSelectElement;
+
+    const previousStatus = app.status;
+
+    const newStatus = selectElement.value as ApplicationStatus;
+
+    if (previousStatus === newStatus) {
+      return;
+    }
+    
+    const confirmed = confirm(
+      `Are you sure you want to set status of application to ${newStatus}`
+    );
+
+    if (!confirmed) {
+      selectElement.value = previousStatus;
+      return;
+    }
+
+        this.applicationService.updateAppStatus(app.id,newStatus).subscribe({
+          next: () => app.status = newStatus,
+          error: (err) => {
+            console.error('Error Updating application status: ', err);
+            alert('Failed to update status.');
+            selectElement.value = previousStatus;
+          }
+        });
   }
 }

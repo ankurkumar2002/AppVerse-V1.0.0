@@ -10,18 +10,16 @@ import com.appverse.app_service.enums.ApplicationStatus;
 @Component
 public class ApplicationCreateService {
     public Application toEntity(ApplicationRequest request, String developerId) {
-        boolean derivedIsFree = request.isFree();
-        java.math.BigDecimal actualPrice = request.price();
 
-        return Application.builder()
+        Application app = Application.builder()
                 .name(request.name())
                 .tagline(request.tagline())
                 .description(request.description())
                 .version(request.version())
                 .categoryId(request.categoryId())
-                .price(actualPrice)
+                .price(request.price())
                 .currency(request.currency())
-                .isFree(derivedIsFree)
+                .isFree(request.isFree())
                 .monetizationType(request.monetizationType())
                 .platforms(request.platforms())
                 .accessUrl(request.accessUrl())
@@ -30,7 +28,10 @@ public class ApplicationCreateService {
                 .developerId(developerId)
                 .tags(request.tags())
                 .status(ApplicationStatus.DRAFT)
-                .publishedAt(null)
                 .build();
+
+        System.out.println("AFTER BUILD = " + app);
+
+        return app;
     }
 }
