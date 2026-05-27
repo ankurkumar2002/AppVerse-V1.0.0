@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import brave.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
@@ -21,6 +22,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.MediaTypeFactory;
@@ -120,7 +122,6 @@ public class ApplicationController {
                     "Invalid JSON format in 'request' or 'metadata' part", e);
         }
 
-        // Call the service with the parsed objects
         return ResponseEntity.ok(
                 applicationService.updateApplication(id, request, thumbnail, screenshots, metadata, jwt.getSubject()));
     }
@@ -171,26 +172,7 @@ public class ApplicationController {
         }
     }
 
-    // @GetMapping("/api/apps/test")
-    // public String testEndpoint() {
-    // return "App service test endpoint is working!";
-    // }
-
-    // @GetMapping("/test")
-    // public ResponseEntity<?> test(@AuthenticationPrincipal Jwt jwt) {
-    // if (jwt != null) {
-    // return ResponseEntity.ok(jwt.getClaims());
-    // } else {
-    // return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("No JWT token
-    // present");
-    // }
-    // }
-
-    // @GetMapping("/test-auth")
-    // public ResponseEntity<String> testAuth(Authentication authentication) {
-    // System.out.println("Authorities: " + authentication.getAuthorities());
-    // return ResponseEntity.ok("Auth OK");
-    // }
+    
 
     @GetMapping("/images/{type}/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String type, @PathVariable String filename) {
@@ -244,6 +226,13 @@ public class ApplicationController {
                         id,
                         status,
                         developerId));
+    }
+
+    @GetMapping("/online")
+    @PreAuthorize("hasAnyRole('USER', 'DEVELOPER')")
+    public ResponseEntity<Page<ApplicationResponse>> getPublishedApplications(@RequestParam(defaultValue = "0") int page,
+        @RequestParam(defaultValue = "10") int size){
+            return ResponseEntity.ok(applicationService.getPublishedApplications(page, size));
     }
 
 }

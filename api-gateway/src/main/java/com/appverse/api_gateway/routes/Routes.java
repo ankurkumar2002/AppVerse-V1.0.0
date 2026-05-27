@@ -84,6 +84,17 @@ public class Routes {
         }
 
         @Bean
+        RouterFunction<ServerResponse> userOnboardingApi() throws Exception {
+                return apiHelper.apiRoute(
+                                new ServiceConfig(
+                                                "user-onboarding-api",
+                                                "/api/v1/users/keycloak/**",
+                                                "http://localhost:8082",
+                                                "userServiceCB"),
+                                RoutePolicy.profileCreation());
+        }
+
+        @Bean
         RouterFunction<ServerResponse> userServiceApi() throws Exception {
                 return apiHelper.apiRoute(
                                 new ServiceConfig(

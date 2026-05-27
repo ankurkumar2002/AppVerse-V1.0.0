@@ -1,1 +1,111 @@
-<p>app-list works!</p>
+<div class="apps-grid">
+
+  @for (app of dataSource.data; track app.id) {
+
+  <div class="app-card">
+
+    <!-- THUMBNAIL -->
+    <div class="app-thumbnail">
+
+      <img [src]="imageUrls[app.id] || 'assets/default-app.png'" [alt]="app.name" />
+
+      <div class="category-badge">
+        {{ app.categoryName }}
+      </div>
+
+    </div>
+
+    <!-- CONTENT -->
+    <div class="app-content">
+
+      <!-- TITLE -->
+      <div class="app-header">
+
+        <div>
+
+          <h2>{{ app.name }}</h2>
+
+          <p class="tagline">
+            {{ app.tagline || 'Discover this amazing platform' }}
+          </p>
+
+        </div>
+
+      </div>
+
+      <!-- DESCRIPTION -->
+      <p class="description">
+        {{ app.description }}
+      </p>
+
+      <!-- TAGS -->
+      @if (app.tags?.length) {
+
+      <div class="tags">
+
+        @for (tag of app.tags.slice(0, 3); track tag) {
+
+        <span class="tag">
+          {{ tag }}
+        </span>
+
+        }
+
+      </div>
+
+      }
+
+      <!-- FOOTER -->
+      <div class="app-footer">
+
+        <!-- LEFT -->
+        <div class="app-meta">
+
+          <div class="developer">
+
+            <mat-icon>person</mat-icon>
+
+            <span>
+              {{ app.developerName }}
+            </span>
+
+          </div>
+
+          <div class="rating">
+
+            <mat-icon>star</mat-icon>
+
+            <span>
+              {{ app.averageRating || 0 }}
+            </span>
+
+          </div>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="app-actions">
+
+          <a class="visit-btn" [href]="app.websiteUrl" target="_blank">
+
+            Visit Website
+
+          </a>
+
+          <button class="details-btn" [routerLink]="['/apps/'+ app.id]">
+
+            Details
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+  }
+
+</div>

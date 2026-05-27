@@ -58,9 +58,17 @@ public class UserController {
     @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<Map<String, Boolean>> existsInternal(
             @PathVariable String keycloakUserId) {
-
+                System.out.println("Checkng if user exists");
         boolean exists = userRepository.existsByKeycloakUserId(keycloakUserId);
         return ResponseEntity.ok(Map.of("exists", exists));
     }
+
+    @GetMapping("/keycloak/{keycloakUserId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<Boolean> userExists(@PathVariable String keycloakUserId){
+        boolean exists = userRepository.existsByKeycloakUserId(keycloakUserId);
+        return ResponseEntity.ok(exists);
+    }
+
 
 }

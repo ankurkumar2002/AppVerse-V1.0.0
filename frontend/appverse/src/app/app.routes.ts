@@ -62,28 +62,39 @@ export const routes: Routes = [
   },
 
   // USER
-  {
-    path: 'user',
-    component: UserLayoutComponent,
-    canActivate: [authGuard],
-    children: [
-      // Onboarding/Profile Completion → token only
-      { path: 'profile-completion', component: ProfileCompletionComponent },
+  // USER
+// USER
+{
+  path: 'user',
+  component: UserLayoutComponent,
+  canActivate: [authGuard],
+  children: [
 
-      // Protected user-only routes
-      {
-        path: 'dashboard',
-        component: UserDashboardComponent,
-        canActivate: [profileCompletionGuard, roleGuard(['USER'])]
-      },
-      {
-        path: 'apps',
-        component: AppListComponent,
-        canActivate: [profileCompletionGuard, roleGuard(['USER'])]
-      }
-    ]
-  },
+    {
+      path: '',
+      redirectTo: 'dashboard',
+      pathMatch: 'full'
+    },
 
+    {
+      path: 'profile-completion',
+      component: ProfileCompletionComponent,
+      canActivate: [profileCompletionGuard]
+    },
+
+    {
+      path: 'dashboard',
+      component: UserDashboardComponent,
+      canActivate: [roleGuard(['USER'])]
+    },
+
+    {
+      path: 'apps',
+      component: AppListComponent,
+      canActivate: [roleGuard(['USER'])]
+    }
+  ]
+},
   // FALLBACK
   { path: '**', redirectTo: 'landing' }
 ];

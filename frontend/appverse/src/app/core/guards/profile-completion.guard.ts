@@ -6,37 +6,76 @@ import { getKeycloak } from '../auth/keycloak';
 import { UserAuthService } from '../services/user/user-auth.service';
 
 export const profileCompletionGuard: CanActivateFn = async () => {
+
   const router = inject(Router);
   const userAuthService = inject(UserAuthService);
 
-  // At this point, authGuard has already run
-  if (!getKeycloak().authenticated) {
-    router.navigate(['/landing']);
-    return false;
+  console.log('========== PROFILE COMPLETION GUARD ==========');
+
+  const keycloak = getKeycloak();
+
+  // Check authentication
+  if (!keycloak.authenticated) {
+
+    console.warn('User is NOT authenticated. Redirecting to landing page.');
+
+    return router.createUrlTree(['/landing']);
   }
 
-  // Load profile from Keycloak
-  const profile = await getKeycloak().loadUserProfile();
-  const keycloakId = profile?.id;
-
-  if (!keycloakId) {
-    router.navigate(['/user/profile-completion']);
-    return false;
-  }
+  console.log('User is authenticated.');
 
   try {
+
+    // Load Keycloak profile
+    const profile = await keycloak.loadUserProfile();
+
+    console.log('Loaded Keycloak profile:', profile);
+
+    const keycloakId = profile?.id;
+
+    if (!keycloakId) {
+
+      console.warn('Keycloak ID missing. Allowing access to profile completion.');
+
+      return true;
+    }
+
+    console.log('Keycloak ID:', keycloakId);
+
+    // Fetch user from backend
     const user = await firstValueFrom(
       userAuthService.getUserByKeycloakId(keycloakId)
     );
 
+    console.log('Backend user fetched:', user);
+
+    // Profile already completed
     if (user && user.username) {
-      return true; // ✅ profile complete
+
+      console.log(
+        'Profile already completed. Redirecting to /user/dashboard'
+      );
+
+      return router.createUrlTree(['/user/dashboard']);
     }
 
-    router.navigate(['/user/profile-completion']);
-    return false;
-  } catch {
-    router.navigate(['/user/profile-completion']);
-    return false;
+    console.log(
+      'Profile NOT completed. Allowing access to profile completion page.'
+    );
+
+    return true;
+
+  } catch (error) {
+
+    console.error(
+      'Error while checking profile completion:',
+      error
+    );
+
+    console.log(
+      'Assuming profile incomplete. Allowing access to completion page.'
+    );
+
+    return true;
   }
 };
