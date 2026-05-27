@@ -7,8 +7,10 @@ export const authGuard: CanActivateFn = async () => {
 
   try {
     const kc = getKeycloak();
+    console.log(kc);
 
     if (kc.authenticated) {
+      console.log(kc.authenticated)
       return true;
     }
 

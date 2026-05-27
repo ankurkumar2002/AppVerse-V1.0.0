@@ -98,8 +98,6 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    @CacheEvict(value = "userProfileByKeycloakId", key = "#keycloakUserId", condition = "#result != null")
-
     public UserResponse createUser(UserRequest userRequest) {
 
         log.info("🔥 createUser() started");
@@ -148,7 +146,13 @@ public class UserServiceImpl implements UserService {
                 keycloakUserId,
                 new AssignRoleRequest(List.of("USER")));
 
-        return userMapper.toResponse(savedUser);
+        log.info("Before mapping response");
+
+        UserResponse response = userMapper.toResponse(savedUser);
+
+        log.info("After mapping response");
+
+        return response;
 
     }
 

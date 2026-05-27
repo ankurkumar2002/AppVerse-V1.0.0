@@ -14,27 +14,25 @@ import { getKeycloak } from '../../../../core/auth/keycloak';
   styleUrls: ['./profile-completion.component.scss']
 })
 export class ProfileCompletionComponent implements OnInit {
-  profileForm!: FormGroup;
+  profileForm: FormGroup = this.fb.group({
+  phone: [
+    '',
+    [
+      Validators.required,
+      Validators.pattern(/^[0-9]{10}$/)
+    ]
+  ]
+});
   loading = false;
 
   constructor(
     private fb: FormBuilder,
     private userAuth: UserAuthService,
     private router: Router
-  ) {}
+  ) { }
 
   async ngOnInit(): Promise<void> {
-    const kcProfile = await getKeycloak().loadUserProfile();
-
-    this.profileForm = this.fb.group({
-      username: [kcProfile.username ?? ''],
-      email: [kcProfile.email ?? ''],
-      firstName: [kcProfile.firstName ?? ''],
-      lastName: [kcProfile.lastName ?? ''],
-      keycloakUserId: [kcProfile.id],
-      phoneNumber: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
-      role: ['USER']
-    });
+    
   }
 
   submitProfile(): void {
@@ -42,8 +40,44 @@ export class ProfileCompletionComponent implements OnInit {
 
     const payload: UserRequest = this.profileForm.value;
 
-    this.userAuth.createUser(payload).subscribe(() => {
-      this.router.navigate(['/user/dashboard']);
+    this.userAuth.createUser(payload).subscribe({
+
+      next: async () => {
+
+        try {
+
+          const kc = getKeycloak();
+
+          console.log('Refreshing token after profile completion...');
+
+          await kc.updateToken(-1);
+
+          console.log('NEW TOKEN:', kc.tokenParsed);
+
+          console.log(
+            'UPDATED ROLES:',
+            kc.tokenParsed?.realm_access?.roles
+          );
+
+          await this.router.navigate(['/user/dashboard']);
+
+        } catch (error) {
+
+          console.error(
+            'Token refresh failed after profile completion:',
+            error
+          );
+
+          this.router.navigate(['/landing']);
+        }
+      },
+
+      error: (err) => {
+
+        console.error('Profile creation failed:', err);
+
+      }
+
     });
   }
 }

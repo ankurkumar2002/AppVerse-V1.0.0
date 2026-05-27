@@ -5,6 +5,9 @@ import com.appverse.user_service.enums.UserStatus;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
+import org.apache.james.mime4j.dom.datetime.DateTime;
+
+
 public record UserResponse(
     UUID id,
     String keycloakUserId,

@@ -22,6 +22,7 @@ public interface UserMapper {
     @Mapping(target = "lastLoginAt", ignore = true)
     User toEntity(UserRequest userRequest);
 
+
     UserResponse toResponse(User user);
 
     List<UserResponse> toResponseList(List<User> users);

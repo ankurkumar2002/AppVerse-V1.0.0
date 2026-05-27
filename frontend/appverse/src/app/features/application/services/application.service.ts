@@ -1,11 +1,12 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { MessageResponse } from '../../../models/message-response';
 import { ApplicationDetail, UpdateApplicationRequest, ScreenshotRequest } from '../models/application-detail';
 import { ApplicationRequest } from '../models/application-request';
 import { ApplicationResponse } from '../models/application-response';
 import { ApplicationStatus } from '../models/application-status';
+import { PageResponse } from '../../user/models/PageResponse';
 
 
 @Injectable({
@@ -48,6 +49,11 @@ export class ApplicationService {
 
   getMyApplications(): Observable<ApplicationResponse[]> {
     return this.http.get<ApplicationResponse[]>('http://localhost:9000/api/apps/my-apps');
+  }
+
+  getPublushedApplications(page: number, size: number): Observable<PageResponse<ApplicationResponse>>{
+    const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
+    return this.http.get<PageResponse<ApplicationResponse>>(`${this.baseUrl}/online`, {params})
   }
 
 

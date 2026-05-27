@@ -1,24 +1,58 @@
-<div class="max-w-md mx-auto bg-gray-900 text-white shadow-lg p-6 rounded-lg">
-  <h2 class="text-2xl font-semibold mb-4">Complete Your Profile</h2>
+<div class="max-w-md mx-auto mt-10 bg-gray-900 text-white shadow-2xl rounded-2xl p-8 border border-gray-800">
 
-  <form [formGroup]="profileForm" (ngSubmit)="submitProfile()">
-    <!-- Hidden fields from Keycloak -->
-    <input type="hidden" formControlName="username" />
-    <input type="hidden" formControlName="email" />
-    <input type="hidden" formControlName="firstName" />
-    <input type="hidden" formControlName="lastName" />
-    <input type="hidden" formControlName="keycloakUserId" />
+  <div class="mb-6 text-center">
+    <h2 class="text-3xl font-bold mb-2">
+      Complete Your Profile
+    </h2>
 
-    <!-- Phone number (only visible field) -->
-    <div class="mb-3">
-      <label class="block mb-1">Phone Number</label>
-      <input formControlName="phoneNumber" type="tel" placeholder="Enter your phone number"
-        class="w-full border border-gray-700 bg-gray-800 text-white p-2 rounded" />
+    <p class="text-gray-400 text-sm">
+      Add your phone number to continue
+    </p>
+  </div>
+
+  <form
+    [formGroup]="profileForm"
+    (ngSubmit)="submitProfile()"
+    class="space-y-5"
+  >
+
+    <!-- Phone -->
+    <div>
+      <label class="block text-sm font-medium mb-2 text-gray-300">
+        Phone Number
+      </label>
+
+      <input
+        formControlName="phone"
+        type="tel"
+        placeholder="Enter your phone number"
+        class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 
+               text-white placeholder-gray-500
+               focus:outline-none focus:ring-2 focus:ring-blue-500 
+               focus:border-blue-500 transition"
+      />
+
+      @if (profileForm.get('phone')?.invalid &&
+            profileForm.get('phone')?.touched) {
+
+        <p class="text-red-400 text-sm mt-2">
+          Enter a valid 10 digit phone number
+        </p>
+      }
+
     </div>
 
-    <button type="submit" [disabled]="loading || profileForm.invalid"
-      class="w-full bg-blue-600 text-white p-2 rounded hover:bg-blue-700">
-      {{ loading ? 'Saving...' : 'Save Profile' }}
+    <!-- Submit -->
+    <button
+      type="submit"
+      [disabled]="loading || profileForm.invalid"
+      class="w-full py-3 rounded-xl font-semibold
+             bg-blue-600 hover:bg-blue-700
+             disabled:bg-gray-700 disabled:cursor-not-allowed
+             transition duration-200"
+    >
+      {{ loading ? 'Saving Profile...' : 'Continue' }}
     </button>
+
   </form>
 </div>

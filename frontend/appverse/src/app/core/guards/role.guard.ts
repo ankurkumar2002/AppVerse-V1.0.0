@@ -3,15 +3,20 @@ import { inject } from '@angular/core';
 import { getKeycloak } from '../auth/keycloak';
 
 export const roleGuard = (expectedRoles: string[]): CanActivateFn => {
-  return () => {
+
+  return async () => {
+
     const router = inject(Router);
 
     try {
+
       const kc = getKeycloak();
 
+      // FORCE TOKEN REFRESH
+      await kc.updateToken(0);
+
       if (!kc.authenticated) {
-        router.navigate(['/landing']);
-        return false;
+        return router.createUrlTree(['/landing']);
       }
 
       const token = kc.tokenParsed as any;
@@ -19,19 +24,23 @@ export const roleGuard = (expectedRoles: string[]): CanActivateFn => {
       const userRoles: string[] =
         token?.realm_access?.roles ?? [];
 
+      console.log('UPDATED USER ROLES:', userRoles);
+
       const hasRole = expectedRoles.some(role =>
         userRoles.some(r => r.toLowerCase() === role.toLowerCase())
       );
 
       if (!hasRole) {
-        router.navigate(['/landing']); // or /unauthorized
-        return false;
+        return router.createUrlTree(['/landing']);
       }
 
       return true;
-    } catch {
-      router.navigate(['/landing']);
-      return false;
+
+    } catch (error) {
+
+      console.error(error);
+
+      return router.createUrlTree(['/landing']);
     }
   };
 };
