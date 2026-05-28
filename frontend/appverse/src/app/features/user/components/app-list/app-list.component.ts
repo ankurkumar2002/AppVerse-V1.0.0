@@ -134,4 +134,6 @@ export class AppListComponent {
       URL.revokeObjectURL(url);
     });
   }
+
+  
 }

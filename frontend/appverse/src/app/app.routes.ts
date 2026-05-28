@@ -21,6 +21,7 @@ import { DeveloperProfileUpdateComponent } from './features/developer/components
 import { AppListComponent } from './features/user/components/app-list/app-list.component';
 import { ProfileCompletionComponent } from './features/user/components/profile-completion/profile-completion.component';
 import { UserDashboardComponent } from './features/user/components/user-dashboard/user-dashboard.component';
+import { AppDetailComponent } from './features/user/components/app-detail/app-detail.component';
 
 
 export const routes: Routes = [
@@ -63,38 +64,19 @@ export const routes: Routes = [
 
   // USER
   // USER
-// USER
-{
-  path: 'user',
-  component: UserLayoutComponent,
-  canActivate: [authGuard],
-  children: [
-
-    {
-      path: '',
-      redirectTo: 'dashboard',
-      pathMatch: 'full'
-    },
-
-    {
-      path: 'profile-completion',
-      component: ProfileCompletionComponent,
-      canActivate: [profileCompletionGuard]
-    },
-
-    {
-      path: 'dashboard',
-      component: UserDashboardComponent,
-      canActivate: [roleGuard(['USER'])]
-    },
-
-    {
-      path: 'apps',
-      component: AppListComponent,
-      canActivate: [roleGuard(['USER'])]
-    }
-  ]
-},
+  // USER
+  {
+    path: 'user',
+    component: UserLayoutComponent,
+    canActivate: [authGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      { path: 'profile-completion', component: ProfileCompletionComponent, canActivate: [profileCompletionGuard] },
+      { path: 'dashboard', component: UserDashboardComponent, canActivate: [roleGuard(['USER'])] },
+      { path: 'apps', component: AppListComponent, canActivate: [roleGuard(['USER'])] },
+      { path: 'apps/:id', component: AppDetailComponent, canActivate: [roleGuard(['USER'])] }
+    ]
+  },
   // FALLBACK
   { path: '**', redirectTo: 'landing' }
 ];
