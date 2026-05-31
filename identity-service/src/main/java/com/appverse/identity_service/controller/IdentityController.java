@@ -2,10 +2,12 @@ package com.appverse.identity_service.controller;
 
 import com.appverse.identity_service.dto.AssignRoleRequest;
 import com.appverse.identity_service.dto.IdentityUserResponse;
+import com.appverse.identity_service.dto.UpdateIdentityRequest;
+import com.appverse.identity_service.dto.UpdatePasswordRequest;
 import com.appverse.identity_service.service.IdentityService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +23,7 @@ public class IdentityController {
     @PreAuthorize("isAuthenticated()")
     public IdentityUserResponse me(
             @AuthenticationPrincipal Jwt jwt) {
-                System.out.println(jwt);
+        System.out.println(jwt);
         return identityService.getCurrentUser(jwt);
     }
 
@@ -43,6 +45,20 @@ public class IdentityController {
     @PreAuthorize("hasAuthority('SCOPE_internal')")
     public void disableUser(@PathVariable String keycloakUserId) {
         identityService.disableUser(keycloakUserId);
+    }
+
+    @PatchMapping("/{keycloakUserId}/update")
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
+    public ResponseEntity<IdentityUserResponse> updateUser(@PathVariable String keycloakUserId,
+            UpdateIdentityRequest request) {
+        return ResponseEntity.ok(identityService.updateUser(keycloakUserId, request));
+    }
+
+    @PutMapping("/me/password/{keycloakUserId}")
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
+    public ResponseEntity<Void> updatePassword(@PathVariable String keycloakUserId, UpdatePasswordRequest request) {
+        identityService.updatePassword(keycloakUserId, request);
+        return ResponseEntity.noContent().build();
     }
 
 }

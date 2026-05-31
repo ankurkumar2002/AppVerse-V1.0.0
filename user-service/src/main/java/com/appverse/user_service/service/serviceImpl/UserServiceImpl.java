@@ -4,6 +4,9 @@ package com.appverse.user_service.service.serviceImpl;
 import com.appverse.user_service.client.IdentityClient;
 import com.appverse.user_service.dto.AssignRoleRequest;
 import com.appverse.user_service.dto.IdentityUserResponse;
+import com.appverse.user_service.dto.KeycloakUpdateRequest;
+import com.appverse.user_service.dto.MessageResponse;
+import com.appverse.user_service.dto.UpdatePasswordRequest;
 import com.appverse.user_service.dto.UpdateUserProfileRequest;
 import com.appverse.user_service.dto.UserRequest;
 import com.appverse.user_service.dto.UserResponse;
@@ -24,6 +27,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.interceptor.TransactionAspectSupport;
@@ -83,8 +87,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "userProfileByKeycloakId", key = "#root.target.currentUserProvider.getCurrentUser().id()")
     public UserResponse getMyprofile() {
+        log.info("function is called");
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         log.info(keycloakUserId + " - keycloak user Id");
         User user = userRepository.findByKeycloakUserId(keycloakUserId)
@@ -92,6 +96,15 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() != UserStatus.ACTIVE) {
             throw new ResourceNotFoundException("User is not active");
         }
+        return userMapper.toResponse(user);
+    }
+
+    @Cacheable(value = "userProfileByKeycloakId", key = "#keycloakUserId")
+    public UserResponse getProfileByKeycloakId(
+            String keycloakUserId) {
+
+        User user = userRepository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("User not Found"));
 
         return userMapper.toResponse(user);
     }
@@ -158,6 +171,24 @@ public class UserServiceImpl implements UserService {
 
     public boolean checkUserExists(String keycloakId) {
         return userRepository.existsByKeycloakUserId(keycloakId);
+    }
+
+    public MessageResponse updateUser(String keycloakUserId, KeycloakUpdateRequest request) {
+
+        IdentityUserResponse response = identityClient.updateUser(keycloakUserId, request);
+
+        return new MessageResponse("Details Updated Successfully! ", keycloakUserId);
+    }
+
+    public MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request) {
+        ResponseEntity<Void> response = identityClient.updatePassword(keycloakUserId, request);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return new MessageResponse("Password Updation Successfull! ", keycloakUserId);
+        }
+
+        return new MessageResponse("Some Error Occurred please try again later! ", keycloakUserId);
+
     }
 
 }

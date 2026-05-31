@@ -6,7 +6,9 @@ import java.util.List;
 import com.appverse.developer_service.dto.DeveloperEmailResponse;
 import com.appverse.developer_service.dto.DeveloperRequest;
 import com.appverse.developer_service.dto.DeveloperResponse;
+import com.appverse.developer_service.dto.KeycloakUserUpdateRequest;
 import com.appverse.developer_service.dto.MessageResponse;
+import com.appverse.developer_service.dto.UpdatePasswordRequest;
 
 public interface DeveloperService {
 
@@ -24,4 +26,7 @@ public interface DeveloperService {
 
     DeveloperEmailResponse getDeveloperEmail(String developerId);
 
+    MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request);
+
+    MessageResponse updateUser(String keycloakUserId, KeycloakUserUpdateRequest request);
 }

@@ -3,7 +3,9 @@ package com.appverse.developer_service.controller;
 import com.appverse.developer_service.dto.DeveloperEmailResponse;
 import com.appverse.developer_service.dto.DeveloperRequest;
 import com.appverse.developer_service.dto.DeveloperResponse;
+import com.appverse.developer_service.dto.KeycloakUserUpdateRequest;
 import com.appverse.developer_service.dto.MessageResponse;
+import com.appverse.developer_service.dto.UpdatePasswordRequest;
 import com.appverse.developer_service.service.DeveloperService;
 import com.appverse.developer_service.validation.OnCreate;
 import com.appverse.developer_service.validation.OnUpdate;
@@ -84,6 +86,18 @@ public class DeveloperController {
 
         return ResponseEntity.ok(
                 developerService.getDeveloperEmail(developerId));
+    }
+
+    @PatchMapping("/updateprofile/{keycloakUserId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> updateDeveloperprofile(@PathVariable String keycloakUserId, @RequestBody KeycloakUserUpdateRequest request) {
+        return ResponseEntity.ok(developerService.updateUser(keycloakUserId, request));
+    }
+
+    @PutMapping("/updatepassword/{keycloakUserId}")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<MessageResponse> updatePassword(@PathVariable String keycloakUserId, UpdatePasswordRequest request) {
+        return ResponseEntity.ok(developerService.updatePassword(keycloakUserId, request));
     }
 
 }

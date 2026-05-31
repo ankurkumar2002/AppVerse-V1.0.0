@@ -9,13 +9,13 @@ import com.appverse.user_service.enums.UserStatus;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"keycloak_user_id"}, name = "uk_user_keycloak_id"),
-    @UniqueConstraint(columnNames = {"username"}, name = "uk_user_username"),
-    @UniqueConstraint(columnNames = {"email"}, name = "uk_user_email")
+        @UniqueConstraint(columnNames = { "keycloak_user_id" }, name = "uk_user_keycloak_id"),
+        @UniqueConstraint(columnNames = { "username" }, name = "uk_user_username"),
+        @UniqueConstraint(columnNames = { "email" }, name = "uk_user_email")
 })
 @Data
-@NoArgsConstructor 
-@AllArgsConstructor 
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class User {
 
@@ -32,7 +32,7 @@ public class User {
     private String email;
 
     @Column(name = "email_verified", nullable = false)
-    private boolean emailVerified = false; 
+    private boolean emailVerified = false;
 
     @Column(name = "first_name", length = 100)
     private String firstName;
@@ -49,7 +49,7 @@ public class User {
 
     @Column(name = "status", nullable = false)
     @Enumerated(EnumType.STRING)
-    private UserStatus status = UserStatus.ACTIVE; 
+    private UserStatus status = UserStatus.ACTIVE;
 
     @Column(name = "deactivated_by_admin", nullable = false)
     private boolean deactivatedByAdmin = false;
@@ -71,7 +71,7 @@ public class User {
         LocalDateTime now = LocalDateTime.now();
         this.createdAt = now;
         this.updatedAt = now;
-        if (this.status == null) { 
+        if (this.status == null) {
             this.status = UserStatus.ACTIVE;
         }
     }
@@ -82,6 +82,6 @@ public class User {
     }
 
     @Column(name = "deleted_at")
-private LocalDateTime deletedAt;
+    private LocalDateTime deletedAt;
 
 }

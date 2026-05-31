@@ -22,6 +22,7 @@ import { AppListComponent } from './features/user/components/app-list/app-list.c
 import { ProfileCompletionComponent } from './features/user/components/profile-completion/profile-completion.component';
 import { UserDashboardComponent } from './features/user/components/user-dashboard/user-dashboard.component';
 import { AppDetailComponent } from './features/user/components/app-detail/app-detail.component';
+import { UserProfileComponent } from './features/user/components/user-profile/user-profile.component';
 
 
 export const routes: Routes = [
@@ -74,7 +75,8 @@ export const routes: Routes = [
       { path: 'profile-completion', component: ProfileCompletionComponent, canActivate: [profileCompletionGuard] },
       { path: 'dashboard', component: UserDashboardComponent, canActivate: [roleGuard(['USER'])] },
       { path: 'apps', component: AppListComponent, canActivate: [roleGuard(['USER'])] },
-      { path: 'apps/:id', component: AppDetailComponent, canActivate: [roleGuard(['USER'])] }
+      { path: 'apps/:id', component: AppDetailComponent, canActivate: [roleGuard(['USER'])] },
+      { path: 'profile', component: UserProfileComponent, canActivate: [roleGuard(['USER'])] }
     ]
   },
   // FALLBACK

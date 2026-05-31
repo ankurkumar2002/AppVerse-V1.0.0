@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 
-import { UserAuthService, UserRequest } from '../../../../core/services/user/user-auth.service';
+import { UserAuthService, UserRequest } from '../../services/user/user-auth.service';
 import { getKeycloak } from '../../../../core/auth/keycloak';
 
 @Component({
