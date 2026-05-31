@@ -1,6 +1,8 @@
 package com.appverse.identity_service.service.impl;
 
 import com.appverse.identity_service.dto.IdentityUserResponse;
+import com.appverse.identity_service.dto.UpdateIdentityRequest;
+import com.appverse.identity_service.dto.UpdatePasswordRequest;
 import com.appverse.identity_service.keycloakClient.KeycloakClient;
 import com.appverse.identity_service.service.IdentityService;
 
@@ -9,12 +11,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.keycloak.representations.idm.UserRepresentation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.logging.Logger;
 
 @Service
 @Slf4j
@@ -25,7 +25,6 @@ public class IdentityServiceImpl implements IdentityService {
 
     @Value("${keycloak.realm}")
     private String realm = "";
-
 
     @Override
     public IdentityUserResponse getUserById(String keycloakUserId) {
@@ -89,6 +88,19 @@ public class IdentityServiceImpl implements IdentityService {
             log.error("Create developer failed", e);
             throw e;
         }
+    }
+
+    @Override
+    public IdentityUserResponse updateUser(String keycloakUserId, UpdateIdentityRequest request) {
+        UserRepresentation user = keycloak.updateUser(keycloakUserId, request);
+
+        return new IdentityUserResponse(user.getId(), user.getUsername(), user.getEmail(), user.isEmailVerified(),
+                user.getFirstName(), user.getLastName());
+    }
+
+    @Override
+    public void updatePassword(String keycloakUserId, UpdatePasswordRequest request) {
+        keycloak.updatePassword(keycloakUserId, request);
     }
 
 }

@@ -1,6 +1,10 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+import { ProfileUpdateRequest } from '../../../../models/ProfileUpdateRequest';
+import { MessageResponse } from '../../../../models/message-response';
+import { PasswordUpdateRequest } from '../../../../models/PasswordUpdateRequest';
+import { UserDetailsResponse } from '../../models/UserDetailsResponse';
 
 export interface UserRequest {
   phone: string;
@@ -26,22 +30,25 @@ export interface RoleAssignRequest {
   providedIn: 'root'
 })
 export class UserAuthService {
-  private readonly baseUrl = 'http://localhost:9000/api/v1/users'; 
+  private readonly baseUrl = 'http://localhost:9000/api/v1/users';
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) { }
 
-  
+
 
   createUser(user: UserRequest): Observable<UserResponse> {
     return this.http.post<UserResponse>(`${this.baseUrl}`, user);
   }
 
-  getUserById(userId: string): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.baseUrl}/${userId}`);
-  }
+  // getUserById(userId: string): Observable<UserResponse> {
+  //   return this.http.get<UserResponse>(`${this.baseUrl}/${userId}`);
+  // }
 
-  getUserByKeycloakId(keycloakUserId: string): Observable<UserResponse> {
-    return this.http.get<UserResponse>(`${this.baseUrl}/keycloak/${keycloakUserId}`);
+  getUserDetailsByKeycloakId(): Observable<UserDetailsResponse> {
+    return this.http.get<UserDetailsResponse>(`${this.baseUrl}/me`);
+  }
+  getUserByKeycloakId(keycloakUserId: string): Observable<Boolean> {
+    return this.http.get<Boolean>(`${this.baseUrl}/keycloak/${keycloakUserId}`);
   }
 
   getUserByUsername(username: string): Observable<UserResponse> {
@@ -56,7 +63,7 @@ export class UserAuthService {
     return this.http.get<UserResponse[]>(`${this.baseUrl}`);
   }
 
-  updateUserProfile(userId: string, user: UserRequest): Observable<UserResponse> {
+  updateUserPhone(userId: string, user: UserRequest): Observable<UserResponse> {
     return this.http.put<UserResponse>(`${this.baseUrl}/${userId}`, user);
   }
 
@@ -76,5 +83,13 @@ export class UserAuthService {
 
   assignRoleToUser(request: RoleAssignRequest): Observable<void> {
     return this.http.post<void>(`${this.baseUrl}/assign-role`, request);
+  }
+
+  updateUserProfile(keycloakUserId: string, profile: ProfileUpdateRequest): Observable<MessageResponse> {
+    return this.http.patch<MessageResponse>(`${this.baseUrl}/updateprofile/${keycloakUserId}`, profile);
+  }
+
+  updateUserPassword(keycloakUserId: string, request: PasswordUpdateRequest): Observable<MessageResponse> {
+    return this.http.put<MessageResponse>(`${this.baseUrl}/updatepassword/${keycloakUserId}`, request);
   }
 }

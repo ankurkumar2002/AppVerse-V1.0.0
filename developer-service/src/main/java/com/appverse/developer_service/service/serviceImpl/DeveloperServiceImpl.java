@@ -8,7 +8,9 @@ import com.appverse.developer_service.dto.DeveloperEmailResponse;
 import com.appverse.developer_service.dto.DeveloperRequest;
 import com.appverse.developer_service.dto.DeveloperResponse;
 import com.appverse.developer_service.dto.IdentityUserResponse;
+import com.appverse.developer_service.dto.KeycloakUserUpdateRequest;
 import com.appverse.developer_service.dto.MessageResponse;
+import com.appverse.developer_service.dto.UpdatePasswordRequest;
 import com.appverse.developer_service.enums.DeveloperStatus;
 import com.appverse.developer_service.enums.Role;
 import com.appverse.developer_service.event.payload.*;
@@ -24,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.http.ResponseEntity;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.security.core.Authentication;
@@ -260,6 +263,22 @@ public class DeveloperServiceImpl implements DeveloperService {
                 .orElseThrow(() -> new ResourceNotFoundException("Developer profile not found"));
 
         return developerMapper.toResponse(developer);
+    }
+
+    public MessageResponse updateUser(String keycloakUserId, KeycloakUserUpdateRequest request) {
+        IdentityUserResponse response = identityClient.updateUser(keycloakUserId, request);
+
+        return new MessageResponse("Details Updated Successfully!", keycloakUserId);
+    }
+
+    public MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request){
+        ResponseEntity<Void> response = identityClient.updatePassword(keycloakUserId, request);
+
+        if (response.getStatusCode().is2xxSuccessful()) {
+            return new MessageResponse("Password updated Successfully!", keycloakUserId);
+        }
+
+        return new MessageResponse("Some Error occured in updating the password.", keycloakUserId);
     }
 
 }

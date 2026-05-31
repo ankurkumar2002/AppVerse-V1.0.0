@@ -1,0 +1,112 @@
+@if (response) {
+
+<div class="profile-page">
+
+    <div class="profile-card">
+
+        <div class="profile-header">
+
+            <div class="profile-avatar">
+                {{ response.firstName[0] }}{{ response.lastName[0] }}
+            </div>
+
+            <div class="profile-info">
+                <h1>{{ response.firstName }} {{ response.lastName }}</h1>
+
+                <p class="username">
+                    Username: {{ response.username }}
+                </p>
+
+                <p class="email">
+                    {{ response.email }}
+                </p>
+            </div>
+
+            <button class="edit-btn">
+                ✏️ Edit Profile
+            </button>
+
+        </div>
+
+        <div class="badges">
+
+            <span class="badge role">
+                {{ response.role }}
+            </span>
+
+            <span class="badge status">
+                {{ response.status }}
+            </span>
+
+            <span class="badge"
+                  [class.verified]="response.emailVerified"
+                  [class.not-verified]="!response.emailVerified">
+
+                {{ response.emailVerified ? 'Verified Email' : 'Email Not Verified' }}
+
+            </span>
+
+        </div>
+
+        <div class="details-grid">
+
+            <div class="detail-card">
+                <label>Username</label>
+                <span>{{ response.username }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Email</label>
+                <span>{{ response.email }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Phone</label>
+                <span>{{ response.phone || 'Not Provided' }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Role</label>
+                <span>{{ response.role }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Status</label>
+                <span>{{ response.status }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Email Verified</label>
+                <span>
+                    {{ response.emailVerified ? 'Yes' : 'No' }}
+                </span>
+            </div>
+
+            <div class="detail-card">
+                <label>Created At</label>
+                <span>{{ response.createdAt }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Updated At</label>
+                <span>{{ response.updatedAt || 'N/A' }}</span>
+            </div>
+
+            <div class="detail-card">
+                <label>Last Login</label>
+                <span>{{ response.lastLoginAt || 'Never' }}</span>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+} @else {
+
+<div class="loading-container">
+    <h3>Loading Profile...</h3>
+</div>
+
+}

@@ -1,5 +1,5 @@
 import { Component, ViewChild } from '@angular/core';
-import { UserAuthService } from '../../../../core/services/user/user-auth.service';
+import { UserAuthService } from '../../services/user/user-auth.service';
 import { ApplicationDetail } from '../../../application/models/application-detail';
 import { ApplicationService } from '../../../application/services/application.service';
 import { MatTableDataSource } from '@angular/material/table';

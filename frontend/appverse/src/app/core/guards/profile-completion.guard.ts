@@ -3,7 +3,7 @@ import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 
 import { getKeycloak } from '../auth/keycloak';
-import { UserAuthService } from '../services/user/user-auth.service';
+import { UserAuthService } from '../../features/user/services/user/user-auth.service';
 
 export const profileCompletionGuard: CanActivateFn = async () => {
 
@@ -43,14 +43,14 @@ export const profileCompletionGuard: CanActivateFn = async () => {
     console.log('Keycloak ID:', keycloakId);
 
     // Fetch user from backend
-    const user = await firstValueFrom(
+    const exists = await firstValueFrom(
       userAuthService.getUserByKeycloakId(keycloakId)
     );
 
-    console.log('Backend user fetched:', user);
+    console.log('Backend user fetched:', exists);
 
     // Profile already completed
-    if (user && user.username) {
+    if (exists) {
 
       console.log(
         'Profile already completed. Redirecting to /user/dashboard'

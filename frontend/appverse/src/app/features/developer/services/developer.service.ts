@@ -8,6 +8,8 @@ import { tap, catchError } from 'rxjs/operators';
 import { MessageResponse } from '../../../models/message-response';
 import { DeveloperRequest } from '../models/developer-request';
 import { DeveloperResponse } from '../models/developer-response';
+import { ProfileUpdateRequest } from '../../../models/ProfileUpdateRequest';
+import { PasswordUpdateRequest } from '../../../models/PasswordUpdateRequest';
 
 @Injectable({ providedIn: 'root' })
 export class DeveloperService {
@@ -85,5 +87,12 @@ export class DeveloperService {
     return this.http.get<DeveloperResponse>(`${this.baseUrl}/me`);
   }
 
+  updateDeveloperProfile(keycloakUserId: string, profile: ProfileUpdateRequest): Observable<MessageResponse> {
+    return this.http.patch<MessageResponse>(`${this.baseUrl}/updateprofile/${keycloakUserId}`, profile);
+  }
+
+  updateDeveloperPassword(keycloakUserId: string, request: PasswordUpdateRequest): Observable<MessageResponse> {
+    return this.http.put<MessageResponse>(`${this.baseUrl}/updatepassword/${keycloakUserId}`, request);
+  }
   
 }
