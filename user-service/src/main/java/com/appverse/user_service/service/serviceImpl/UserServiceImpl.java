@@ -172,15 +172,31 @@ public class UserServiceImpl implements UserService {
     public boolean checkUserExists(String keycloakId) {
         return userRepository.existsByKeycloakUserId(keycloakId);
     }
-
-    public MessageResponse updateUser(String keycloakUserId, KeycloakUpdateRequest request) {
-
-        IdentityUserResponse response = identityClient.updateUser(keycloakUserId, request);
-
+    @Transactional
+    public MessageResponse updateUser( KeycloakUpdateRequest request) {
+        String keycloakUserId = currentUserProvider.getCurrentUser().id();
+        log.info("request reached in this function");
+        log.info("Sending email to identity service = {}", request.getEmail());
+        try {
+            identityClient.updateUser(keycloakUserId, request);
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
+        }
+        log.info("request sent to keycloak service and completed successfully");
+        User user = userRepository.findByKeycloakUserId(keycloakUserId)
+                .orElseThrow(() -> new ResourceNotFoundException("Cannot find User: " + keycloakUserId));
+        user.setEmail(request.getEmail());
+        user.setFirstName(request.getFirstName());
+        user.setLastName(request.getLastName());
+        user.setPhone(request.getPhone());
+        userRepository.save(user);
         return new MessageResponse("Details Updated Successfully! ", keycloakUserId);
     }
 
-    public MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request) {
+    public MessageResponse updatePassword( UpdatePasswordRequest request) {
+        String keycloakUserId = currentUserProvider.getCurrentUser().id();
+        
         ResponseEntity<Void> response = identityClient.updatePassword(keycloakUserId, request);
 
         if (response.getStatusCode().is2xxSuccessful()) {

@@ -14,15 +14,15 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ServiceTokenProvider {
 
-    private final WebClient webClient; // Renamed from restTemplate for clarity
+    private final WebClient webClient; 
 
     @Value("${keycloak.token-uri}")
     private String tokenUri;
 
-    @Value("${appverse.keycloak.client-id}") // Fixed: added 'appverse.' prefix
+    @Value("${appverse.keycloak.client-id}") 
     private String clientId;
 
-    @Value("${appverse.keycloak.client-secret}") // Fixed: added 'appverse.' prefix
+    @Value("${appverse.keycloak.client-secret}") 
     private String clientSecret;
 
     public String getServiceToken() {

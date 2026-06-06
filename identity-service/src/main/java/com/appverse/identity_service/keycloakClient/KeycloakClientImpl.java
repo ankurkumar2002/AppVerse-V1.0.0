@@ -15,7 +15,10 @@ import org.springframework.stereotype.Service;
 import com.appverse.identity_service.dto.UpdateIdentityRequest;
 import com.appverse.identity_service.dto.UpdatePasswordRequest;
 
+import lombok.extern.slf4j.Slf4j;
+
 @Service
+@Slf4j
 public class KeycloakClientImpl implements KeycloakClient {
 
     private final Keycloak keycloak;
@@ -91,6 +94,7 @@ public class KeycloakClientImpl implements KeycloakClient {
         }
 
         userResource.update(user);
+        log.info("User updated successfully "+ user.getEmail());
 
         return userResource.toRepresentation();
     }

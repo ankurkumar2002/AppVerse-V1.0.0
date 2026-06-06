@@ -5,6 +5,9 @@ import com.appverse.identity_service.dto.IdentityUserResponse;
 import com.appverse.identity_service.dto.UpdateIdentityRequest;
 import com.appverse.identity_service.dto.UpdatePasswordRequest;
 import com.appverse.identity_service.service.IdentityService;
+
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -14,6 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/identity/users")
+@Slf4j
 public class IdentityController {
 
     @Autowired
@@ -47,16 +51,21 @@ public class IdentityController {
         identityService.disableUser(keycloakUserId);
     }
 
-    @PatchMapping("/{keycloakUserId}/update")
+    @PutMapping("/{keycloakUserId}/update")
     @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<IdentityUserResponse> updateUser(@PathVariable String keycloakUserId,
-            UpdateIdentityRequest request) {
+            @RequestBody UpdateIdentityRequest request) {
+        log.info("Request reached here successfully!");
+        log.info("REQUEST EMAIL = {}", request.getEmail());
+        log.info("REQUEST FIRSTNAME = {}", request.getFirstName());
+        log.info("REQUEST LASTNAME = {}", request.getLastName());
         return ResponseEntity.ok(identityService.updateUser(keycloakUserId, request));
     }
 
     @PutMapping("/me/password/{keycloakUserId}")
     @PreAuthorize("hasAuthority('SCOPE_internal')")
-    public ResponseEntity<Void> updatePassword(@PathVariable String keycloakUserId, UpdatePasswordRequest request) {
+    public ResponseEntity<Void> updatePassword(@PathVariable String keycloakUserId,
+            @RequestBody UpdatePasswordRequest request) {
         identityService.updatePassword(keycloakUserId, request);
         return ResponseEntity.noContent().build();
     }

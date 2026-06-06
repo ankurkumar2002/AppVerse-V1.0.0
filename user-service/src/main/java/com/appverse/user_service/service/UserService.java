@@ -18,7 +18,7 @@ public interface UserService {
     void deleteMyAccount();
     boolean checkUserExists(String keycloakId);
 
-    MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request);
+    MessageResponse updatePassword( UpdatePasswordRequest request);
 
-    MessageResponse updateUser(String keycloakUserId, KeycloakUpdateRequest request);
+    MessageResponse updateUser( KeycloakUpdateRequest request);
 }

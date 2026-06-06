@@ -1,0 +1,26 @@
+<h1>Edit Profile</h1>
+
+<form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
+    <div class="card">
+        <h2>Profile Details</h2>
+
+        <div class="form-group">
+            <label>First Name</label>
+            <input type="text" formControlName="firstName">
+        </div>
+        <div class="form-group">
+            <label>Last Name</label>
+            <input type="text" formControlName="lastName">
+        </div>
+        <div class="form-group">
+            <label>Email</label>
+            <input type="text" formControlName="email">
+            <p>{{ profileForm.get('email')?.value }}</p>
+        </div>
+        <div class="form-group">
+            <label>Phone</label>
+            <input type="text" formControlName="phone">
+        </div>
+        <button type="submit">Save Changes</button>
+    </div>
+</form>

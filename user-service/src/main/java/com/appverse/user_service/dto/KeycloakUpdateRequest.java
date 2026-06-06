@@ -6,13 +6,16 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-@Getter @Setter
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 public class KeycloakUpdateRequest {
-        String firstName;
+    String firstName;
     String lastName;
 
     @Email
     String email;
+
+    String phone;
 }

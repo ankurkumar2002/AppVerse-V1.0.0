@@ -17,6 +17,7 @@ public class UserFeignAuthConfig {
         return (RequestTemplate template) -> {
             var auth = SecurityContextHolder.getContext().getAuthentication();
             System.out.println("AUTH IN FEIGN: " + auth);
+            System.out.println("USER TOKEN INTERCEPTOR EXECUTED");
 
             if (auth != null && auth.getPrincipal() instanceof Jwt jwt) {
                 template.header("Authorization", "Bearer "+jwt.getTokenValue());

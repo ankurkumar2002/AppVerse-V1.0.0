@@ -10,6 +10,7 @@ import { DeveloperRequest } from '../models/developer-request';
 import { DeveloperResponse } from '../models/developer-response';
 import { ProfileUpdateRequest } from '../../../models/ProfileUpdateRequest';
 import { PasswordUpdateRequest } from '../../../models/PasswordUpdateRequest';
+import { updateDeveloperRequest } from '../models/update-developer-request';
 
 @Injectable({ providedIn: 'root' })
 export class DeveloperService {
@@ -83,16 +84,16 @@ export class DeveloperService {
   }
 
   /** Raw fetch */
-  getMyProfile(): Observable<DeveloperResponse> {
-    return this.http.get<DeveloperResponse>(`${this.baseUrl}/me`);
+  getMyProfile(): Observable<updateDeveloperRequest> {
+    return this.http.get<updateDeveloperRequest>(`${this.baseUrl}/me`);
   }
 
-  updateDeveloperProfile(keycloakUserId: string, profile: ProfileUpdateRequest): Observable<MessageResponse> {
-    return this.http.patch<MessageResponse>(`${this.baseUrl}/updateprofile/${keycloakUserId}`, profile);
+  updateDeveloperProfile( profile: updateDeveloperRequest): Observable<MessageResponse> {
+    return this.http.patch<MessageResponse>(`${this.baseUrl}/updateprofile`, profile);
   }
 
-  updateDeveloperPassword(keycloakUserId: string, request: PasswordUpdateRequest): Observable<MessageResponse> {
-    return this.http.put<MessageResponse>(`${this.baseUrl}/updatepassword/${keycloakUserId}`, request);
+  updateDeveloperPassword(request: PasswordUpdateRequest): Observable<MessageResponse> {
+    return this.http.put<MessageResponse>(`${this.baseUrl}/updatepassword`, request);
   }
   
 }

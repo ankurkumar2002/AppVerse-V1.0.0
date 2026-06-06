@@ -85,11 +85,11 @@ export class UserAuthService {
     return this.http.post<void>(`${this.baseUrl}/assign-role`, request);
   }
 
-  updateUserProfile(keycloakUserId: string, profile: ProfileUpdateRequest): Observable<MessageResponse> {
-    return this.http.patch<MessageResponse>(`${this.baseUrl}/updateprofile/${keycloakUserId}`, profile);
+  updateUserProfile( profile: ProfileUpdateRequest): Observable<MessageResponse> {
+    return this.http.patch<MessageResponse>(`${this.baseUrl}/updateprofile`, profile);
   }
 
-  updateUserPassword(keycloakUserId: string, request: PasswordUpdateRequest): Observable<MessageResponse> {
-    return this.http.put<MessageResponse>(`${this.baseUrl}/updatepassword/${keycloakUserId}`, request);
+  updateUserPassword( request: PasswordUpdateRequest): Observable<MessageResponse> {
+    return this.http.put<MessageResponse>(`${this.baseUrl}/updatepassword`, request);
   }
 }

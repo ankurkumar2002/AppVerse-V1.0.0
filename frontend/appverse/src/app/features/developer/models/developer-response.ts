@@ -1,7 +1,7 @@
 export interface DeveloperResponse {
   id: string;
   firstName: string;
-lastName: string;
+  lastName: string;
   email: string;
   website?: string;
   companyName?: string;

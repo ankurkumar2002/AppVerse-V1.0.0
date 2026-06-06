@@ -265,13 +265,21 @@ public class DeveloperServiceImpl implements DeveloperService {
         return developerMapper.toResponse(developer);
     }
 
-    public MessageResponse updateUser(String keycloakUserId, KeycloakUserUpdateRequest request) {
-        IdentityUserResponse response = identityClient.updateUser(keycloakUserId, request);
+    public MessageResponse updateUser( KeycloakUserUpdateRequest request) {
+        String keycloakUserId = currentUserProvider.getCurrentUser().id();
+        log.info(request.getEmail());
+        identityClient.updateUser(keycloakUserId, request);
+        Developer developer = developerRepository.findByKeycloakUserId(keycloakUserId).orElseThrow(() -> new ResourceNotFoundException("Cannot find user with keycloak id : "+ keycloakUserId));
+        developer.setEmail(request.getEmail());
+        developer.setFirstName(request.getFirstName());
+        developer.setLastName(request.getLastName());
+        developerRepository.save(developer);
 
         return new MessageResponse("Details Updated Successfully!", keycloakUserId);
     }
 
-    public MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request){
+    public MessageResponse updatePassword( UpdatePasswordRequest request){
+        String keycloakUserId = currentUserProvider.getCurrentUser().id();
         ResponseEntity<Void> response = identityClient.updatePassword(keycloakUserId, request);
 
         if (response.getStatusCode().is2xxSuccessful()) {
