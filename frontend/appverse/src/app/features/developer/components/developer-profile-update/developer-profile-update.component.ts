@@ -82,20 +82,20 @@ export class DeveloperProfileUpdateComponent implements OnInit {
 
     this.developerService.getMyDeveloperProfile().subscribe({
       next: developer => {
-  this.developerForm.patchValue({
-    name: `${developer.firstName ?? ''} ${developer.lastName ?? ''}`.trim(),
-    email: developer.email,
-    website: developer.website,
-    companyName: developer.companyName,
-    bio: developer.bio,
-    logoUrl: developer.logoUrl,
-    location: developer.location,
-    developerType: developer.developerType
-  });
+        this.developerForm.patchValue({
+          name: `${developer.firstName ?? ''} ${developer.lastName ?? ''}`.trim(),
+          email: developer.email,
+          website: developer.website,
+          companyName: developer.companyName,
+          bio: developer.bio,
+          logoUrl: developer.logoUrl,
+          location: developer.location,
+          developerType: developer.developerType
+        });
 
-  this.logoPreviewUrl = developer.logoUrl ?? null;
-  this.loading = false;
-},
+        this.logoPreviewUrl = developer.logoUrl ?? null;
+        this.loading = false;
+      },
       error: async () => {
         this.messageService.add({
           severity: 'info',

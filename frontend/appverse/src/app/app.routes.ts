@@ -22,7 +22,11 @@ import { AppListComponent } from './features/user/components/app-list/app-list.c
 import { ProfileCompletionComponent } from './features/user/components/profile-completion/profile-completion.component';
 import { UserDashboardComponent } from './features/user/components/user-dashboard/user-dashboard.component';
 import { AppDetailComponent } from './features/user/components/app-detail/app-detail.component';
-import { UserProfileComponent } from './features/user/components/user-profile/user-profile.component';
+import { UserProfileComponent } from './features/user/components/user-personal-details/user-personal-details.component';
+import { EditUserComponent } from './features/user/components/edit-user/edit-user.component';
+import { EditPasswordComponent } from './features/user/components/edit-password/edit-password.component';
+import { UpdatePersonelDetailsComponent } from './features/developer/components/update-personel-details/update-personel-details.component';
+import { UpdatePasswordComponent } from './features/developer/components/update-password/update-password.component';
 
 
 export const routes: Routes = [
@@ -43,13 +47,10 @@ export const routes: Routes = [
       // Onboarding/Profile routes → token only
       { path: 'create', component: DeveloperFormComponent },
       { path: 'update', component: DeveloperProfileUpdateComponent },
+      { path: 'dashboard', component: DeveloperDashboardComponent, canActivate: [roleGuard(['DEVELOPER'])] },
+      { path: 'update-personel-details', component: UpdatePersonelDetailsComponent, canActivate: [roleGuard(['DEVELOPER'])] },
+      { path: 'update-password', component: UpdatePasswordComponent, canActivate: [roleGuard(['DEVELOPER'])] },
 
-      // Protected developer-only routes
-      {
-        path: 'dashboard',
-        component: DeveloperDashboardComponent,
-        canActivate: [roleGuard(['DEVELOPER'])]
-      },
       {
         path: 'apps',
         canActivate: [roleGuard(['DEVELOPER'])],
@@ -63,9 +64,7 @@ export const routes: Routes = [
     ]
   },
 
-  // USER
-  // USER
-  // USER
+
   {
     path: 'user',
     component: UserLayoutComponent,
@@ -76,7 +75,9 @@ export const routes: Routes = [
       { path: 'dashboard', component: UserDashboardComponent, canActivate: [roleGuard(['USER'])] },
       { path: 'apps', component: AppListComponent, canActivate: [roleGuard(['USER'])] },
       { path: 'apps/:id', component: AppDetailComponent, canActivate: [roleGuard(['USER'])] },
-      { path: 'profile', component: UserProfileComponent, canActivate: [roleGuard(['USER'])] }
+      { path: 'profile', component: UserProfileComponent, canActivate: [roleGuard(['USER'])] },
+      { path: 'edit-personal-details', component: EditUserComponent, canActivate: [roleGuard(['USER'])] },
+      { path: 'update-password', component: EditPasswordComponent, canActivate: [roleGuard(['USER'])] }
     ]
   },
   // FALLBACK

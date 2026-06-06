@@ -1,0 +1,24 @@
+<h1>Edit Personel Details</h1>
+
+<form [formGroup]="developerProfileForm" (ngSubmit)="updateProfile()">
+    <div class="card">
+        <h2>Profile Details</h2>
+
+        <div class="form-group">
+            <label>First name</label>
+            <input type="text" formControlName="firstName">
+        </div>
+
+        <div class="form-group">
+            <label>Last name</label>
+            <input type="text" formControlName="lastName">
+        </div>
+
+        <div class="form-group">
+            <label>Email</label>
+            <input type="email" formControlName="email">
+        </div>
+
+        <button type="submit">Save Changes</button>
+    </div>
+</form>

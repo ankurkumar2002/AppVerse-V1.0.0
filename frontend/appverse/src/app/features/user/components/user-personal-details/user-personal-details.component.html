@@ -22,8 +22,11 @@
                 </p>
             </div>
 
-            <button class="edit-btn">
-                ✏️ Edit Profile
+            <button class="edit-btn" [routerLink]="['/user/edit-personal-details']">
+                ✏️ Edit Personel Details
+            </button>
+            <button class="edit-btn" [routerLink]="['/user/update-password']">
+                ✏️ Edit Password
             </button>
 
         </div>
@@ -38,9 +41,8 @@
                 {{ response.status }}
             </span>
 
-            <span class="badge"
-                  [class.verified]="response.emailVerified"
-                  [class.not-verified]="!response.emailVerified">
+            <span class="badge" [class.verified]="response.emailVerified"
+                [class.not-verified]="!response.emailVerified">
 
                 {{ response.emailVerified ? 'Verified Email' : 'Email Not Verified' }}
 

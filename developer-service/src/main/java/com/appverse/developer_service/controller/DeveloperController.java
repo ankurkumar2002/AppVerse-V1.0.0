@@ -88,16 +88,16 @@ public class DeveloperController {
                 developerService.getDeveloperEmail(developerId));
     }
 
-    @PatchMapping("/updateprofile/{keycloakUserId}")
+    @PatchMapping("/updateprofile")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MessageResponse> updateDeveloperprofile(@PathVariable String keycloakUserId, @RequestBody KeycloakUserUpdateRequest request) {
-        return ResponseEntity.ok(developerService.updateUser(keycloakUserId, request));
+    public ResponseEntity<MessageResponse> updateDeveloperprofile( @RequestBody KeycloakUserUpdateRequest request) {
+        return ResponseEntity.ok(developerService.updateUser(request));
     }
 
-    @PutMapping("/updatepassword/{keycloakUserId}")
+    @PutMapping("/updatepassword")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MessageResponse> updatePassword(@PathVariable String keycloakUserId, UpdatePasswordRequest request) {
-        return ResponseEntity.ok(developerService.updatePassword(keycloakUserId, request));
+    public ResponseEntity<MessageResponse> updatePassword( @RequestBody UpdatePasswordRequest request) {
+        return ResponseEntity.ok(developerService.updatePassword(request));
     }
 
 }

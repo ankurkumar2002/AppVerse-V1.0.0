@@ -26,7 +26,7 @@ public interface DeveloperService {
 
     DeveloperEmailResponse getDeveloperEmail(String developerId);
 
-    MessageResponse updatePassword(String keycloakUserId, UpdatePasswordRequest request);
+    MessageResponse updatePassword( UpdatePasswordRequest request);
 
-    MessageResponse updateUser(String keycloakUserId, KeycloakUserUpdateRequest request);
+    MessageResponse updateUser( KeycloakUserUpdateRequest request);
 }

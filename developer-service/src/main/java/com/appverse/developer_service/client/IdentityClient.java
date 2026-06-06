@@ -25,10 +25,10 @@ public interface IdentityClient {
     @PostMapping("/api/identity/users/{keycloakUserId}/disable")
     void disableUser(@PathVariable("keycloakUserId") String userId);
 
-    @PutMapping("/api/me/password/{keycloakUserId}")
-    ResponseEntity<Void> updatePassword(@PathVariable("keycloakUserId") String keycloakUserId, UpdatePasswordRequest request);
+    @PutMapping("/api/identity/users/me/password/{keycloakUserId}")
+    ResponseEntity<Void> updatePassword(@PathVariable("keycloakUserId") String keycloakUserId, @RequestBody UpdatePasswordRequest request);
 
-    @PatchMapping("/api/{keycloakUserId}/update")
-    IdentityUserResponse updateUser(@PathVariable("keycloakUserId") String keycloakUserId, KeycloakUserUpdateRequest request);
+    @PutMapping("/api/identity/users/{keycloakUserId}/update")
+    IdentityUserResponse updateUser(@PathVariable("keycloakUserId") String keycloakUserId, @RequestBody KeycloakUserUpdateRequest request);
 
 }

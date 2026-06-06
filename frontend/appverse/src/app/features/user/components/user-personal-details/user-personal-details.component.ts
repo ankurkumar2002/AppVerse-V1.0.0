@@ -2,13 +2,14 @@ import { Component } from '@angular/core';
 import { UserAuthService, UserResponse } from '../../services/user/user-auth.service';
 import { UserDetailsResponse } from '../../models/UserDetailsResponse';
 import { CommonModule, DatePipe } from '@angular/common';
+import { RouterLink } from "@angular/router";
 
 @Component({
   selector: 'app-user-profile',
   standalone: true,
-  imports: [CommonModule, DatePipe],
-  templateUrl: './user-profile.component.html',
-  styleUrls: ['./user-profile.component.scss']
+  imports: [CommonModule, RouterLink],
+  templateUrl: './user-personal-details.component.html',
+  styleUrls: ['./user-personal-details.component.scss']
 })
 export class UserProfileComponent {
 
@@ -31,6 +32,4 @@ export class UserProfileComponent {
         error: (err) => console.error(`Error fetching details`, err)
       })
   }
-
-
 }

@@ -48,9 +48,6 @@ public class UserController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<UserResponse> updateMyProfile(
             @Valid @RequestBody UpdateUserProfileRequest request) {
-
-                
-
         return ResponseEntity.ok(userService.updateUserProfile(request));
     }
 
@@ -76,18 +73,16 @@ public class UserController {
         return ResponseEntity.ok(exists);
     }
 
-    @PutMapping("/updatepassword/{keycloakUserId}")
+    @PutMapping("/updatepassword")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MessageResponse> updatePassword(@PathVariable String keycloakUserId,
-            @RequestBody UpdatePasswordRequest request) {
-        return ResponseEntity.ok(userService.updatePassword(keycloakUserId, request));
+    public ResponseEntity<MessageResponse> updatePassword(@RequestBody UpdatePasswordRequest request) {
+        return ResponseEntity.ok(userService.updatePassword( request));
     }
 
-    @PatchMapping("/updateprofile/{keycloakUserId}")
+    @PatchMapping("/updateprofile")
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<MessageResponse> updateUser(@PathVariable String keycloakUserId,
-            KeycloakUpdateRequest request) {
-        return ResponseEntity.ok(userService.updateUser(keycloakUserId, request));
+    public ResponseEntity<MessageResponse> updateUser(@RequestBody KeycloakUpdateRequest request) {
+        return ResponseEntity.ok(userService.updateUser(request));
     }
 
 }
