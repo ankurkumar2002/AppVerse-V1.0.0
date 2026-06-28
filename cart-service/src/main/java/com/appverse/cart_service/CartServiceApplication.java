@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableJpaAuditing // Keep this if you were using it for JPA Auditing
+@EnableFeignClients
 public class CartServiceApplication {
 
 	public static void main(String[] args) {

@@ -8,6 +8,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatIcon } from "@angular/material/icon";
 import { Router, RouterModule } from '@angular/router';
+import { CartService } from '../../../cart/services/cart.service';
 
 @Component({
   selector: 'app-app-list',
@@ -24,6 +25,8 @@ export class AppListComponent {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
+  cartAppIds = new Set<string>();
+
   currentPage = 0;
   pageSize = 5;
 
@@ -32,10 +35,11 @@ export class AppListComponent {
   pages: number[] = [];
   imageUrls: Record<string, string> = {};
 
-  constructor(private appService: ApplicationService, private router: Router) { }
+  constructor(private appService: ApplicationService, private router: Router, private cartService: CartService) { }
 
   ngOnInit(): void {
     this.loadApplications();
+    this.loadCart();
 
   }
 
@@ -135,5 +139,61 @@ export class AppListComponent {
     });
   }
 
+loadCart(): void {
+  this.cartService.getCart().subscribe({
+    next: cart => {
+
+      this.cartAppIds.clear();
+
+      cart.items.forEach(item => {
+        this.cartAppIds.add(item.applicationId);
+      });
+
+      console.log(this.cartAppIds);
+    },
+    error: err => console.error(err)
+  });
+}
+
+addToCart(applicationId: string): void {
+
+  const payload = {
+    applicationId,
+    quantity: 1
+  };
+
+  this.cartService.addToCart(payload).subscribe({
+
+    next: () => {
+
+      this.cartAppIds.add(applicationId);
+
+      console.log('Added to cart successfully');
+
+    },
+
+    error: (err) => {
+
+      console.error('Failed to add item to cart', err);
+
+    }
+
+  });
+}
+
+removeFromCart(applicationId: string): void {
+
+  this.cartService.removeItemFromCart(applicationId).subscribe({
+
+    next: () => {
+
+      this.cartAppIds.delete(applicationId);
+
+    },
+
+    error: err => console.error(err)
+
+  });
+}
   
 }

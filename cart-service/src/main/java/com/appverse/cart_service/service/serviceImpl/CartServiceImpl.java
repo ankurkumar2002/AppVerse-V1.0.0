@@ -73,9 +73,12 @@ public class CartServiceImpl implements CartService {
         public CartResponse addItemTocart(String userId, AddItemToCartRequest addItemToRequest) {
                 log.info("User {} attempting to add item (AppID: {}, Qty: {}) to cart.",
                                 userId, addItemToRequest.applicationId(), addItemToRequest.quantity());
-
+                
+                log.info("checking if it is attempting and coming to next line");
                 ApplicationDetails appDetails = fetchApplicationDetails(
                                 addItemToRequest.applicationId());
+
+                log.info("item added to cart : "+appDetails);
 
                 return addItemToCartInternal(userId, addItemToRequest, appDetails);
         }
@@ -85,11 +88,14 @@ public class CartServiceImpl implements CartService {
                         String userId,
                         AddItemToCartRequest addItemToCartRequest,
                         ApplicationDetails appDetails) {
+                log.info("Searching for cart now ");
                 Cart cart = cartRepository.findByUserId(userId).orElseGet(() -> createNewCart(userId));
+                log.info("Cart found with cart id : "+cart.getId());
 
                 Optional<CartItem> existingItemOpt = cart.getItems().stream()
                                 .filter(item -> item.getApplicationId().equals(addItemToCartRequest.applicationId()))
                                 .findFirst();
+                
 
                 CartItem itemForEvent;
                 int quantityAdded = addItemToCartRequest.quantity();
@@ -143,9 +149,11 @@ public class CartServiceImpl implements CartService {
 
         private ApplicationDetails fetchApplicationDetails(String applicationId) {
                 try {
-                        log.debug("Fetching application details for ID: {}", applicationId);
+                        log.info("Fetching application details for ID: {}", applicationId);
                         ApplicationDetails details = applicationServiceClient
                                         .getApplicationDetails(applicationId);
+                        
+                        log.info("Details got are : "+details);
 
                         if (details == null) {
                                 throw new ResourceNotFoundException(
