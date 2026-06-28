@@ -1,0 +1,12 @@
+<div class="cart-item">
+    <img [src]="item.thumbnailUrl" alt="thumbnail" width="100">
+
+    <div>
+        <h3>{{item.applicationName}}</h3>
+        <p>Quantity : {{item.quantity}}</p>
+        <p>{{item.unitPrice}} {{item.currency}}</p>
+        <p>Total: {{item.unitPrice * item.quantity}} {{item.currency}}</p>
+    </div>
+
+    <button (click)="removeItem()">Remove</button>
+</div>

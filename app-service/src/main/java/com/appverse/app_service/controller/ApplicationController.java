@@ -172,8 +172,6 @@ public class ApplicationController {
         }
     }
 
-    
-
     @GetMapping("/images/{type}/{filename:.+}")
     public ResponseEntity<Resource> getImage(@PathVariable String type, @PathVariable String filename) {
 
@@ -230,9 +228,19 @@ public class ApplicationController {
 
     @GetMapping("/online")
     @PreAuthorize("hasAnyRole('USER', 'DEVELOPER')")
-    public ResponseEntity<Page<ApplicationResponse>> getPublishedApplications(@RequestParam(defaultValue = "0") int page,
-        @RequestParam(defaultValue = "10") int size){
-            return ResponseEntity.ok(applicationService.getPublishedApplications(page, size));
+    public ResponseEntity<Page<ApplicationResponse>> getPublishedApplications(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        return ResponseEntity.ok(applicationService.getPublishedApplications(page, size));
+    }
+
+    @GetMapping("/internal/{id}")
+    @PreAuthorize("hasAuthority('SCOPE_internal')")
+    public ResponseEntity<ApplicationResponse> getApplicationInternal(
+            @PathVariable String id) {
+
+        return ResponseEntity.ok(
+                applicationService.getApplicationById(id));
     }
 
 }

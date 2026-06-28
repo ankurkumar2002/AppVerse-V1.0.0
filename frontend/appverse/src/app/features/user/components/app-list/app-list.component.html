@@ -92,11 +92,29 @@
 
           </a>
 
-          <button class="details-btn" [routerLink]="['/user/apps/'+ app.id]">
+          <button class="details-btn" [routerLink]="['/user/apps', app.id]">
 
             Details
 
           </button>
+
+          @if (!cartAppIds.has(app.id)) {
+
+          <button class="cart-btn" (click)="addToCart(app.id)">
+
+            Add To Cart
+
+          </button>
+
+          } @else {
+
+          <button class="cart-btn in-cart-btn" disabled>
+
+            ✓ In Cart
+
+          </button>
+
+          }
 
         </div>
 
