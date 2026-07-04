@@ -145,31 +145,45 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     private void adjustPricingAndFlags(Application application) {
+
         switch (application.getMonetizationType()) {
+
             case FREE -> {
                 application.setFree(true);
                 application.setPrice(BigDecimal.ZERO);
-                application.setCurrency(null);
+                application.setCurrency("INR");
             }
+
             case SUBSCRIPTION -> {
                 application.setFree(false);
-                if (application.getPrice() == null || application.getPrice().compareTo(BigDecimal.ZERO) != 0) {
-                    log.warn("For SUBSCRIPTION_ONLY app '{}', price is expected to be 0. Setting it to 0.",
-                            application.getName());
-                    application.setPrice(BigDecimal.ZERO);
-                    application.setCurrency(null);
-                }
+                application.setPrice(BigDecimal.ZERO);
+                application.setCurrency("INR");
             }
+
             case ONE_TIME_PURCHASE, ONE_TIME_OR_SUBSCRIPTION -> {
-                if (application.getPrice() == null || application.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+
+                if (application.getPrice() == null ||
+                        application.getPrice().compareTo(BigDecimal.ZERO) < 0) {
+
                     throw new BadRequestException(
                             "Price must be provided and non-negative for purchasable monetization types.");
                 }
-                if (application.getPrice().compareTo(BigDecimal.ZERO) > 0
-                        && (application.getCurrency() == null || application.getCurrency().isBlank())) {
-                    throw new BadRequestException("Currency must be provided for priced items.");
+
+                if (application.getPrice().compareTo(BigDecimal.ZERO) > 0 &&
+                        (application.getCurrency() == null ||
+                                application.getCurrency().isBlank())) {
+
+                    throw new BadRequestException(
+                            "Currency must be provided for priced items.");
                 }
-                application.setFree(application.getPrice().compareTo(BigDecimal.ZERO) == 0);
+
+                if (application.getCurrency() == null ||
+                        application.getCurrency().isBlank()) {
+                    application.setCurrency("INR");
+                }
+
+                application.setFree(
+                        application.getPrice().compareTo(BigDecimal.ZERO) == 0);
             }
         }
     }
@@ -399,19 +413,19 @@ public class ApplicationServiceImpl implements ApplicationService {
         }
 
         if (app.getScreenshots() == null || app.getScreenshots().isEmpty()) {
-             log.error("Screenshots missing");
+            log.error("Screenshots missing");
             throw new BadRequestException("At least one screenshot required.");
         }
 
         // if (app.getDescription() == null || app.getDescription().isBlank()) {
-        //     log.error("Description missing");
-        //     throw new BadRequestException("Description required before publishing.");
+        // log.error("Description missing");
+        // throw new BadRequestException("Description required before publishing.");
         // }
 
     }
 
     @Override
-    public Page<ApplicationResponse> getPublishedApplications(int page, int size){
+    public Page<ApplicationResponse> getPublishedApplications(int page, int size) {
 
         Pageable pageable = PageRequest.of(page, size);
         Page<Application> applications = applicationRepository.findByStatus(ApplicationStatus.PUBLISHED, pageable);

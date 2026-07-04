@@ -24,7 +24,7 @@ public class FeignClientAuthInterceptor implements RequestInterceptor {
     
     @Override
     public void apply(RequestTemplate template) {
-        
+        System.out.println(">>> INTERCEPTOR EXECUTED <<<");
         // Prevent duplicate headers
         if (template.headers().containsKey(AUTH_HEADER)) {
             return;

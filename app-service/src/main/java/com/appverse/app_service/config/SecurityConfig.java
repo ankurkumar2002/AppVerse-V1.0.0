@@ -1,5 +1,6 @@
 package com.appverse.app_service.config;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import org.slf4j.Logger;
@@ -10,7 +11,9 @@ import org.springframework.security.config.annotation.method.configuration.Enabl
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.cors.CorsConfiguration;
@@ -85,9 +88,28 @@ public class SecurityConfig {
     }
 
     private JwtAuthenticationConverter jwtAuthenticationConverter() {
-        logger.info("APP-SERVICE: Creating JwtAuthenticationConverter with KeycloakRealmRoleConverter.");
+
         JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(new KeycloakRealmRoleConverter());
+
+        converter.setJwtGrantedAuthoritiesConverter(jwt -> {
+
+            List<GrantedAuthority> authorities = new ArrayList<>();
+
+            // your existing Keycloak roles
+            authorities.addAll(
+                    new KeycloakRealmRoleConverter().convert(jwt));
+
+            // OAuth scopes
+            JwtGrantedAuthoritiesConverter scopeConverter = new JwtGrantedAuthoritiesConverter();
+
+            scopeConverter.setAuthorityPrefix("SCOPE_");
+            scopeConverter.setAuthoritiesClaimName("scope");
+
+            authorities.addAll(scopeConverter.convert(jwt));
+
+            return authorities;
+        });
+
         return converter;
     }
 

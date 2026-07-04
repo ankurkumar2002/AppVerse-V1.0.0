@@ -139,61 +139,61 @@ export class AppListComponent {
     });
   }
 
-loadCart(): void {
-  this.cartService.getCart().subscribe({
-    next: cart => {
+  loadCart(): void {
+    this.cartService.getCart().subscribe({
+      next: cart => {
 
-      this.cartAppIds.clear();
+        this.cartAppIds.clear();
 
-      cart.items.forEach(item => {
-        this.cartAppIds.add(item.applicationId);
-      });
+        cart.items.forEach(item => {
+          this.cartAppIds.add(item.applicationId);
+        });
 
-      console.log(this.cartAppIds);
-    },
-    error: err => console.error(err)
-  });
-}
+        console.log(this.cartAppIds);
+      },
+      error: err => console.error(err)
+    });
+  }
 
-addToCart(applicationId: string): void {
+  addToCart(applicationId: string): void {
 
-  const payload = {
-    applicationId,
-    quantity: 1
-  };
+    const payload = {
+      applicationId,
+      quantity: 1
+    };
 
-  this.cartService.addToCart(payload).subscribe({
+    this.cartService.addToCart(payload).subscribe({
 
-    next: () => {
+      next: () => {
 
-      this.cartAppIds.add(applicationId);
+        this.cartAppIds.add(applicationId);
 
-      console.log('Added to cart successfully');
+        console.log('Added to cart successfully');
 
-    },
+      },
 
-    error: (err) => {
+      error: (err) => {
 
-      console.error('Failed to add item to cart', err);
+        console.error('Failed to add item to cart', err);
 
-    }
+      }
 
-  });
-}
+    });
+  }
 
-removeFromCart(applicationId: string): void {
+  removeFromCart(applicationId: string): void {
 
-  this.cartService.removeItemFromCart(applicationId).subscribe({
+    this.cartService.removeItemFromCart(applicationId).subscribe({
 
-    next: () => {
+      next: () => {
 
-      this.cartAppIds.delete(applicationId);
+        this.cartAppIds.delete(applicationId);
 
-    },
+      },
 
-    error: err => console.error(err)
+      error: err => console.error(err)
 
-  });
-}
-  
+    });
+  }
+
 }

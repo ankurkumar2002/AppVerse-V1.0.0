@@ -16,6 +16,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import brave.Response;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,6 +46,7 @@ import java.util.List;
 @RestController
 @RequestMapping("/api/apps")
 @RequiredArgsConstructor
+@Slf4j
 public class ApplicationController {
 
     @Value("${app.upload-dir}")
@@ -238,7 +240,7 @@ public class ApplicationController {
     @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<ApplicationResponse> getApplicationInternal(
             @PathVariable String id) {
-
+                log.info("Request is coming and getting processed");
         return ResponseEntity.ok(
                 applicationService.getApplicationById(id));
     }

@@ -8,7 +8,7 @@ import com.appverse.cart_service.dto.ApplicationDetails;
 @FeignClient(name = "application-service", url = "${appverse.application-service.url}")
 public interface ApplicationServiceClient {
 
-    @GetMapping("/api/apps/{applicationId}")
+    @GetMapping("/api/apps/internal/{applicationId}")
     ApplicationDetails getApplicationDetails(@PathVariable("applicationId") String applicationId);
 
 }
