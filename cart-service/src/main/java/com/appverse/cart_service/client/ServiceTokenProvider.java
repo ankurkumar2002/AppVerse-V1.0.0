@@ -36,7 +36,7 @@ public class ServiceTokenProvider {
     private final AtomicReference<CachedToken> cachedToken = new AtomicReference<>();
 
     public String getServiceToken() {
-
+        System.out.println("Entering getServiceToken");
         CachedToken current = cachedToken.get();
 
         if (current != null && !current.isExpired()) {
@@ -48,7 +48,7 @@ public class ServiceTokenProvider {
             if (current != null && !current.isExpired()) {
                 return current.token();
             }
-
+            System.out.println("Fetching new token");
             CachedToken newToken = fetchNewToken();
             cachedToken.set(newToken);
             return newToken.token();
@@ -61,25 +61,33 @@ public class ServiceTokenProvider {
         formData.add("grant_type", "client_credentials");
         formData.add("client_id", clientId);
         formData.add("client_secret", clientSecret);
+        System.out.println("Calling Keycloak URL: " + tokenUri);
 
-        JsonNode body = webClient.post()
-                .uri(tokenUri)
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(BodyInserters.fromFormData(formData))
-                .retrieve()
-                .bodyToMono(JsonNode.class)
-                .block();
+        try {
 
-        if (body == null || !body.has("access_token")) {
-            throw new IllegalStateException("Failed to obtain service token from keycloak");
+            JsonNode body = webClient.post()
+                    .uri(tokenUri)
+                    .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                    .body(BodyInserters.fromFormData(formData))
+                    .retrieve()
+                    .bodyToMono(JsonNode.class)
+                    .block();
+
+            System.out.println("Response from Keycloak: " + body);
+
+            if (body == null || !body.has("access_token")) {
+                throw new IllegalStateException("Failed to obtain service token from keycloak");
+            }
+
+            String token = body.get("access_token").asText();
+            long expiresIn = body.get("expires_in").asLong();
+
+            return new CachedToken(
+                    token, Instant.now().plusSeconds(expiresIn));
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw e;
         }
-
-        String token = body.get("access_token").asText();
-        long expiresIn = body.get("expires_in").asLong();
-
-        return new CachedToken(
-                token, Instant.now().plusSeconds(expiresIn));
     }
 
 }
-
