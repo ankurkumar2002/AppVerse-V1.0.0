@@ -33,6 +33,8 @@ import com.appverse.app_service.exception.CreationException;
 import com.appverse.app_service.exception.DatabaseOperationException;
 import com.appverse.app_service.exception.ResourceNotFoundException;
 import com.appverse.app_service.exception.UpdateOperationException;
+import com.appverse.app_service.kafka.consumer.ApplicationEventProducer;
+import com.appverse.app_service.kafka.events.ApplicationCreatedEvent;
 import com.appverse.app_service.kafkaEvents.ApplicationEventPublisher;
 import com.appverse.app_service.mapper.ApplicationMapper;
 import com.appverse.app_service.model.Application;
@@ -59,7 +61,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationMapper applicationMapper;
     private final SubscriptionServiceClient subscriptionServiceClient;
 
-    private final ApplicationEventPublisher applicationEventPublisher;
+    private final ApplicationEventProducer applicationEventProducer;
 
     private final Executor applicationTaskExecutor;
     private final ApplicationValidator applicationValidator;
@@ -122,6 +124,12 @@ public class ApplicationServiceImpl implements ApplicationService {
         log.info(savedApplication.toString());
 
         log.info(savedApplication + " data is pushed");
+
+        ApplicationCreatedEvent event = new ApplicationCreatedEvent(savedApplication.getId(),
+                savedApplication.getDeveloperId(), savedApplication.getName(), savedApplication.getCategoryId(),
+                savedApplication.getStatus(), Instant.now());
+
+        applicationEventProducer.publishApplicationCreated(event);
 
         // applicationEventPublisher.publishCreated(savedApplication);
 

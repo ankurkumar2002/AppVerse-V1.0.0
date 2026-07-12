@@ -60,12 +60,6 @@ public class ApplicationServiceImplTest {
 	@InjectMocks
 	private ApplicationServiceImpl service;
 
-	@BeforeEach
-	void setup() {
-		service = new ApplicationServiceImpl(mediaService, repository, createService, mapper, subscriptionServiceClient,
-				eventPublisher, syncExecutor, validator);
-	}
-
 	@Test
 	void createApplication_success() {
 		ApplicationRequest request = new ApplicationRequest(
