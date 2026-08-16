@@ -425,11 +425,6 @@ public class ApplicationServiceImpl implements ApplicationService {
             throw new BadRequestException("At least one screenshot required.");
         }
 
-        // if (app.getDescription() == null || app.getDescription().isBlank()) {
-        // log.error("Description missing");
-        // throw new BadRequestException("Description required before publishing.");
-        // }
-
     }
 
     @Override

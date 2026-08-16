@@ -9,9 +9,9 @@ import com.appverse.user_service.dto.UserResponse;
 
 public interface UserService {
 
-    UserResponse createUser(UserRequest userRequest);
+    MessageResponse createUser(UserRequest userRequest);
 
-    UserResponse updateUserProfile(UpdateUserProfileRequest userRequest);
+    MessageResponse updateUserProfile(UpdateUserProfileRequest userRequest);
 
     UserResponse getMyprofile();
 

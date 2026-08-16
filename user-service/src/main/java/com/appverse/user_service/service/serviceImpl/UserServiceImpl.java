@@ -1,4 +1,3 @@
-
 package com.appverse.user_service.service.serviceImpl;
 
 import com.appverse.user_service.client.IdentityClient;
@@ -47,15 +46,18 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @CacheEvict(value = "userProfileByKeycloakId", key = "#root.target.currentUserProvider.getCurrentUser().id()")
-    public UserResponse updateUserProfile(UpdateUserProfileRequest userRequest) {
+    public MessageResponse updateUserProfile(UpdateUserProfileRequest userRequest) {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         User user = userRepository.findByKeycloakUserId(keycloakUserId)
                 .orElseThrow(() -> new ResourceNotFoundException("User profile not found"));
         if (userRequest.phone() != null && !userRequest.phone().isBlank()) {
             user.setPhone(userRequest.phone());
         }
+        if (user.getRole() == Role.DEVELOPER) {
+            return new MessageResponse("You already have a user profile with this account.", keycloakUserId);
+        }
         User updatedUser = userRepository.save(user);
-        return userMapper.toResponse(updatedUser);
+        return new MessageResponse("User profile created successfully!", user.getKeycloakUserId());
     }
 
     @Override
@@ -111,7 +113,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public UserResponse createUser(UserRequest userRequest) {
+    public MessageResponse createUser(UserRequest userRequest) {
 
         log.info("🔥 createUser() started");
 
@@ -137,6 +139,9 @@ public class UserServiceImpl implements UserService {
             throw new IntegrationException(
                     "Incomplete user data received from identity-service");
         }
+        if (identityUser.roles().contains("USER")) {
+            throw new DuplicateResourceException("You already have a user profile with this account. " + keycloakUserId);
+        }
 
         User user = User.builder()
                 .keycloakUserId(identityUser.id())
@@ -161,19 +166,20 @@ public class UserServiceImpl implements UserService {
 
         log.info("Before mapping response");
 
-        UserResponse response = userMapper.toResponse(savedUser);
+        // UserResponse response = userMapper.toResponse(savedUser);
 
         log.info("After mapping response");
 
-        return response;
+        return new MessageResponse("User created successfully!", keycloakUserId);
 
     }
 
     public boolean checkUserExists(String keycloakId) {
         return userRepository.existsByKeycloakUserId(keycloakId);
     }
+
     @Transactional
-    public MessageResponse updateUser( KeycloakUpdateRequest request) {
+    public MessageResponse updateUser(KeycloakUpdateRequest request) {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         log.info("request reached in this function");
         log.info("Sending email to identity service = {}", request.getEmail());
@@ -194,9 +200,9 @@ public class UserServiceImpl implements UserService {
         return new MessageResponse("Details Updated Successfully! ", keycloakUserId);
     }
 
-    public MessageResponse updatePassword( UpdatePasswordRequest request) {
+    public MessageResponse updatePassword(UpdatePasswordRequest request) {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
-        
+
         ResponseEntity<Void> response = identityClient.updatePassword(keycloakUserId, request);
 
         if (response.getStatusCode().is2xxSuccessful()) {

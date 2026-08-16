@@ -1,172 +1,957 @@
 @use 'sass:color';
 
-/* Theme Variables */
-$dark-bg: #121212; // This is our main page background
-$dark-text: #e0e0e0;
-$dark-primary: #90caf9;
-$dark-border: #3f3f3f; // This is great for row separators
-$dark-hover: rgba(144, 202, 249, 0.08);
-$light-blue: #64b5f6;
-$danger-red: #ef5350;
-$icon-gray: rgba($dark-text, 0.7);
+/* =========================================================
+   APPVERSE APPLICATION PAGE
+   ========================================================= */
+
+$bg: #111827;
+$surface: #1f2937;
+$surface-light: #243244;
+
+$text-primary: #f9fafb;
+$text-secondary: #9ca3af;
+$text-muted: #6b7280;
+
+$border: rgba(147, 197, 253, 0.16);
+
+$primary: #60a5fa;
+$primary-dark: #3b82f6;
+
+$success: #34d399;
+$warning: #fbbf24;
+$danger: #f87171;
+
+$transition: 0.2s ease;
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
 
 .application-container {
-  padding: 24px;
-}
 
-/*
-* ✅ NEW SEAMLESS TABLE CONTAINER STYLES
-* This replaces the old .table-card styles.
-*/
-.table-container {
-  // --- Custom Header Styles ---
-  .table-header {
-    display: flex;
-    align-items: center;
-    padding: 0 0 24px 0; // Padding only on the bottom
-  }
-
-  .table-title {
-    font-size: 24px;
-    font-weight: 500;
-    line-height: 32px;
-    margin: 0;
-  }
-
-  .spacer {
-    flex-grow: 1;
-  }
-
-  // --- Table Styles ---
-  // Make the table background transparent to blend with the page
-  .mat-table, .mat-mdc-table {
-    background: transparent !important;
-  }
-  
-  // Style all cells with a bottom border for separation
-  .mat-header-cell, .mat-mdc-header-cell,
-  .mat-cell, .mat-mdc-cell {
-    border-bottom: 1px solid $dark-border !important;
-  }
-  
-  .mat-header-cell, .mat-mdc-header-cell {
-    color: rgba($dark-text, 0.7) !important;
-    font-size: 0.8rem;
-    font-weight: 500;
-    padding: 12px 10px;
-    text-transform: none;
-    letter-spacing: 0.2px;
-  }
-  
-  .mat-cell, .mat-mdc-cell {
-    color: $dark-text !important;
-    padding: 16px 10px;
-    font-weight: 500;
-  }
-
-  .mat-row, .mat-mdc-row {
-    transition: background-color 0.2s ease-in-out;
-    &:hover { background-color: $dark-hover !important; }
-  }
-
-  // Remove the bottom border from the very last row
-  .mat-row:last-of-type .mat-cell,
-  .mat-mdc-row:last-of-type .mat-mdc-cell {
-    border-bottom-width: 0;
-  }
-
-  // --- Paginator Styles ---
-  mat-paginator {
-    background: transparent !important; // Blend with page
-    color: rgba($dark-text, 0.7) !important;
-    padding-top: 16px;
-  }
-
-  .mat-mdc-paginator-range-label,
-  .mat-mdc-paginator-page-size-label {
-    color: rgba($dark-text, 0.7) !important;
-  }
-  .mat-mdc-select-value, .mat-mdc-select-arrow,
-  .mat-mdc-icon-button .mat-icon {
-    color: $dark-text !important;
-  }
-}
-
-// Scrollbar Styling (remains the same)
-.table-responsive {
   width: 100%;
+  min-height: 100%;
+
+  padding: 28px 32px;
+
+  box-sizing: border-box;
+
+  background: $bg;
+  color: $text-primary;
+
+}
+
+
+/* =========================================================
+   MAIN CONTAINER
+   ========================================================= */
+
+.table-container {
+
+  width: 100%;
+  max-width: 1500px;
+
+  margin: 0 auto;
+
+  background:
+    linear-gradient(
+      145deg,
+      rgba(31, 41, 55, 0.82),
+      rgba(17, 24, 39, 0.92)
+    );
+
+  border: 1px solid $border;
+
+  border-radius: 16px;
+
+  box-shadow:
+    0 10px 35px rgba(0, 0, 0, 0.25);
+
+  overflow: visible;
+
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.table-header {
+
+  min-height: 76px;
+
+  padding: 0 24px;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 18px;
+
+  border-bottom: 1px solid $border;
+
+  box-sizing: border-box;
+
+}
+
+
+.table-title {
+
+  margin: 0;
+
+  font-size: 1.5rem;
+
+  line-height: 1;
+
+  font-weight: 650;
+
+  letter-spacing: -0.02em;
+
+  color: $text-primary;
+
+}
+
+
+.table-subtitle {
+
+  margin-left: 4px;
+
+  color: $text-muted;
+
+  font-size: 0.85rem;
+
+}
+
+
+/* =========================================================
+   HEADER SPACER
+   ========================================================= */
+
+.spacer {
+
+  flex: 1;
+}
+
+
+/* =========================================================
+   SEARCH
+   ========================================================= */
+
+.search-wrapper {
+
+  width: 280px;
+
+  position: relative;
+
+}
+
+
+.search-field {
+
+  width: 100%;
+
+}
+
+
+.search-field .mat-mdc-text-field-wrapper {
+
+  background: rgba(255, 255, 255, 0.04);
+
+  border-radius: 10px;
+
+}
+
+
+.search-field .mat-mdc-form-field-flex {
+
+  min-height: 42px;
+
+}
+
+
+.search-field .mdc-notched-outline {
+
+  border-color: $border !important;
+
+}
+
+
+.search-field:hover .mdc-notched-outline {
+
+  border-color: rgba(147, 197, 253, 0.3) !important;
+
+}
+
+
+.search-field.mat-focused .mdc-notched-outline {
+
+  border-color: $primary !important;
+
+}
+
+
+.search-field input {
+
+  color: $text-primary !important;
+
+  font-size: 0.9rem;
+
+}
+
+
+.search-field input::placeholder {
+
+  color: $text-muted !important;
+
+}
+
+
+.search-field .mat-icon {
+
+  color: $text-muted;
+
+}
+
+
+/* =========================================================
+   CREATE BUTTON
+   ========================================================= */
+
+.create-button {
+
+  height: 42px;
+
+  padding: 0 18px;
+
+  border-radius: 9px;
+
+  font-weight: 600;
+
+  letter-spacing: 0.01em;
+
+  white-space: nowrap;
+
+}
+
+
+.create-button mat-icon {
+
+  margin-right: 7px;
+
+}
+
+
+/* =========================================================
+   PROGRESS BAR
+   ========================================================= */
+
+.table-container
+mat-progress-bar {
+
+  height: 3px;
+
+}
+
+
+/* =========================================================
+   TABLE
+   ========================================================= */
+
+.table-responsive {
+
+  width: 100%;
+
   overflow-x: auto;
-  &::-webkit-scrollbar { height: 6px; }
-  &::-webkit-scrollbar-thumb { background-color: rgba($dark-text, 0.3); border-radius: 3px; }
-  &::-webkit-scrollbar-track { background: $dark-bg; }
+
+  overflow-y: visible;
+
+  border-radius: 0 0 16px 16px;
+
 }
 
-// Cell-specific and Badge styles (remain the same)
+
+table.mat-mdc-table {
+
+  width: 100%;
+
+  min-width: 800px;
+
+  background: transparent !important;
+
+}
+
+
+/* =========================================================
+   HEADER CELLS
+   ========================================================= */
+
+.mat-mdc-header-cell {
+
+  height: 52px;
+
+  padding: 0 18px !important;
+
+  background: rgba(255, 255, 255, 0.025) !important;
+
+  border-bottom: 1px solid $border !important;
+
+  color: $text-muted !important;
+
+  font-size: 0.76rem !important;
+
+  font-weight: 650 !important;
+
+  text-transform: uppercase;
+
+  letter-spacing: 0.06em;
+
+}
+
+
+/* =========================================================
+   TABLE CELLS
+   ========================================================= */
+
+.mat-mdc-cell {
+
+  height: 68px;
+
+  padding: 0 18px !important;
+
+  border-bottom: 1px solid rgba(147, 197, 253, 0.09) !important;
+
+  color: $text-primary !important;
+
+  font-size: 0.9rem;
+
+}
+
+
+.mat-mdc-row {
+
+  background: transparent !important;
+
+  transition:
+    background-color $transition,
+    transform $transition;
+
+}
+
+
+.mat-mdc-row:hover {
+
+  background: rgba(96, 165, 250, 0.055) !important;
+
+}
+
+
+/* =========================================================
+   APP NAME
+   ========================================================= */
+
+.app-name {
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  font-weight: 600;
+
+}
+
+
+.app-icon {
+
+  width: 38px;
+
+  height: 38px;
+
+  border-radius: 9px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  background:
+    linear-gradient(
+      135deg,
+      rgba(96, 165, 250, 0.18),
+      rgba(59, 130, 246, 0.08)
+    );
+
+  color: $primary;
+
+}
+
+
+.app-icon mat-icon {
+
+  font-size: 20px;
+
+  width: 20px;
+
+  height: 20px;
+
+}
+
+
+/* =========================================================
+   TAGLINE
+   ========================================================= */
+
 .tagline-cell {
-  color: rgba($dark-text, 0.7) !important;
+
+  color: $text-secondary !important;
+
   font-weight: 400;
+
+  max-width: 350px;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
 }
 
-.actions-cell {
-  text-align: right;
-  width: 140px;
 
-  .view-button .mat-icon { color: $icon-gray !important; }
-  .edit-button .mat-icon { color: $light-blue !important; }
-  .delete-button .mat-icon { color: $danger-red !important; }
+/* =========================================================
+   STATUS COLUMN
+   ========================================================= */
 
-  button.mat-icon-button {
-    margin-left: 4px;
+.status-cell {
 
-    .mat-icon {
-      opacity: 0.6;
-      transition: opacity 0.2s ease-in-out;
-    }
+  display: flex;
 
-    &:hover .mat-icon {
-      opacity: 1;
-    }
-  }
+  align-items: center;
+
+  gap: 10px;
+
 }
+
+
+/* =========================================================
+   STATUS BADGE
+   ========================================================= */
 
 .status-badge {
-  display: inline-block;
-  padding: 5px 14px;
-  border-radius: 15px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  color: #fff;
 
-  &.status-published {
-    background-color: #28a745;
-  }
-  &.status-draft {
-    background-color: #ffc107;
-    color: #111;
-  }
-  &.status-rejected {
-    background-color: #dc3545;
-  }
+  display: inline-flex;
+
+  align-items: center;
+
+  gap: 7px;
+
+  min-width: 105px;
+
+  height: 32px;
+
+  padding: 0 11px;
+
+  border-radius: 8px;
+
+  font-size: 0.78rem;
+
+  font-weight: 600;
+
+  letter-spacing: 0.01em;
+
+  border: 1px solid transparent;
+
 }
 
+
+.status-badge mat-icon {
+
+  width: 16px;
+
+  height: 16px;
+
+  font-size: 16px;
+
+}
+
+
+/* Published */
+
+.status-published {
+
+  color: $success;
+
+  background: rgba(52, 211, 153, 0.09);
+
+  border-color: rgba(52, 211, 153, 0.18);
+
+}
+
+
+/* Unpublished */
+
+.status-unpublished {
+
+  color: $text-secondary;
+
+  background: rgba(156, 163, 175, 0.08);
+
+  border-color: rgba(156, 163, 175, 0.15);
+
+}
+
+
+/* Draft */
+
+.status-draft {
+
+  color: $warning;
+
+  background: rgba(251, 191, 36, 0.09);
+
+  border-color: rgba(251, 191, 36, 0.18);
+
+}
+
+
+/* Archived */
+
+.status-archived {
+
+  color: #a78bfa;
+
+  background: rgba(167, 139, 250, 0.09);
+
+  border-color: rgba(167, 139, 250, 0.18);
+
+}
+
+
+/* Rejected */
+
+.status-rejected {
+
+  color: $danger;
+
+  background: rgba(248, 113, 113, 0.09);
+
+  border-color: rgba(248, 113, 113, 0.18);
+
+}
+
+
+/* =========================================================
+   STATUS CHANGE BUTTON
+   ========================================================= */
+
+.status-menu-button {
+
+  width: 32px !important;
+
+  height: 32px !important;
+
+  min-width: 32px !important;
+
+  padding: 0 !important;
+
+  border-radius: 8px !important;
+
+  color: $text-secondary !important;
+
+  background: rgba(255, 255, 255, 0.035) !important;
+
+  border: 1px solid rgba(255, 255, 255, 0.07);
+
+}
+
+
+.status-menu-button:hover {
+
+  color: $primary !important;
+
+  background: rgba(96, 165, 250, 0.09) !important;
+
+  border-color: rgba(96, 165, 250, 0.2);
+
+}
+
+
+.status-menu-button mat-icon {
+
+  font-size: 19px;
+
+}
+
+
+/* =========================================================
+   STATUS MENU
+   ========================================================= */
+
+.status-menu {
+
+  margin-top: 6px;
+
+}
+
+
+.status-menu .mat-mdc-menu-item {
+
+  min-height: 42px;
+
+  font-size: 0.88rem;
+
+}
+
+
+.status-menu .mat-mdc-menu-item mat-icon {
+
+  margin-right: 10px;
+
+  color: $text-secondary;
+
+}
+
+
+/* =========================================================
+   ACTIONS
+   ========================================================= */
+
+.actions-cell {
+
+  width: 150px;
+
+  text-align: right;
+
+  white-space: nowrap;
+
+}
+
+
+.action-button {
+
+  width: 36px !important;
+
+  height: 36px !important;
+
+  margin-left: 3px;
+
+  color: $text-secondary !important;
+
+  border-radius: 8px !important;
+
+  transition:
+    background-color $transition,
+    color $transition;
+
+}
+
+
+.action-button:hover {
+
+  background: rgba(255, 255, 255, 0.06);
+
+}
+
+
+.view-button:hover {
+
+  color: $primary !important;
+
+}
+
+
+.edit-button:hover {
+
+  color: $warning !important;
+
+}
+
+
+.delete-button:hover {
+
+  color: $danger !important;
+
+}
+
+
+/* =========================================================
+   EMPTY STATE
+   ========================================================= */
+
 .empty-state {
+
+  min-height: 320px;
+
   display: flex;
+
   flex-direction: column;
+
   align-items: center;
+
   justify-content: center;
-  padding: 64px 24px;
+
   text-align: center;
-  color: rgba($dark-text, 0.6);
 
-  mat-icon {
-    font-size: 56px;
-    width: 56px;
-    height: 56px;
-    margin-bottom: 24px;
-    color: rgba($dark-text, 0.4);
+  padding: 40px 24px;
+
+  color: $text-secondary;
+
+}
+
+
+.empty-state mat-icon {
+
+  width: 58px;
+
+  height: 58px;
+
+  font-size: 58px;
+
+  margin-bottom: 18px;
+
+  color: rgba(147, 197, 253, 0.25);
+
+}
+
+
+.empty-state span {
+
+  font-size: 0.95rem;
+
+}
+
+
+.empty-state-button {
+
+  margin-top: 20px;
+
+}
+
+
+/* =========================================================
+   PAGINATOR
+   ========================================================= */
+
+mat-paginator {
+
+  min-height: 58px;
+
+  background: transparent !important;
+
+  color: $text-secondary !important;
+
+  border-top: 1px solid rgba(147, 197, 253, 0.09);
+
+  padding: 0 12px;
+
+  box-sizing: border-box;
+
+}
+
+
+.mat-mdc-paginator-container {
+
+  min-height: 58px;
+
+}
+
+
+.mat-mdc-paginator-range-label {
+
+  color: $text-secondary !important;
+
+}
+
+
+.mat-mdc-paginator-page-size-label {
+
+  color: $text-secondary !important;
+
+}
+
+
+.mat-mdc-paginator .mat-mdc-select-value {
+
+  color: $text-primary !important;
+
+}
+
+
+.mat-mdc-paginator .mat-mdc-select-arrow {
+
+  color: $text-secondary !important;
+
+}
+
+
+.mat-mdc-paginator .mat-mdc-icon-button {
+
+  color: $text-secondary !important;
+
+}
+
+
+/* =========================================================
+   MATERIAL MENU OVERLAY
+   ========================================================= */
+
+.cdk-overlay-container {
+
+  z-index: 10000 !important;
+
+}
+
+
+.mat-mdc-menu-panel {
+
+  background: #1f2937 !important;
+
+  border: 1px solid $border;
+
+  border-radius: 10px !important;
+
+  box-shadow:
+    0 15px 40px rgba(0, 0, 0, 0.4) !important;
+
+}
+
+
+.mat-mdc-menu-item {
+
+  color: $text-primary !important;
+
+}
+
+
+.mat-mdc-menu-item:hover {
+
+  background: rgba(96, 165, 250, 0.08) !important;
+
+}
+
+
+/* =========================================================
+   PAGINATOR SELECT OVERLAY
+   ========================================================= */
+
+.mat-mdc-select-panel {
+
+  background: #1f2937 !important;
+
+  border: 1px solid $border;
+
+}
+
+
+.mat-mdc-option {
+
+  color: $text-primary !important;
+
+}
+
+
+.mat-mdc-option:hover {
+
+  background: rgba(96, 165, 250, 0.08) !important;
+
+}
+
+
+.mat-mdc-option.mdc-list-item--selected {
+
+  background: rgba(96, 165, 250, 0.12) !important;
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 900px) {
+
+  .application-container {
+
+    padding: 20px;
+
   }
 
-  .empty-state-button {
-    margin-top: 24px;
+
+  .table-header {
+
+    flex-wrap: wrap;
+
+    padding: 18px;
+
   }
+
+
+  .search-wrapper {
+
+    width: 100%;
+
+    order: 3;
+
+  }
+
+
+  .create-button {
+
+    margin-left: auto;
+
+  }
+
+}
+
+
+@media (max-width: 600px) {
+
+  .application-container {
+
+    padding: 12px;
+
+  }
+
+
+  .table-container {
+
+    border-radius: 12px;
+
+  }
+
+
+  .table-title {
+
+    font-size: 1.25rem;
+
+  }
+
+
+  .create-button span {
+
+    display: none;
+
+  }
+
+
+  .create-button {
+
+    width: 42px;
+
+    padding: 0;
+
+    min-width: 42px;
+
+  }
+
+
+  .create-button mat-icon {
+
+    margin: 0;
+
+  }
+
 }

@@ -30,10 +30,10 @@ public class UserController {
 
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    public ResponseEntity<UserResponse> createMyProfile(
+    public ResponseEntity<MessageResponse> createMyProfile(
             @Valid @RequestBody UserRequest request) {
 
-        UserResponse response = userService.createUser(request);
+        MessageResponse response = userService.createUser(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
@@ -46,7 +46,7 @@ public class UserController {
 
     @PutMapping("/me")
     @PreAuthorize("hasRole('USER')")
-    public ResponseEntity<UserResponse> updateMyProfile(
+    public ResponseEntity<MessageResponse> updateMyProfile(
             @Valid @RequestBody UpdateUserProfileRequest request) {
         return ResponseEntity.ok(userService.updateUserProfile(request));
     }

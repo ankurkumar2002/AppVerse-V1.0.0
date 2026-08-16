@@ -1,92 +1,284 @@
-<!-- We add a class to the container itself to control child styles -->
-<mat-sidenav-container class="layout-container" [class.sidenav-collapsed]="isSidenavCollapsed">
+<mat-sidenav-container
+  class="layout-container"
+  [class.sidenav-collapsed]="isSidenavCollapsed"
+>
 
-  <!-- Sidebar -->
-  <mat-sidenav #sidenav mode="side" opened class="layout-sidenav">
-    <mat-toolbar class="sidenav-header">
-      <!-- Show logo or icon based on collapsed state -->
-      <div class="app-logo-container">
-        <span *ngIf="!isSidenavCollapsed" class="app-logo-text">AppVerse</span>
-        <mat-icon *ngIf="isSidenavCollapsed" class="app-logo-icon">widgets</mat-icon>
+  <!-- ================= SIDEBAR ================= -->
+
+  <mat-sidenav
+    #sidenav
+    mode="side"
+    opened
+    class="layout-sidenav"
+  >
+
+    <!-- Sidebar Header -->
+    <div class="sidenav-header">
+
+      <div class="brand-container">
+
+        <img
+          src="/assets/appverse_logo/appverse_logo.png"
+          alt="AppVerse"
+          class="brand-logo"
+        />
+
       </div>
-    </mat-toolbar>
 
-    <mat-nav-list>
+    </div>
+
+
+    <!-- ================= NAVIGATION ================= -->
+
+    <mat-nav-list class="navigation-list">
+
       <!-- Dashboard -->
       <div class="nav-section">
-        <a class="custom-list-item" routerLink="/developer/dashboard" routerLinkActive="active-link"
-          matTooltip="Dashboard" [matTooltipDisabled]="!isSidenavCollapsed">
-          <mat-icon class="item-icon">dashboard</mat-icon>
-          <span class="item-text">Dashboard</span>
+
+        <a
+          class="custom-list-item"
+          routerLink="/developer/dashboard"
+          routerLinkActive="active-link"
+          matTooltip="Dashboard"
+          [matTooltipDisabled]="!isSidenavCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            dashboard
+          </mat-icon>
+
+          <span class="item-text">
+            Dashboard
+          </span>
+
         </a>
+
       </div>
 
-      <!-- Apps -->
+
+      <!-- Applications -->
       <div class="nav-section">
-        <a class="custom-list-item" routerLink="/developer/apps" routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: true }" matTooltip="My Apps" [matTooltipDisabled]="!isSidenavCollapsed">
-          <mat-icon class="item-icon">apps</mat-icon>
-          <span class="item-text">My Apps</span>
+
+        <div class="section-title">
+          APPLICATIONS
+        </div>
+
+
+        <!-- My Apps -->
+        <a
+          class="custom-list-item"
+          routerLink="/developer/apps"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          matTooltip="My Apps"
+          [matTooltipDisabled]="!isSidenavCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            apps
+          </mat-icon>
+
+          <span class="item-text">
+            My Apps
+          </span>
+
         </a>
 
-        <a *ngIf="developer" class="custom-list-item" routerLink="/developer/apps/create" routerLinkActive="active-link"
-          [routerLinkActiveOptions]="{ exact: true }" matTooltip="Upload App"
-          [matTooltipDisabled]="!isSidenavCollapsed">
-          <mat-icon class="item-icon">cloud_upload</mat-icon>
-          <span class="item-text">Upload App</span>
+
+        <!-- Upload App -->
+        <a
+          *ngIf="developer"
+          class="custom-list-item"
+          routerLink="/developer/apps/create"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          matTooltip="Upload App"
+          [matTooltipDisabled]="!isSidenavCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            cloud_upload
+          </mat-icon>
+
+          <span class="item-text">
+            Upload App
+          </span>
+
         </a>
 
       </div>
 
-      <!-- Profile Management -->
+
+      <!-- Account -->
       <div class="nav-section">
-        <a class="custom-list-item" routerLink="/developer/update" routerLinkActive="active-link"
-          matTooltip="Edit Profile" [matTooltipDisabled]="!isSidenavCollapsed">
-          <mat-icon class="item-icon">edit</mat-icon>
-          <span class="item-text">Edit Profile</span>
+
+        <div class="section-title">
+          ACCOUNT
+        </div>
+
+
+        <!-- Edit Profile -->
+        <a
+          class="custom-list-item"
+          routerLink="/developer/update"
+          routerLinkActive="active-link"
+          matTooltip="Edit Profile"
+          [matTooltipDisabled]="!isSidenavCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            edit
+          </mat-icon>
+
+          <span class="item-text">
+            Edit Profile
+          </span>
+
         </a>
-        <a class="custom-list-item" routerLink="/developer/apps/create" routerLinkActive="active-link"
-          matTooltip="Create Profile" [matTooltipDisabled]="!isSidenavCollapsed">
-          <mat-icon class="item-icon">person_add</mat-icon>
-          <span class="item-text">Create Profile</span>
-        </a>
+
+
+        <!-- Create Profile -->
+        <!-- <a
+          class="custom-list-item"
+          routerLink="/developer/apps/create"
+          routerLinkActive="active-link"
+          matTooltip="Create Profile"
+          [matTooltipDisabled]="!isSidenavCollapsed"
+        > -->
+<!-- 
+          <mat-icon class="item-icon">
+            person_add
+          </mat-icon>
+
+          <span class="item-text">
+            Create Profile
+          </span>
+
+        </a> -->
+
       </div>
+
     </mat-nav-list>
 
 
-    <!-- Bottom Profile -->
+    <!-- ================= PROFILE ================= -->
+
     <div class="profile-section">
-      <div class="profile-pic" [style.background]="profileGradient">
+
+      <div
+        class="profile-pic"
+        [style.background]="profileGradient"
+      >
         {{ developer?.firstName?.charAt(0) || 'U' }}
       </div>
+
+
       <div class="profile-info">
-        <span class="profile-name">{{ developer?.firstName || 'User' }}</span>
-        <span class="profile-email">{{ developer?.email || 'user@example.com' }}</span>
+
+        <span class="profile-name">
+          {{ developer?.firstName || 'User' }}
+        </span>
+
+        <span class="profile-email">
+          {{ developer?.email || 'user@example.com' }}
+        </span>
+
       </div>
+
     </div>
+
   </mat-sidenav>
 
-  <!-- Main Content -->
+
+  <!-- ================= MAIN CONTENT ================= -->
+
   <mat-sidenav-content class="layout-content">
+
+
+    <!-- ================= TOP BAR ================= -->
+
     <mat-toolbar class="layout-toolbar">
-      <!-- Changed this button to call our custom toggle function -->
-      <button mat-icon-button (click)="toggleSidenav()">
-        <mat-icon>menu</mat-icon>
+
+      <!-- Hamburger -->
+      <button
+        mat-icon-button
+        class="menu-button"
+        type="button"
+        (click)="toggleSidenav()"
+        aria-label="Toggle sidebar"
+      >
+
+        <mat-icon>
+          menu
+        </mat-icon>
+
       </button>
-      <span class="toolbar-title">AppVerse Developer Panel</span>
+
+
+      <!-- Page title -->
+      <div class="toolbar-heading">
+
+        <span class="toolbar-title">
+          Developer Panel
+        </span>
+
+        <span class="toolbar-subtitle">
+          AppVerse
+        </span>
+
+      </div>
+
+
       <span class="spacer"></span>
-      <button mat-button routerLink="/developer/apps/create">
-        <mat-icon>add_circle</mat-icon>
-        <span>Create App</span>
+
+
+      <!-- Create App -->
+      <button
+        mat-raised-button
+        class="create-app-button"
+        routerLink="/developer/apps/create"
+      >
+
+        <mat-icon>
+          add
+        </mat-icon>
+
+        <span>
+          Create App
+        </span>
+
       </button>
-      <button mat-button (click)="logout()">
-        <mat-icon>logout</mat-icon>
-        <span>Logout</span>
+
+
+      <!-- Logout -->
+      <button
+        mat-button
+        class="logout-button"
+        type="button"
+        (click)="logout()"
+      >
+
+        <mat-icon>
+          logout
+        </mat-icon>
+
+        <span>
+          Logout
+        </span>
+
       </button>
+
     </mat-toolbar>
 
-    <div class="main-content">
+
+    <!-- ================= PAGE CONTENT ================= -->
+
+    <main class="main-content">
+
       <router-outlet></router-outlet>
-    </div>
+
+    </main>
+
   </mat-sidenav-content>
+
 </mat-sidenav-container>

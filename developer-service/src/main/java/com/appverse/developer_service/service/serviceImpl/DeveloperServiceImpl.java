@@ -79,6 +79,10 @@ public class DeveloperServiceImpl implements DeveloperService {
             developer.setFirstName(me.firstName());
             developer.setLastName(me.lastName());
             developer.setEmail(me.email());
+
+            if (developer.getRole() == Role.USER) {
+                return new MessageResponse("You already have a user profile with this account.", developer.getKeycloakUserId());
+            }
             developer.setRole(Role.DEVELOPER);
 
             Developer savedDeveloper = developerRepository.save(developer);
@@ -140,29 +144,30 @@ public class DeveloperServiceImpl implements DeveloperService {
         Developer updatedDeveloper = developerRepository.save(developer);
 
         // CompletableFuture<SendResult<String, Object>> future = kafkaTemplate.send(
-        //         DEVELOPER_EVENTS_TOPIC,
-        //         updatedDeveloper.getId(),
-        //         new DeveloperProfileUpdatedPayload(
-        //                 updatedDeveloper.getId(),
-        //                 updatedDeveloper.getKeycloakUserId(),
+        // DEVELOPER_EVENTS_TOPIC,
+        // updatedDeveloper.getId(),
+        // new DeveloperProfileUpdatedPayload(
+        // updatedDeveloper.getId(),
+        // updatedDeveloper.getKeycloakUserId(),
 
-        //                 updatedDeveloper.getUsername(),
-        //                 updatedDeveloper.getFirstName(),
-        //                 updatedDeveloper.getLastName(),
-        //                 updatedDeveloper.getEmail(),
+        // updatedDeveloper.getUsername(),
+        // updatedDeveloper.getFirstName(),
+        // updatedDeveloper.getLastName(),
+        // updatedDeveloper.getEmail(),
 
-        //                 updatedDeveloper.getDeveloperType(),
-        //                 updatedDeveloper.getWebsite(),
-        //                 updatedDeveloper.getCompanyName(),
-        //                 updatedDeveloper.getBio(),
-        //                 updatedDeveloper.getLogoUrl(),
-        //                 updatedDeveloper.getLocation(),
+        // updatedDeveloper.getDeveloperType(),
+        // updatedDeveloper.getWebsite(),
+        // updatedDeveloper.getCompanyName(),
+        // updatedDeveloper.getBio(),
+        // updatedDeveloper.getLogoUrl(),
+        // updatedDeveloper.getLocation(),
 
-        //                 updatedDeveloper.getUpdatedAt()));
+        // updatedDeveloper.getUpdatedAt()));
         // future.whenComplete((result, ex) -> {
-        //     if (ex != null) {
-        //         log.error("Kafka publish failed for developer {}", updatedDeveloper.getId(), ex);
-        //     }
+        // if (ex != null) {
+        // log.error("Kafka publish failed for developer {}", updatedDeveloper.getId(),
+        // ex);
+        // }
         // });
 
         return new MessageResponse("Developer updated successfully", updatedDeveloper.getId());
@@ -265,11 +270,13 @@ public class DeveloperServiceImpl implements DeveloperService {
         return developerMapper.toResponse(developer);
     }
 
-    public MessageResponse updateUser( KeycloakUserUpdateRequest request) {
+    public MessageResponse updateUser(KeycloakUserUpdateRequest request) {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         log.info(request.getEmail());
         identityClient.updateUser(keycloakUserId, request);
-        Developer developer = developerRepository.findByKeycloakUserId(keycloakUserId).orElseThrow(() -> new ResourceNotFoundException("Cannot find user with keycloak id : "+ keycloakUserId));
+        Developer developer = developerRepository.findByKeycloakUserId(keycloakUserId).orElseThrow(
+                () -> new ResourceNotFoundException("Cannot find user with keycloak id : " + keycloakUserId));
+
         developer.setEmail(request.getEmail());
         developer.setFirstName(request.getFirstName());
         developer.setLastName(request.getLastName());
@@ -278,7 +285,7 @@ public class DeveloperServiceImpl implements DeveloperService {
         return new MessageResponse("Details Updated Successfully!", keycloakUserId);
     }
 
-    public MessageResponse updatePassword( UpdatePasswordRequest request){
+    public MessageResponse updatePassword(UpdatePasswordRequest request) {
         String keycloakUserId = currentUserProvider.getCurrentUser().id();
         ResponseEntity<Void> response = identityClient.updatePassword(keycloakUserId, request);
 
