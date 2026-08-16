@@ -1,43 +1,534 @@
 <div class="landing-container">
+
+  <!-- ==================== NAVBAR ==================== -->
+
   <mat-toolbar class="toolbar">
-    <span class="logo">AppVerse</span>
+
+    <!-- Logo -->
+    <div class="brand">
+      <img src="assets/appverse_logo/appverse_logo.png" alt="AppVerse" class="brand-logo" />
+    </div>
+
     <span class="spacer"></span>
 
     <!-- Theme Toggle -->
-    <button mat-icon-button (click)="toggleTheme()" aria-label="Toggle theme">
-      <mat-icon>{{ isDarkMode ? 'light_mode' : 'dark_mode' }}</mat-icon>
+    <button mat-icon-button class="theme-button" (click)="toggleTheme()" aria-label="Toggle theme">
+      <mat-icon>
+        {{ isDarkMode ? 'light_mode' : 'dark_mode' }}
+      </mat-icon>
     </button>
 
-    <!-- User Menu -->
-    <button mat-button [matMenuTriggerFor]="userMenu">User</button>
+
+    <!-- ================= USER MENU ================= -->
+
+    <button mat-button class="nav-button" [matMenuTriggerFor]="userMenu">
+      <span>User</span>
+
+      <mat-icon>
+        keyboard_arrow_down
+      </mat-icon>
+    </button>
+
     <mat-menu #userMenu="matMenu">
-      <button mat-menu-item (click)="login('user')">Login</button>
-      <button mat-menu-item (click)="register('user')">Register</button>
+
+      <button mat-menu-item (click)="login('user')">
+        <mat-icon>
+          login
+        </mat-icon>
+
+        <span>Login</span>
+      </button>
+
+      <button mat-menu-item (click)="register('user')">
+        <mat-icon>
+          person_add
+        </mat-icon>
+
+        <span>Register</span>
+      </button>
+
     </mat-menu>
 
-    <!-- Developer Menu -->
-    <button mat-button [matMenuTriggerFor]="devMenu">Developer</button>
+
+    <!-- ================= DEVELOPER MENU ================= -->
+
+    <button mat-button class="nav-button" [matMenuTriggerFor]="devMenu">
+      <span>Developer</span>
+
+      <mat-icon>
+        keyboard_arrow_down
+      </mat-icon>
+    </button>
+
     <mat-menu #devMenu="matMenu">
-      <button mat-menu-item (click)="login('developer')">Login</button>
-      <button mat-menu-item (click)="register('developer')">Register</button>
+
+      <button mat-menu-item (click)="login('developer')">
+        <mat-icon>
+          code
+        </mat-icon>
+
+        <span>Login</span>
+      </button>
+
+      <button mat-menu-item (click)="register('developer')">
+        <mat-icon>
+          person_add
+        </mat-icon>
+
+        <span>Register</span>
+      </button>
+
     </mat-menu>
+
   </mat-toolbar>
 
-  <!-- Hero Section -->
+
+  <!-- ==================== HERO SECTION ==================== -->
+
   <main class="hero-section">
-    <div class="hero-content">
-      <h1 class="fade-in-up">Welcome to AppVerse 🚀</h1>
-      <p class="fade-in-up" style="animation-delay: 0.2s;">
-        Your one-stop platform to discover, deploy, and manage applications in a seamless ecosystem.
-      </p>
-      <div class="cta-buttons fade-in-up" style="animation-delay: 0.4s;">
-        <button mat-raised-button color="primary" (click)="login('user')">Explore Apps</button>
-        <button mat-flat-button class="learn-more-btn" (click)="login('developer')">Become a Developer</button>
+
+    <!-- ================= LEFT SIDE ================= -->
+
+    <section class="hero-content">
+
+      <!-- Eyebrow -->
+      <div class="eyebrow fade-in-up">
+
+        <span class="eyebrow-dot"></span>
+
+        APPLICATION MARKETPLACE
+
       </div>
-    </div>
-    <div class="hero-image-container fade-in-up" style="animation-delay: 0.6s;">
-      <!-- Using a more theme-appropriate image with a transparent background -->
-      <img src="https://cdni.iconscout.com/illustration/premium/thumb/app-development-4449843-3705741.png" alt="App development illustration" />
-    </div>
+
+
+      <!-- Main Heading -->
+
+      <h1 class="fade-in-up">
+
+        Discover apps.
+
+        <br />
+
+        <span>Build what's next.</span>
+
+      </h1>
+
+
+      <!-- Description -->
+
+      <p class="hero-description fade-in-up" style="animation-delay: 0.15s;">
+        Discover powerful applications, connect with developers,
+        and bring your ideas to life — all in one ecosystem.
+      </p>
+
+
+      <!-- CTA Buttons -->
+
+      <div class="cta-buttons fade-in-up" style="animation-delay: 0.3s;">
+
+        <!-- Explore Apps -->
+
+        <button mat-raised-button color="primary" class="primary-button" (click)="login('user')">
+
+          <span>
+            Explore Apps
+          </span>
+
+          <mat-icon>
+            arrow_forward
+          </mat-icon>
+
+        </button>
+
+
+        <!-- Become Developer -->
+
+        <button mat-flat-button class="secondary-button" (click)="login('developer')">
+
+          Become a Developer
+
+        </button>
+
+      </div>
+
+
+      <!-- ================= FEATURES ================= -->
+
+      <div class="hero-features fade-in-up" style="animation-delay: 0.45s;">
+
+        <!-- Discover -->
+
+        <div class="feature">
+
+          <div class="feature-icon">
+
+            <mat-icon>
+              apps
+            </mat-icon>
+
+          </div>
+
+          <div class="feature-content">
+
+            <strong>
+              Discover
+            </strong>
+
+            <span>
+              Explore applications
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div class="feature-divider"></div>
+
+
+        <!-- Build -->
+
+        <div class="feature">
+
+          <div class="feature-icon">
+
+            <mat-icon>
+              code
+            </mat-icon>
+
+          </div>
+
+          <div class="feature-content">
+
+            <strong>
+              Build
+            </strong>
+
+            <span>
+              Publish your apps
+            </span>
+
+          </div>
+
+        </div>
+
+
+        <div class="feature-divider"></div>
+
+
+        <!-- Connect -->
+
+        <div class="feature">
+
+          <div class="feature-icon">
+
+            <mat-icon>
+              hub
+            </mat-icon>
+
+          </div>
+
+          <div class="feature-content">
+
+            <strong>
+              Connect
+            </strong>
+
+            <span>
+              Join the ecosystem
+            </span>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- ================= RIGHT SIDE ================= -->
+
+    <section class="hero-visual fade-in-up" style="animation-delay: 0.45s;">
+
+      <!-- Glow -->
+
+      <div class="visual-glow"></div>
+
+
+      <!-- Main Preview -->
+
+      <div class="visual-card">
+
+        <!-- Browser Header -->
+
+        <div class="visual-header">
+
+          <div class="window-controls">
+
+            <span></span>
+            <span></span>
+            <span></span>
+
+          </div>
+
+          <span class="visual-title">
+            AppVerse
+          </span>
+
+        </div>
+
+
+        <!-- Application Body -->
+
+        <div class="visual-body">
+
+          <!-- Sidebar -->
+
+          <aside class="visual-sidebar">
+
+            <!-- Logo -->
+
+            <div class="sidebar-logo">
+
+              <img src="/appverse_logo/appverse_logo.png" alt="AppVerse" />
+
+            </div>
+
+
+            <!-- Navigation -->
+
+            <div class="sidebar-item active">
+
+              <mat-icon>
+                grid_view
+              </mat-icon>
+
+            </div>
+
+
+            <div class="sidebar-item">
+
+              <mat-icon>
+                explore
+              </mat-icon>
+
+            </div>
+
+
+            <div class="sidebar-item">
+
+              <mat-icon>
+                favorite_border
+              </mat-icon>
+
+            </div>
+
+
+            <div class="sidebar-item">
+
+              <mat-icon>
+                person_outline
+              </mat-icon>
+
+            </div>
+
+          </aside>
+
+
+          <!-- Main Application -->
+
+          <div class="visual-main">
+
+            <!-- Welcome -->
+
+            <div class="visual-welcome">
+
+              <span>
+                Explore
+              </span>
+
+              <strong>
+                Applications
+              </strong>
+
+            </div>
+
+
+            <!-- Search -->
+
+            <div class="visual-search">
+
+              <mat-icon>
+                search
+              </mat-icon>
+
+              <span>
+                Search applications...
+              </span>
+
+            </div>
+
+
+            <!-- Application Cards -->
+
+            <div class="app-grid">
+
+              <!-- App 1 -->
+
+              <div class="app-mini-card">
+
+                <div class="app-icon purple">
+
+                  <mat-icon>
+                    auto_awesome
+                  </mat-icon>
+
+                </div>
+
+                <div class="app-lines">
+
+                  <span class="line-large"></span>
+
+                  <span class="line-small"></span>
+
+                </div>
+
+              </div>
+
+
+              <!-- App 2 -->
+
+              <div class="app-mini-card">
+
+                <div class="app-icon blue">
+
+                  <mat-icon>
+                    code
+                  </mat-icon>
+
+                </div>
+
+                <div class="app-lines">
+
+                  <span class="line-large"></span>
+
+                  <span class="line-small"></span>
+
+                </div>
+
+              </div>
+
+
+              <!-- App 3 -->
+
+              <div class="app-mini-card">
+
+                <div class="app-icon green">
+
+                  <mat-icon>
+                    analytics
+                  </mat-icon>
+
+                </div>
+
+                <div class="app-lines">
+
+                  <span class="line-large"></span>
+
+                  <span class="line-small"></span>
+
+                </div>
+
+              </div>
+
+
+              <!-- App 4 -->
+
+              <div class="app-mini-card">
+
+                <div class="app-icon orange">
+
+                  <mat-icon>
+                    layers
+                  </mat-icon>
+
+                </div>
+
+                <div class="app-lines">
+
+                  <span class="line-large"></span>
+
+                  <span class="line-small"></span>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================= FLOATING CARD ================= -->
+
+      <div class="floating-card developer-card">
+
+        <div class="floating-icon">
+
+          <mat-icon>
+            code
+          </mat-icon>
+
+        </div>
+
+        <div class="floating-content">
+
+          <strong>
+            Developers
+          </strong>
+
+          <span>
+            Build &amp; publish
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- ================= FLOATING CARD ================= -->
+
+      <div class="floating-card apps-card">
+
+        <div class="floating-icon">
+
+          <mat-icon>
+            apps
+          </mat-icon>
+
+        </div>
+
+        <div class="floating-content">
+
+          <strong>
+            Applications
+          </strong>
+
+          <span>
+            Discover something new
+          </span>
+
+        </div>
+
+      </div>
+
+    </section>
+
   </main>
+
 </div>

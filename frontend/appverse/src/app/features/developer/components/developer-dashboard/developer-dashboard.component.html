@@ -1,80 +1,384 @@
 <div class="dashboard-container">
-  <!-- Loading Spinner -->
+
   @if (isLoading) {
-    <mat-spinner class="loading-spinner"></mat-spinner>
-  }
-
-  <!-- Content when loaded -->
-  @if ((developer$ | async); as developer) {
-    <div class="dashboard-content">
-      <!-- Profile Card -->
-      <mat-card class="profile-card card-fade-in">
-        <mat-card-header>
-          <mat-card-title>Welcome, {{ developer.firstName || 'User' }}</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <p class="bio">{{ developer.bio || 'No bio available' }}</p>
-          <div class="contact-info">
-            <p class="email">
-              <mat-icon>email</mat-icon>
-              <span>{{ developer.email }}</span>
-            </p>
-            @if (developer.website) {
-              <div class="website">
-                <mat-icon>public</mat-icon>
-                <a [href]="developer.website" target="_blank" rel="noopener">
-                  {{ developer.website }}
-                </a>
-              </div>
-            }
-          </div>
-        </mat-card-content>
-        <mat-card-actions>
-          <button mat-raised-button color="primary" (click)="editProfile()">
-            <mat-icon>edit</mat-icon>
-            <span>Edit Profile</span>
-          </button>
-        </mat-card-actions>
-      </mat-card>
-
-      <!-- Stats Section -->
-      <div class="stats-grid">
-        @for (stat of stats; track stat.label; let i = $index) {
-          <mat-card class="stat-card" [style.animation-delay.ms]="100 + i * 100">
-            <mat-card-content>
-              <div class="stat-icon-wrapper">
-                <mat-icon>{{ stat.icon }}</mat-icon>
-              </div>
-              <h3>{{ stat.value }}</h3>
-              <p>{{ stat.label }}</p>
-            </mat-card-content>
-          </mat-card>
-        }
-      </div>
-
-      <!-- Recent Activity -->
-      <mat-card class="activity-card card-fade-in" style="animation-delay: 200ms;">
-        <mat-card-header>
-          <mat-card-title>Recent Activity</mat-card-title>
-        </mat-card-header>
-        <mat-card-content>
-          <mat-list>
-            @for (activity of recentActivities; track activity.message) {
-              <mat-list-item>
-                <mat-icon matListItemIcon>notifications</mat-icon>
-                <div matListItemTitle>{{ activity.message }}</div>
-                <div matListItemLine>{{ activity.date | date:'medium' }}</div>
-              </mat-list-item>
-            }
-            @if (recentActivities.length === 0) {
-              <div class="empty-state">
-                <mat-icon>inbox</mat-icon>
-                <p>No recent activity</p>
-              </div>
-            }
-          </mat-list>
-        </mat-card-content>
-      </mat-card>
+    <div class="loading-container">
+      <mat-spinner></mat-spinner>
+      <p>Loading your developer dashboard...</p>
     </div>
   }
+
+  @if ((developer$ | async); as developer) {
+
+    <div class="dashboard-content">
+
+      <!-- =========================================================
+           HEADER
+      ========================================================== -->
+
+      <section class="dashboard-header">
+
+        <div class="header-text">
+          <span class="eyebrow">DEVELOPER WORKSPACE</span>
+
+          <h1>
+            Welcome back,
+            <span>{{ developer.firstName || 'Developer' }}</span>
+          </h1>
+
+          <p>
+            Manage your applications, track your users, and grow your
+            presence in the AppVerse ecosystem.
+          </p>
+        </div>
+
+        <button
+          class="edit-profile-btn"
+          type="button"
+          routerLink="/developer/update">
+
+          <mat-icon>edit</mat-icon>
+          Edit Profile
+
+        </button>
+
+      </section>
+
+
+      <!-- =========================================================
+           STATISTICS
+      ========================================================== -->
+
+      <section class="stats-grid">
+
+        @for (stat of stats; track stat.label) {
+
+          <div
+            class="stat-card"
+            [style.animation-delay.ms]="100 + $index * 80">
+
+            <div class="stat-top">
+
+              <div class="stat-icon">
+                <mat-icon>{{ stat.icon }}</mat-icon>
+              </div>
+
+              <mat-icon class="stat-arrow">
+                north_east
+              </mat-icon>
+
+            </div>
+
+            <div class="stat-value">
+              {{ stat.value }}
+            </div>
+
+            <div class="stat-label">
+              {{ stat.label }}
+            </div>
+
+            <div class="stat-description">
+              {{ stat.description }}
+            </div>
+
+          </div>
+
+        }
+
+      </section>
+
+
+      <!-- =========================================================
+           MAIN GRID
+      ========================================================== -->
+
+      <div class="dashboard-grid">
+
+
+        <!-- =======================================================
+             PROFILE OVERVIEW
+        ======================================================== -->
+
+        <section class="dashboard-card profile-overview">
+
+          <div class="card-header">
+
+            <div>
+              <span class="card-eyebrow">YOUR PROFILE</span>
+              <h2>Developer Profile</h2>
+            </div>
+
+            <div class="header-icon">
+              <mat-icon>person</mat-icon>
+            </div>
+
+          </div>
+
+
+          <div class="profile-body">
+
+            <div
+              class="profile-avatar">
+
+              {{ developer.firstName.charAt(0) || 'D' }}
+
+            </div>
+
+
+            <div class="profile-details">
+
+              <h3>
+                {{ developer.firstName || 'Developer' }}
+                {{ developer.lastName || '' }}
+              </h3>
+
+              <div class="profile-row">
+
+                <mat-icon>email</mat-icon>
+
+                <span>
+                  {{ developer.email }}
+                </span>
+
+              </div>
+
+
+              @if (developer.website) {
+
+                <div class="profile-row">
+
+                  <mat-icon>language</mat-icon>
+
+                  <a
+                    [href]="developer.website"
+                    target="_blank"
+                    rel="noopener">
+
+                    {{ developer.website }}
+
+                  </a>
+
+                </div>
+
+              }
+
+
+              <p class="profile-bio">
+                {{ developer.bio || 'Add a bio to tell users more about yourself and your applications.' }}
+              </p>
+
+            </div>
+
+          </div>
+
+
+          <div class="profile-footer">
+
+            <span class="profile-status">
+              <span class="status-dot"></span>
+              Developer account active
+            </span>
+
+            <button
+              type="button"
+              class="text-button"
+              routerLink="/developer/update">
+
+              Manage Profile
+              <mat-icon>arrow_forward</mat-icon>
+
+            </button>
+
+          </div>
+
+        </section>
+
+
+
+        <!-- =======================================================
+             QUICK ACTIONS
+        ======================================================== -->
+
+        <section class="dashboard-card quick-actions">
+
+          <div class="card-header">
+
+            <div>
+              <span class="card-eyebrow">GET STARTED</span>
+              <h2>Quick Actions</h2>
+            </div>
+
+            <div class="header-icon">
+              <mat-icon>bolt</mat-icon>
+            </div>
+
+          </div>
+
+
+          <div class="action-grid">
+
+            @for (action of quickActions; track action.title) {
+
+              <a
+                class="action-card"
+                [routerLink]="action.route">
+
+                <div class="action-icon">
+                  <mat-icon>{{ action.icon }}</mat-icon>
+                </div>
+
+                <div class="action-content">
+
+                  <h3>
+                    {{ action.title }}
+                  </h3>
+
+                  <p>
+                    {{ action.description }}
+                  </p>
+
+                </div>
+
+                <mat-icon class="action-arrow">
+                  arrow_forward
+                </mat-icon>
+
+              </a>
+
+            }
+
+          </div>
+
+        </section>
+
+
+
+        <!-- =======================================================
+             RECENT ACTIVITY
+        ======================================================== -->
+
+        <section class="dashboard-card activity-card">
+
+          <div class="card-header">
+
+            <div>
+              <span class="card-eyebrow">ACTIVITY</span>
+              <h2>Recent Activity</h2>
+            </div>
+
+            <div class="header-icon">
+              <mat-icon>history</mat-icon>
+            </div>
+
+          </div>
+
+
+          <div class="activity-list">
+
+            @for (activity of recentActivities; track activity.message) {
+
+              <div class="activity-item">
+
+                <div class="activity-icon">
+                  <mat-icon>{{ activity.icon }}</mat-icon>
+                </div>
+
+                <div class="activity-content">
+
+                  <h3>
+                    {{ activity.message }}
+                  </h3>
+
+                  <p>
+                    {{ activity.description }}
+                  </p>
+
+                  <span>
+                    {{ activity.date | date:'medium' }}
+                  </span>
+
+                </div>
+
+              </div>
+
+            }
+
+
+            @if (recentActivities.length === 0) {
+
+              <div class="empty-state">
+
+                <mat-icon>inbox</mat-icon>
+
+                <h3>No recent activity</h3>
+
+                <p>
+                  Your recent developer activity will appear here.
+                </p>
+
+              </div>
+
+            }
+
+          </div>
+
+        </section>
+
+
+
+        <!-- =======================================================
+             DEVELOPER TIPS
+        ======================================================== -->
+
+        <section class="dashboard-card tips-card">
+
+          <div class="card-header">
+
+            <div>
+              <span class="card-eyebrow">INSIGHTS</span>
+              <h2>Developer Tips</h2>
+            </div>
+
+            <div class="header-icon">
+              <mat-icon>lightbulb</mat-icon>
+            </div>
+
+          </div>
+
+
+          <div class="tips-list">
+
+            @for (tip of tips; track tip.title) {
+
+              <div class="tip-item">
+
+                <div class="tip-icon">
+                  <mat-icon>{{ tip.icon }}</mat-icon>
+                </div>
+
+                <div>
+
+                  <h3>
+                    {{ tip.title }}
+                  </h3>
+
+                  <p>
+                    {{ tip.description }}
+                  </p>
+
+                </div>
+
+              </div>
+
+            }
+
+          </div>
+
+        </section>
+
+      </div>
+
+    </div>
+
+  }
+
 </div>

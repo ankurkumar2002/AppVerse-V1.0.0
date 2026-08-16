@@ -28,7 +28,7 @@ export class AppListComponent {
   cartAppIds = new Set<string>();
 
   currentPage = 0;
-  pageSize = 5;
+  pageSize = 6;
 
   totalPages = 0;
 

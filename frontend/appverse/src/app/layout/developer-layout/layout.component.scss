@@ -1,206 +1,984 @@
-/* --- Global Theme Variables --- */
-// NOTE: All color values now come from the global :root variables in styles.scss
+// ============================================================
+// APPVERSE DEVELOPER LAYOUT
+// ============================================================
 
-/* --- Layout Dimensions & Speed (Unchanged) --- */
-$sidenav-width: 260px;
-$sidenav-collapsed-width: 80px;
-$toolbar-height: 64px;
-$transition-speed: 0.3s;
+// ------------------------------------------------------------
+// Dimensions
+// ------------------------------------------------------------
 
-/*
-==========================================================================
-  Main Layout Container & Animation Logic
-==========================================================================
-*/
+$sidenav-width: 270px;
+$sidenav-collapsed-width: 82px;
+$toolbar-height: 72px;
+
+$transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+
+
+// ------------------------------------------------------------
+// Theme
+// ------------------------------------------------------------
+
+:host {
+
+  --app-bg: #08090f;
+  --app-bg-secondary: #0d0e16;
+
+  --sidebar-bg: #0b0c12;
+  --toolbar-bg: #0b0c12;
+
+  --card-bg: #151824;
+
+  --border: rgba(255, 255, 255, 0.09);
+
+  --text-primary: #f5f5f7;
+  --text-secondary: #a1a1b2;
+  --text-muted: #727386;
+
+  --purple: #8b5cf6;
+  --purple-light: #a78bfa;
+  --purple-dark: #6d3fe8;
+
+  --hover-bg: rgba(139, 92, 246, 0.09);
+
+  --active-bg: rgba(139, 92, 246, 0.14);
+
+  --shadow:
+    0 12px 35px rgba(0, 0, 0, 0.25);
+}
+
+
+// ============================================================
+// MAIN CONTAINER
+// ============================================================
+
 .layout-container {
+
+  width: 100%;
   height: 100vh;
-  background-color: var(--dark-bg);
+
+  background: var(--app-bg);
+
+  color: var(--text-primary);
+
+  overflow: hidden;
 }
 
-.layout-sidenav,
-.layout-content {
-  // Use a smoother cubic-bezier for a more professional feel
-  transition: all $transition-speed cubic-bezier(0.4, 0, 0.2, 1);
-}
+
+// ============================================================
+// SIDEBAR
+// ============================================================
 
 .layout-sidenav {
-  width: $sidenav-width;
-  background: var(--dark-sidebar);
-  border-right: 1px solid var(--dark-border);
+
+  width: $sidenav-width !important;
+
+  background: var(--sidebar-bg) !important;
+
+  border-right: 1px solid var(--border) !important;
+
+  color: var(--text-primary);
+
   display: flex;
   flex-direction: column;
-  overflow: hidden; // Critical for clean animations
-}
 
-// === STYLES FOR THE COLLAPSED STATE ===
-.sidenav-collapsed {
-  .layout-sidenav {
-    width: $sidenav-collapsed-width;
-  }
-
-  // Hide text and adjust layout when collapsed
-  .app-logo-text,
-  .item-text,
-  .profile-info {
-    width: 0;
-    opacity: 0;
-    visibility: hidden;
-  }
-
-  .app-logo-icon {
-    display: block !important;
-  }
-
-  .custom-list-item {
-    justify-content: center;
-    .item-icon { margin-right: 0; }
-  }
-
-  .profile-section {
-    justify-content: center;
-    .profile-info { display: none; }
-  }
-}
-
-/*
-==========================================================================
-  Sidenav Internal Item Styling
-==========================================================================
-*/
-.sidenav-header {
-  height: $toolbar-height;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0 1.5rem;
-  background: rgba(255, 255, 255, 0.03); // A subtle highlight
-  border-bottom: 1px solid var(--dark-border);
-  flex-shrink: 0;
-
-  .app-logo-text {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--dark-text-primary);
-  }
-
-  .app-logo-icon {
-    display: none; // Hidden by default, shown when collapsed
-    font-size: 2rem;
-    color: var(--dark-text-primary);
-  }
-}
-
-.mat-nav-list {
-  padding: 8px 0;
-  flex-grow: 1;
-  overflow-y: auto;
-  overflow-x: hidden;
-}
-
-.custom-list-item {
-  display: flex;
-  align-items: center;
-  height: 48px;
-  padding: 0 24px;
-  margin: 4px 12px;
-  border-radius: 8px;
-  color: var(--dark-text-secondary);
-  text-decoration: none;
-  transition: background-color 0.2s, color 0.2s;
-  white-space: nowrap;
-
-  .item-icon {
-    margin-right: 20px;
-    transition: margin-right $transition-speed cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  .item-text, .profile-info {
-    transition: opacity 0.2s ease, width 0.3s ease, visibility 0.3s;
-    opacity: 1;
-    visibility: visible;
-  }
-
-  &:hover {
-    background: var(--hover-bg);
-    color: var(--dark-text-primary);
-  }
-
-  &.active-link {
-    background: var(--primary-accent);
-    color: var(--dark-text-primary);
-    font-weight: 500;
-  }
-}
-
-.nav-section {
-  padding-bottom: 8px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--dark-border);
-  &:last-of-type {
-    border-bottom: none;
-  }
-}
-
-.profile-section {
-  padding: 1rem;
-  border-top: 1px solid var(--dark-border);
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-shrink: 0;
-  white-space: nowrap;
   overflow: hidden;
 
-  .profile-pic {
-    width: 40px;
-    height: 40px;
-    border-radius: 50%;
-    color: white;
-    font-weight: bold;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
+  transition:
+    width $transition,
+    min-width $transition,
+    max-width $transition;
+
+  box-shadow: 8px 0 30px rgba(0, 0, 0, 0.08);
+}
+
+
+// ============================================================
+// COLLAPSED SIDEBAR
+// ============================================================
+
+.sidenav-collapsed {
+
+  .layout-sidenav {
+
+    width: $sidenav-collapsed-width !important;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Hide text
+  // ----------------------------------------------------------
+
+  .item-text,
+  .section-title,
+  .profile-info {
+
+    opacity: 0;
+
+    width: 0;
+
+    max-width: 0;
+
+    overflow: hidden;
+
+    visibility: hidden;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Header
+  // ----------------------------------------------------------
+
+  .brand-container {
+
     justify-content: center;
-    font-size: 1.2rem;
+
   }
 
-  .profile-name {
-    font-weight: 500;
-    color: var(--dark-text-primary);
+
+  .brand-logo {
+
+    width: 42px;
+
+    max-width: 42px;
+
   }
-  .profile-email {
-    font-size: 0.8rem;
-    color: var(--dark-text-secondary);
+
+
+  // ----------------------------------------------------------
+  // Navigation
+  // ----------------------------------------------------------
+
+  .custom-list-item {
+
+    justify-content: center;
+
+    padding-left: 0;
+    padding-right: 0;
+
+    margin-left: 10px;
+    margin-right: 10px;
+
   }
+
+
+  .item-icon {
+
+    margin-right: 0;
+
+  }
+
+
+  // ----------------------------------------------------------
+  // Profile
+  // ----------------------------------------------------------
+
+  .profile-section {
+
+    justify-content: center;
+
+    padding-left: 0;
+    padding-right: 0;
+
+  }
+
+
+  .profile-pic {
+
+    margin: 0;
+
+  }
+
 }
 
-/*
-==========================================================================
-  Toolbar and Main Content Area
-==========================================================================
-*/
-.layout-toolbar {
+
+// ============================================================
+// SIDEBAR HEADER
+// ============================================================
+
+.sidenav-header {
+
   height: $toolbar-height;
-  // Glassmorphism effect
-  background: rgba(31, 41, 55, 0.6);
-  backdrop-filter: blur(12px);
-  color: var(--dark-text-primary);
-  border-bottom: 1px solid var(--dark-border);
-  padding: 0 16px 0 24px;
 
-  .toolbar-title {
-    margin-left: 1rem;
-  }
+  min-height: $toolbar-height;
 
-  .spacer { flex-grow: 1; }
-  
-  button {
-    margin-left: 8px;
-  }
+  padding: 0 24px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-start;
+
+  background: var(--sidebar-bg);
+
+  border-bottom: 1px solid var(--border);
+
+  box-sizing: border-box;
+
+  flex-shrink: 0;
+
 }
+
+
+// ============================================================
+// LOGO
+// ============================================================
+
+.brand-container {
+
+  height: 100%;
+
+  width: 100%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: flex-start;
+
+  overflow: hidden;
+
+}
+
+
+// IMPORTANT:
+// Uses exactly your actual Angular asset path.
+//
+// /assets/appverse_logo/appverse_logo.png
+//
+
+.brand-logo {
+
+  display: block;
+
+  width: 190px;
+  height: 55px;
+  min-width: 190px;
+  object-fit: contain;
+
+  object-position: left center;
+
+  transition:
+    width $transition,
+    min-width $transition,
+    opacity $transition;
+
+}
+
+
+// ============================================================
+// NAVIGATION LIST
+// ============================================================
+
+.navigation-list {
+
+  flex: 1;
+
+  padding: 18px 10px 12px;
+
+  overflow-y: auto;
+
+  overflow-x: hidden;
+
+  box-sizing: border-box;
+
+}
+
+
+// Remove Angular Material default spacing
+
+.navigation-list .mat-mdc-list-item {
+
+  background: transparent !important;
+
+}
+
+
+// ============================================================
+// NAV SECTION
+// ============================================================
+
+.nav-section {
+
+  padding-bottom: 14px;
+
+  margin-bottom: 12px;
+
+  border-bottom: 1px solid var(--border);
+
+}
+
+
+.nav-section:last-child {
+
+  border-bottom: none;
+
+}
+
+
+// ============================================================
+// SECTION TITLE
+// ============================================================
+
+.section-title {
+
+  height: 34px;
+
+  display: flex;
+
+  align-items: center;
+
+  padding-left: 18px;
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+
+  font-weight: 600;
+
+  letter-spacing: 1.5px;
+
+  text-transform: uppercase;
+
+  white-space: nowrap;
+
+  transition:
+    opacity $transition,
+    width $transition;
+
+}
+
+
+// ============================================================
+// NAV ITEM
+// ============================================================
+
+.custom-list-item {
+
+  position: relative;
+
+  display: flex;
+
+  align-items: center;
+
+  width: 100%;
+
+  height: 48px;
+
+  min-height: 48px;
+
+  margin: 3px 0;
+
+  padding: 0 16px;
+
+  box-sizing: border-box;
+
+  border-radius: 10px;
+
+  color: var(--text-secondary);
+
+  text-decoration: none;
+
+  cursor: pointer;
+
+  white-space: nowrap;
+
+  overflow: hidden;
+
+  transition:
+    background $transition,
+    color $transition,
+    transform 0.15s ease;
+
+}
+
+
+// ------------------------------------------------------------
+// Icon
+// ------------------------------------------------------------
+
+.item-icon {
+
+  width: 22px;
+
+  height: 22px;
+
+  min-width: 22px;
+
+  margin-right: 18px;
+
+  color: #9295a7;
+
+  font-size: 21px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  transition:
+    margin-right $transition,
+    color 0.2s ease;
+
+}
+
+
+// ------------------------------------------------------------
+// Text
+// ------------------------------------------------------------
+
+.item-text {
+
+  font-size: 15px;
+
+  font-weight: 400;
+
+  line-height: 1;
+
+  color: inherit;
+
+  transition:
+    opacity $transition,
+    width $transition,
+    max-width $transition;
+
+}
+
+
+// ============================================================
+// HOVER
+// ============================================================
+
+.custom-list-item:hover {
+
+  background: var(--hover-bg);
+
+  color: var(--text-primary);
+
+}
+
+
+.custom-list-item:hover .item-icon {
+
+  color: var(--purple-light);
+
+}
+
+
+// ============================================================
+// ACTIVE
+// ============================================================
+
+.custom-list-item.active-link {
+
+  background: var(--active-bg);
+
+  color: var(--purple-light);
+
+  font-weight: 500;
+
+}
+
+
+.custom-list-item.active-link::before {
+
+  content: '';
+
+  position: absolute;
+
+  left: 0;
+
+  top: 8px;
+
+  bottom: 8px;
+
+  width: 3px;
+
+  border-radius: 0 4px 4px 0;
+
+  background: var(--purple);
+
+}
+
+
+.custom-list-item.active-link .item-icon {
+
+  color: var(--purple-light);
+
+}
+
+
+// ============================================================
+// PROFILE SECTION
+// ============================================================
+
+.profile-section {
+
+  min-height: 86px;
+
+  padding: 16px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  gap: 12px;
+
+  background: rgba(255, 255, 255, 0.015);
+
+  border-top: 1px solid var(--border);
+
+  flex-shrink: 0;
+
+  overflow: hidden;
+
+  white-space: nowrap;
+
+  transition:
+    padding $transition;
+
+}
+
+
+// ============================================================
+// PROFILE IMAGE
+// ============================================================
+
+.profile-pic {
+
+  width: 42px;
+
+  height: 42px;
+
+  min-width: 42px;
+
+  border-radius: 50%;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: white;
+
+  font-size: 16px;
+
+  font-weight: 600;
+
+  box-shadow:
+    0 4px 15px rgba(139, 92, 246, 0.2);
+
+}
+
+
+// ============================================================
+// PROFILE INFO
+// ============================================================
+
+.profile-info {
+
+  display: flex;
+
+  flex-direction: column;
+
+  min-width: 0;
+
+  overflow: hidden;
+
+  transition:
+    opacity $transition,
+    width $transition;
+
+}
+
+
+.profile-name {
+
+  color: var(--text-primary);
+
+  font-size: 14px;
+
+  font-weight: 600;
+
+  line-height: 1.4;
+
+}
+
+
+.profile-email {
+
+  color: var(--text-muted);
+
+  font-size: 11px;
+
+  line-height: 1.5;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+
+  white-space: nowrap;
+
+}
+
+
+// ============================================================
+// MAIN CONTENT
+// ============================================================
+
+.layout-content {
+
+  height: 100vh;
+
+  background: var(--app-bg);
+
+  color: var(--text-primary);
+
+  overflow: hidden;
+
+}
+
+
+// ============================================================
+// TOP TOOLBAR
+// ============================================================
+
+.layout-toolbar {
+
+  height: $toolbar-height !important;
+
+  min-height: $toolbar-height !important;
+
+  padding: 0 24px;
+
+  box-sizing: border-box;
+
+  display: flex;
+
+  align-items: center;
+
+  background: rgba(11, 12, 18, 0.92) !important;
+
+  backdrop-filter: blur(16px);
+
+  -webkit-backdrop-filter: blur(16px);
+
+  border-bottom: 1px solid var(--border);
+
+  color: var(--text-primary);
+
+}
+
+
+// ============================================================
+// MENU BUTTON
+// ============================================================
+
+.menu-button {
+
+  width: 42px;
+
+  height: 42px;
+
+  margin-right: 14px;
+
+  display: flex;
+
+  align-items: center;
+
+  justify-content: center;
+
+  color: var(--text-secondary);
+
+  border-radius: 9px;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease;
+
+}
+
+
+.menu-button:hover {
+
+  background: var(--hover-bg);
+
+  color: var(--purple-light);
+
+}
+
+
+.menu-button mat-icon {
+
+  font-size: 23px;
+
+}
+
+
+// ============================================================
+// TOOLBAR HEADING
+// ============================================================
+
+.toolbar-heading {
+
+  display: flex;
+
+  flex-direction: column;
+
+  justify-content: center;
+
+  gap: 2px;
+
+}
+
+
+.toolbar-title {
+
+  font-size: 16px;
+
+  line-height: 1.2;
+
+  font-weight: 600;
+
+  color: var(--text-primary);
+
+}
+
+
+.toolbar-subtitle {
+
+  font-size: 11px;
+
+  line-height: 1.2;
+
+  color: var(--text-muted);
+
+}
+
+
+// ============================================================
+// SPACER
+// ============================================================
+
+.spacer {
+
+  flex: 1 1 auto;
+
+}
+
+
+// ============================================================
+// CREATE APP BUTTON
+// ============================================================
+
+.create-app-button {
+
+  height: 40px;
+
+  padding: 0 18px;
+
+  margin-right: 8px;
+
+  border-radius: 8px !important;
+
+  background: var(--purple) !important;
+
+  color: white !important;
+
+  font-size: 13px;
+
+  font-weight: 600;
+
+  box-shadow:
+    0 5px 18px rgba(139, 92, 246, 0.18);
+
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+
+}
+
+
+.create-app-button:hover {
+
+  background: var(--purple-dark) !important;
+
+  transform: translateY(-1px);
+
+  box-shadow:
+    0 8px 22px rgba(139, 92, 246, 0.28);
+
+}
+
+
+.create-app-button mat-icon {
+
+  margin-right: 5px;
+
+  font-size: 18px;
+
+}
+
+
+// ============================================================
+// LOGOUT BUTTON
+// ============================================================
+
+.logout-button {
+
+  height: 40px;
+
+  color: var(--text-secondary) !important;
+
+  border-radius: 8px;
+
+  font-size: 13px;
+
+}
+
+
+.logout-button:hover {
+
+  background: rgba(255, 255, 255, 0.04);
+
+  color: var(--text-primary) !important;
+
+}
+
+
+.logout-button mat-icon {
+
+  margin-right: 5px;
+
+  font-size: 19px;
+
+}
+
+
+// ============================================================
+// PAGE CONTENT
+// ============================================================
 
 .main-content {
-  padding: 24px;
+
   height: calc(100vh - #{$toolbar-height});
+
+  box-sizing: border-box;
+
+  padding: 28px;
+
   overflow-y: auto;
+
+  overflow-x: hidden;
+
+  background:
+    radial-gradient(circle at 80% 10%,
+      rgba(139, 92, 246, 0.035),
+      transparent 30%),
+    var(--app-bg);
+
+}
+
+
+// ============================================================
+// SCROLLBAR
+// ============================================================
+
+.navigation-list::-webkit-scrollbar,
+.main-content::-webkit-scrollbar {
+
+  width: 6px;
+
+}
+
+
+.navigation-list::-webkit-scrollbar-track,
+.main-content::-webkit-scrollbar-track {
+
+  background: transparent;
+
+}
+
+
+.navigation-list::-webkit-scrollbar-thumb,
+.main-content::-webkit-scrollbar-thumb {
+
+  background: rgba(255, 255, 255, 0.12);
+
+  border-radius: 10px;
+
+}
+
+
+.navigation-list::-webkit-scrollbar-thumb:hover,
+.main-content::-webkit-scrollbar-thumb:hover {
+
+  background: rgba(139, 92, 246, 0.4);
+
+}
+
+
+// ============================================================
+// RESPONSIVE
+// ============================================================
+
+@media (max-width: 900px) {
+
+  .layout-sidenav {
+
+    width: 240px !important;
+
+  }
+
+  .main-content {
+
+    padding: 20px;
+
+  }
+
+  .logout-button span {
+
+    display: none;
+
+  }
+
+}
+
+
+@media (max-width: 650px) {
+
+  .layout-sidenav {
+
+    width: 220px !important;
+
+  }
+
+  .create-app-button span {
+
+    display: none;
+
+  }
+
+  .create-app-button {
+
+    width: 40px;
+
+    padding: 0;
+
+    min-width: 40px;
+
+  }
+
+  .create-app-button mat-icon {
+
+    margin: 0;
+
+  }
+
 }
