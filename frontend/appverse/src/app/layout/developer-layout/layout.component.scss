@@ -53,6 +53,7 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 .layout-container {
 
   width: 100%;
+
   height: 100vh;
 
   background: var(--app-bg);
@@ -60,16 +61,47 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text-primary);
 
   overflow: hidden;
+
 }
 
+
+// ------------------------------------------------------------
+// FIX: mat-sidenav-content does not animate its own margin-left
+// by default when the drawer width changes. Give it the same
+// transition as the sidebar so the toolbar and page content
+// shift in sync instead of jumping/lagging.
+// ------------------------------------------------------------
+
+:host ::ng-deep .mat-drawer-content {
+
+  margin-left: #{$sidenav-width} !important;
+
+  transition: margin-left $transition !important;
+
+}
+
+.sidenav-collapsed {
+
+  ::ng-deep .mat-drawer-content {
+
+    margin-left: #{$sidenav-collapsed-width} !important;
+
+  }
+
+}
 
 // ============================================================
 // SIDEBAR
 // ============================================================
+//
+// FIX: width is now controlled from the template via
+// [style.width.px] so Angular Material's internal resize
+// detection actually fires and repositions mat-sidenav-content.
+// No !important width override here anymore — it would fight
+// the inline style binding.
+// ============================================================
 
 .layout-sidenav {
-
-  width: $sidenav-width !important;
 
   background: var(--sidebar-bg) !important;
 
@@ -78,6 +110,7 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   color: var(--text-primary);
 
   display: flex;
+
   flex-direction: column;
 
   overflow: hidden;
@@ -88,6 +121,7 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
     max-width $transition;
 
   box-shadow: 8px 0 30px rgba(0, 0, 0, 0.08);
+
 }
 
 
@@ -97,11 +131,8 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
 .sidenav-collapsed {
 
-  .layout-sidenav {
-
-    width: $sidenav-collapsed-width !important;
-
-  }
+  // Width is handled by the [style.width.px] binding in the
+  // template now — no rule needed here for .layout-sidenav width.
 
 
   // ----------------------------------------------------------
@@ -147,24 +178,44 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
   // ----------------------------------------------------------
   // Navigation
+  // FIX: symmetric margin so the icon is truly centered
   // ----------------------------------------------------------
 
   .custom-list-item {
 
     justify-content: center;
 
-    padding-left: 0;
-    padding-right: 0;
+    padding: 0;
 
-    margin-left: 10px;
-    margin-right: 10px;
+    margin: 3px 12px;
 
   }
 
 
   .item-icon {
 
-    margin-right: 0;
+    margin: 0;
+
+  }
+
+
+  // FIX: hide the active-link accent bar in collapsed mode —
+  // it skewed the icon's optical center. Use a background
+  // highlight instead.
+  // ----------------------------------------------------------
+
+  .custom-list-item.active-link::before {
+
+    display: none;
+
+  }
+
+
+  .custom-list-item.active-link {
+
+    background: var(--active-bg);
+
+    border-radius: 10px;
 
   }
 
@@ -389,13 +440,19 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   transition:
     background $transition,
     color $transition,
-    transform 0.15s ease;
+    transform 0.15s ease,
+    margin $transition,
+    padding $transition,
+    justify-content $transition;
 
 }
 
 
 // ------------------------------------------------------------
 // Icon
+// FIX: removed margin-right from the transition list — animating
+// margin between collapsed/expanded states caused the icon to
+// visibly drift off-center mid-transition.
 // ------------------------------------------------------------
 
 .item-icon {
@@ -419,7 +476,6 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
   justify-content: center;
 
   transition:
-    margin-right $transition,
     color 0.2s ease;
 
 }
@@ -927,14 +983,17 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 // ============================================================
 // RESPONSIVE
 // ============================================================
+//
+// NOTE: these media queries previously set width: ... !important
+// on .layout-sidenav to shrink it on small screens. That now
+// conflicts with the [style.width.px] binding driving width
+// from the template. If you want different widths at these
+// breakpoints, that needs to come from the component's
+// isSidenavCollapsed logic / a screen-size signal bound into
+// the same [style.width.px] expression, not a CSS override here.
+// ============================================================
 
 @media (max-width: 900px) {
-
-  .layout-sidenav {
-
-    width: 240px !important;
-
-  }
 
   .main-content {
 
@@ -952,12 +1011,6 @@ $transition: 0.28s cubic-bezier(0.4, 0, 0.2, 1);
 
 
 @media (max-width: 650px) {
-
-  .layout-sidenav {
-
-    width: 220px !important;
-
-  }
 
   .create-app-button span {
 

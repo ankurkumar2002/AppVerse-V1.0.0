@@ -1,26 +1,185 @@
-<h1>Edit Profile</h1>
+<div class="edit-profile-page">
 
-<form [formGroup]="profileForm" (ngSubmit)="updateProfile()">
-    <div class="card">
-        <h2>Profile Details</h2>
-
-        <div class="form-group">
-            <label>First Name</label>
-            <input type="text" formControlName="firstName">
+    <!-- PAGE HEADER -->
+    <div class="page-header">
+        <div>
+            <h1>Edit Profile</h1>
+            <p>Update your personal information and account details.</p>
         </div>
-        <div class="form-group">
-            <label>Last Name</label>
-            <input type="text" formControlName="lastName">
-        </div>
-        <div class="form-group">
-            <label>Email</label>
-            <input type="text" formControlName="email">
-            <p>{{ profileForm.get('email')?.value }}</p>
-        </div>
-        <div class="form-group">
-            <label>Phone</label>
-            <input type="text" formControlName="phone">
-        </div>
-        <button type="submit">Save Changes</button>
     </div>
-</form>
+
+    <form
+        [formGroup]="profileForm"
+        (ngSubmit)="updateProfile()"
+        class="profile-form"
+    >
+
+        <div class="card">
+
+            <!-- CARD HEADER -->
+            <div class="card-header">
+                <div class="header-icon">
+                    <span>👤</span>
+                </div>
+
+                <div>
+                    <h2>Personal Details</h2>
+                    <p>Keep your profile information up to date.</p>
+                </div>
+            </div>
+
+
+            <!-- FORM -->
+            <div class="form-grid">
+
+                <!-- FIRST NAME -->
+                <div class="form-group">
+
+                    <label for="firstName">
+                        First Name
+                    </label>
+
+                    <input
+                        id="firstName"
+                        type="text"
+                        formControlName="firstName"
+                        placeholder="Enter your first name"
+                    />
+
+                    @if (
+                        profileForm.get('firstName')?.touched &&
+                        profileForm.get('firstName')?.invalid
+                    ) {
+
+                        <small class="error-message">
+                            First name is required.
+                        </small>
+
+                    }
+
+                </div>
+
+
+                <!-- LAST NAME -->
+                <div class="form-group">
+
+                    <label for="lastName">
+                        Last Name
+                    </label>
+
+                    <input
+                        id="lastName"
+                        type="text"
+                        formControlName="lastName"
+                        placeholder="Enter your last name"
+                    />
+
+                    @if (
+                        profileForm.get('lastName')?.touched &&
+                        profileForm.get('lastName')?.invalid
+                    ) {
+
+                        <small class="error-message">
+                            Last name is required.
+                        </small>
+
+                    }
+
+                </div>
+
+
+                <!-- EMAIL -->
+                <div class="form-group full-width">
+
+                    <label for="email">
+                        Email
+                    </label>
+
+                    <input
+                        id="email"
+                        type="email"
+                        formControlName="email"
+                        placeholder="Enter your email"
+                    />
+
+                    @if (
+                        profileForm.get('email')?.touched &&
+                        profileForm.get('email')?.hasError('required')
+                    ) {
+
+                        <small class="error-message">
+                            Email is required.
+                        </small>
+
+                    }
+
+                    @if (
+                        profileForm.get('email')?.touched &&
+                        profileForm.get('email')?.hasError('email')
+                    ) {
+
+                        <small class="error-message">
+                            Please enter a valid email address.
+                        </small>
+
+                    }
+
+                </div>
+
+
+                <!-- PHONE -->
+                <div class="form-group full-width">
+
+                    <label for="phone">
+                        Phone Number
+                    </label>
+
+                    <input
+                        id="phone"
+                        type="tel"
+                        formControlName="phone"
+                        placeholder="Enter your phone number"
+                    />
+
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+            <div class="card-footer">
+
+                <button
+                    type="button"
+                    class="cancel-btn"
+                    routerLink="/user/profile"
+                >
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="save-btn"
+                    [disabled]="profileForm.invalid || isSaving"
+                >
+
+                    @if (isSaving) {
+
+                        <span class="spinner"></span>
+                        Saving...
+
+                    } @else {
+
+                        Save Changes
+
+                    }
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </form>
+
+</div>

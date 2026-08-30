@@ -1,121 +1,355 @@
 <div class="app-detail-page">
 
-    <!-- HERO SECTION -->
-    <section class="hero-section">
+  <!-- =====================================================
+       HERO
+       ===================================================== -->
 
-        <div class="hero-left">
+  <section class="hero-section">
 
-            <div class="thumbnail-wrapper">
-                <img [src]="thumbnailBlobUrl" [alt]="application.name" class="app-thumbnail" />
-            </div>
+    <!-- APP IMAGE -->
+    <div class="hero-media">
 
-        </div>
+      <div class="thumbnail-wrapper">
 
-        <div class="hero-right">
+        @if (thumbnailBlobUrl) {
 
-            <div class="title-row">
-                <h1>{{ application.name }}</h1>
+          <img
+            [src]="thumbnailBlobUrl"
+            [alt]="application.name"
+            class="app-thumbnail"
+          />
 
-                @if (application.isFree) {
-                <span class="price-badge free">FREE</span>
-                } @else {
-                <span class="price-badge paid">
-                    ₹{{ application.price }}
-                </span>
-                }
-            </div>
+        } @else {
 
-            <p class="tagline">
-                {{ application.tagline }}
-            </p>
+          <div class="thumbnail-placeholder">
 
-            <div class="meta-grid">
+            <mat-icon>apps</mat-icon>
 
-                <div class="meta-item">
-                    <mat-icon>category</mat-icon>
-                    <span>{{ application.categoryId }}</span>
-                </div>
+            <span>
+              {{ application.name?.charAt(0) || 'A' }}
+            </span>
 
-                <div class="meta-item">
-                    <mat-icon>verified</mat-icon>
-                    <span>{{ application.version }}</span>
-                </div>
+          </div>
 
-                <div class="meta-item">
-                    <mat-icon>payments</mat-icon>
-                    <span>{{ application.monetizationType }}</span>
-                </div>
+        }
 
-            </div>
+      </div>
 
-            <div class="hero-actions">
+    </div>
 
-                <button mat-raised-button color="primary" class="install-btn">
-                    Install / Access
-                </button>
 
-                @if (application.websiteUrl) {
-                <a mat-stroked-button [href]="application.websiteUrl" target="_blank">
-                    Visit Website
-                </a>
-                }
+    <!-- APP INFORMATION -->
+    <div class="hero-content">
 
-            </div>
+      <!-- CATEGORY -->
+      <div class="category-label">
 
-        </div>
+        <mat-icon>category</mat-icon>
 
-    </section>
+        <span>
+          {{ application.categoryId }}
+        </span>
 
-    <!-- DESCRIPTION -->
-    <section class="content-card">
+      </div>
 
-        <div class="section-header">
-            <mat-icon>description</mat-icon>
-            <h2>About This Application</h2>
-        </div>
 
-        <p class="description">
-            {{ application.description }}
+      <!-- TITLE -->
+      <div class="title-row">
+
+        <h1>
+          {{ application.name }}
+        </h1>
+
+        @if (application.isFree) {
+
+          <span class="price-badge free">
+            FREE
+          </span>
+
+        } @else {
+
+          <span class="price-badge paid">
+
+            ₹{{ application.price }}
+
+          </span>
+
+        }
+
+      </div>
+
+
+      <!-- TAGLINE -->
+      @if (application.tagline) {
+
+        <p class="tagline">
+          {{ application.tagline }}
         </p>
 
-    </section>
+      }
 
-    <!-- SCREENSHOTS -->
-    @if (application.screenshots?.length) {
+
+      <!-- META -->
+      <div class="meta-grid">
+
+        <div class="meta-item">
+
+          <mat-icon>verified</mat-icon>
+
+          <div>
+            <span class="meta-label">
+              Version
+            </span>
+
+            <span class="meta-value">
+              {{ application.version }}
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="meta-item">
+
+          <mat-icon>payments</mat-icon>
+
+          <div>
+            <span class="meta-label">
+              Monetization
+            </span>
+
+            <span class="meta-value">
+              {{ application.monetizationType }}
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="meta-item">
+
+          <mat-icon>apps</mat-icon>
+
+          <div>
+            <span class="meta-label">
+              Category
+            </span>
+
+            <span class="meta-value">
+              {{ application.categoryId }}
+            </span>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ACTIONS -->
+      <div class="hero-actions">
+
+        <button
+          mat-raised-button
+          class="primary-action"
+          type="button"
+        >
+
+          <mat-icon>
+            download
+          </mat-icon>
+
+          Install / Access
+
+        </button>
+
+
+        @if (application.websiteUrl) {
+
+          <a
+            mat-stroked-button
+            class="secondary-action"
+            [href]="application.websiteUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+
+            <mat-icon>
+              open_in_new
+            </mat-icon>
+
+            Visit Website
+
+          </a>
+
+        }
+
+      </div>
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       DESCRIPTION
+       ===================================================== -->
+
+  <section class="content-card">
+
+    <div class="section-header">
+
+      <div class="section-icon">
+
+        <mat-icon>
+          description
+        </mat-icon>
+
+      </div>
+
+      <div>
+
+        <h2>
+          About This Application
+        </h2>
+
+        <span>
+          Application overview
+        </span>
+
+      </div>
+
+    </div>
+
+
+    <div class="description">
+
+      @if (application.description) {
+
+        <p>
+          {{ application.description }}
+        </p>
+
+      } @else {
+
+        <p class="empty-text">
+          No description has been provided for this application.
+        </p>
+
+      }
+
+    </div>
+
+  </section>
+
+
+  <!-- =====================================================
+       SCREENSHOTS
+       ===================================================== -->
+
+  @if (application.screenshots?.length) {
 
     <section class="content-card">
 
-        <div class="section-header">
-            <mat-icon>photo_library</mat-icon>
-            <h2>Screenshots</h2>
-        </div>
+      <div class="section-header">
 
-        <div class="screenshots-grid">
+        <div class="section-icon">
 
-            <div class="screenshots-grid">
-
-                @for (shot of application.screenshots; track shot._id) {
-
-                <div class="screenshot-card">
-
-                    <img [src]="screenshotBlobUrls[shot._id]" [alt]="shot.caption || 'Application Screenshot'" />
-
-                    @if (shot.caption) {
-                    <div class="screenshot-caption">
-                        {{ shot.caption }}
-                    </div>
-                    }
-
-                </div>
-
-                }
-
-            </div>
+          <mat-icon>
+            photo_library
+          </mat-icon>
 
         </div>
+
+        <div>
+
+          <h2>
+            Screenshots
+          </h2>
+
+          <span>
+            Explore the application interface
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <div class="screenshots-grid">
+
+        @for (
+          shot of application.screenshots;
+          track shot._id
+        ) {
+
+          <div class="screenshot-card">
+
+            @if (screenshotBlobUrls[shot._id]) {
+
+              <img
+                [src]="screenshotBlobUrls[shot._id]"
+                [alt]="shot.caption || 'Application Screenshot'"
+              />
+
+            } @else {
+
+              <div class="screenshot-placeholder">
+
+                <mat-icon>
+                  image
+                </mat-icon>
+
+                <span>
+                  Loading image...
+                </span>
+
+              </div>
+
+            }
+
+
+            @if (shot.caption) {
+
+              <div class="screenshot-caption">
+
+                {{ shot.caption }}
+
+              </div>
+
+            }
+
+          </div>
+
+        }
+
+      </div>
 
     </section>
 
-    }
+  }
+
+
+  <!-- =====================================================
+       BACK
+       ===================================================== -->
+
+  <div class="back-section">
+
+    <button
+      mat-button
+      class="back-button"
+      routerLink="/user/apps"
+      type="button"
+    >
+
+      <mat-icon>
+        arrow_back
+      </mat-icon>
+
+      Back to Applications
+
+    </button>
+
+  </div>
 
 </div>

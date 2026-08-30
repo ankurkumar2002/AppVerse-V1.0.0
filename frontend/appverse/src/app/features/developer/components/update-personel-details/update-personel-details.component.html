@@ -1,24 +1,173 @@
-<h1>Edit Personel Details</h1>
+<div class="edit-profile-page">
 
-<form [formGroup]="developerProfileForm" (ngSubmit)="updateProfile()">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
+
+    <h1>Edit Personal Details</h1>
+
+    <p>
+      Update your developer profile information.
+    </p>
+
+  </div>
+
+
+  <!-- FORM -->
+  <form
+    [formGroup]="developerProfileForm"
+    (ngSubmit)="updateProfile()"
+    class="profile-form"
+  >
+
     <div class="card">
-        <h2>Profile Details</h2>
 
-        <div class="form-group">
-            <label>First name</label>
-            <input type="text" formControlName="firstName">
+      <!-- CARD HEADER -->
+      <div class="card-header">
+
+        <div class="header-icon">
+          👤
         </div>
 
-        <div class="form-group">
-            <label>Last name</label>
-            <input type="text" formControlName="lastName">
+        <div>
+          <h2>Profile Details</h2>
+
+          <p>
+            Keep your personal information up to date.
+          </p>
         </div>
 
+      </div>
+
+
+      <!-- FORM CONTENT -->
+      <div class="form-grid">
+
+        <!-- FIRST NAME -->
         <div class="form-group">
-            <label>Email</label>
-            <input type="email" formControlName="email">
+
+          <label for="firstName">
+            First Name
+          </label>
+
+          <input
+            id="firstName"
+            type="text"
+            formControlName="firstName"
+            placeholder="Enter your first name"
+          />
+
+          @if (
+            developerProfileForm.get('firstName')?.invalid &&
+            developerProfileForm.get('firstName')?.touched
+          ) {
+            <span class="error-message">
+              First name is required.
+            </span>
+          }
+
         </div>
 
-        <button type="submit">Save Changes</button>
+
+        <!-- LAST NAME -->
+        <div class="form-group">
+
+          <label for="lastName">
+            Last Name
+          </label>
+
+          <input
+            id="lastName"
+            type="text"
+            formControlName="lastName"
+            placeholder="Enter your last name"
+          />
+
+          @if (
+            developerProfileForm.get('lastName')?.invalid &&
+            developerProfileForm.get('lastName')?.touched
+          ) {
+            <span class="error-message">
+              Last name is required.
+            </span>
+          }
+
+        </div>
+
+
+        <!-- EMAIL -->
+        <div class="form-group full-width">
+
+          <label for="email">
+            Email Address
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Enter your email address"
+          />
+
+          @if (
+            developerProfileForm.get('email')?.touched &&
+            developerProfileForm.get('email')?.hasError('required')
+          ) {
+            <span class="error-message">
+              Email is required.
+            </span>
+          }
+
+          @if (
+            developerProfileForm.get('email')?.touched &&
+            developerProfileForm.get('email')?.hasError('email')
+          ) {
+            <span class="error-message">
+              Please enter a valid email address.
+            </span>
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- FOOTER -->
+      <div class="card-footer">
+
+        <button
+          type="button"
+          class="cancel-btn"
+          (click)="cancel()"
+          [disabled]="isSaving"
+        >
+          Cancel
+        </button>
+
+
+        <button
+          type="submit"
+          class="save-btn"
+          [disabled]="developerProfileForm.invalid || isSaving"
+        >
+
+          @if (isSaving) {
+
+            <span class="spinner"></span>
+
+            Saving...
+
+          } @else {
+
+            Save Changes
+
+          }
+
+        </button>
+
+      </div>
+
     </div>
-</form>
+
+  </form>
+
+</div>

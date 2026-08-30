@@ -1,56 +1,322 @@
 <div class="dashboard-container">
-  <!-- Welcome Section -->
+
+  <!-- =========================================================
+       WELCOME
+       ========================================================= -->
+
   <section class="welcome">
-    <h2>👋 Welcome, {{ username }}</h2>
-    <p>Explore trending apps and categories below.</p>
+
+    <div class="welcome-content">
+
+      <span class="section-label">
+        APPVERSE
+      </span>
+
+      <h2>
+        👋 Welcome, {{ username }}
+      </h2>
+
+      <p>
+        Explore trending applications and discover something useful.
+      </p>
+
+    </div>
+
   </section>
 
-  <!-- Quick Actions -->
+
+  <!-- =========================================================
+       QUICK ACTIONS
+       ========================================================= -->
+
   <section class="quick-actions">
-    <button (click)="goToApps()">Browse Apps</button>
-    <button (click)="goToProfile()">My Profile</button>
-    <button (click)="goToDashboard()">My Dashboard</button>
+
+    <button
+      type="button"
+      class="quick-action primary-action"
+      (click)="goToApps()"
+    >
+      <span class="action-icon">
+        <mat-icon>apps</mat-icon>
+      </span>
+
+      <span class="action-content">
+        <strong>Browse Apps</strong>
+        <small>Explore applications</small>
+      </span>
+
+      <mat-icon class="action-arrow">
+        arrow_forward
+      </mat-icon>
+    </button>
+
+
+    <button
+      type="button"
+      class="quick-action"
+      (click)="goToProfile()"
+    >
+      <span class="action-icon">
+        <mat-icon>person</mat-icon>
+      </span>
+
+      <span class="action-content">
+        <strong>My Profile</strong>
+        <small>View your profile</small>
+      </span>
+
+      <mat-icon class="action-arrow">
+        arrow_forward
+      </mat-icon>
+    </button>
+
+
+    <button
+      type="button"
+      class="quick-action"
+      (click)="goToDashboard()"
+    >
+      <span class="action-icon">
+        <mat-icon>dashboard</mat-icon>
+      </span>
+
+      <span class="action-content">
+        <strong>My Dashboard</strong>
+        <small>View dashboard</small>
+      </span>
+
+      <mat-icon class="action-arrow">
+        arrow_forward
+      </mat-icon>
+    </button>
+
   </section>
 
-  <!-- Trending Apps -->
-  <section class="trending-apps">
-    <h3>🔥 Trending Apps</h3>
-    <div *ngIf="loadingApps" class="loading-message">Loading apps...</div>
 
-    <div class="app-grid" *ngIf="!loadingApps">
-      <!-- We add a fallback for when there are no apps to show -->
-      <div *ngIf="applications.length === 0" class="empty-state">
-        No trending apps found.
+  <!-- =========================================================
+       TRENDING APPS
+       ========================================================= -->
+
+  <section class="dashboard-section trending-apps">
+
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          DISCOVER
+        </span>
+
+        <h3>
+          🔥 Trending Apps
+        </h3>
+
+        <p>
+          Popular applications you might want to explore.
+        </p>
       </div>
-      
-      <div class="app-card" *ngFor="let app of applications" (click)="goToApp(app.id)">
-        <!-- ✅ CORRECTED IMAGE BINDING -->
-        <!-- We now bind [src] to the 'thumbnailBlobUrl' that your component creates. -->
-        <!-- We also add a placeholder for apps that might not have a thumbnail. -->
+
+      <button
+        type="button"
+        class="view-all-button"
+        (click)="goToApps()"
+      >
+        View All
+
+        <mat-icon>
+          arrow_forward
+        </mat-icon>
+      </button>
+
+    </div>
+
+
+    <!-- Loading -->
+
+    <div
+      *ngIf="loadingApps"
+      class="loading-message"
+    >
+
+      <mat-icon>
+        sync
+      </mat-icon>
+
+      <span>
+        Loading apps...
+      </span>
+
+    </div>
+
+
+    <!-- Apps -->
+
+    <div
+      class="app-grid"
+      *ngIf="!loadingApps"
+    >
+
+      <!-- Empty state -->
+
+      <div
+        *ngIf="applications.length === 0"
+        class="empty-state"
+      >
+
+        <mat-icon>
+          apps
+        </mat-icon>
+
+        <h4>
+          No trending apps found
+        </h4>
+
+        <p>
+          There are currently no applications available.
+        </p>
+
+      </div>
+
+
+      <!-- App Cards -->
+
+      <div
+        class="app-card"
+        *ngFor="let app of applications"
+        (click)="goToApp(app.id)"
+      >
+
+        <!-- Thumbnail -->
+
         <div class="app-thumbnail-container">
-          <img *ngIf="app.thumbnailBlobUrl" 
-               [src]="app.thumbnailBlobUrl" 
-               alt="{{ app.name }} thumbnail" />
-          <div *ngIf="!app.thumbnailBlobUrl" class="thumbnail-placeholder">
-            <span>{{ app.name.charAt(0) }}</span>
+
+          <img
+            *ngIf="app.thumbnailBlobUrl"
+            [src]="app.thumbnailBlobUrl"
+            [alt]="app.name + ' thumbnail'"
+          />
+
+          <div
+            *ngIf="!app.thumbnailBlobUrl"
+            class="thumbnail-placeholder"
+          >
+            <span>
+              {{ app.name.charAt(0) }}
+            </span>
           </div>
+
         </div>
-        
-        <h4>{{ app.name }}</h4>
-        <p>{{ app.description | slice:0:80 }}{{ app.description.length > 80 ? '...' : '' }}</p>
+
+
+        <!-- App information -->
+
+        <div class="app-card-content">
+
+          <h4>
+            {{ app.name }}
+          </h4>
+
+          <p>
+            {{ app.description | slice:0:80 }}
+            {{ app.description.length > 80 ? '...' : '' }}
+          </p>
+
+          <div class="app-card-footer">
+
+            <span>
+              Explore
+            </span>
+
+            <mat-icon>
+              arrow_forward
+            </mat-icon>
+
+          </div>
+
+        </div>
+
       </div>
+
     </div>
+
   </section>
 
-  <!-- Categories -->
-  <section class="categories">
-    <h3>📂 Explore Categories</h3>
-    <div *ngIf="loadingCategories" class="loading-message">Loading categories...</div>
-    
-    <div class="category-grid" *ngIf="!loadingCategories">
-      <div class="category-card" *ngFor="let cat of categories" (click)="goToCategory(cat.id)">
-        {{ cat.name }}
+
+  <!-- =========================================================
+       CATEGORIES
+       ========================================================= -->
+
+  <section class="dashboard-section categories">
+
+    <div class="section-header">
+
+      <div>
+        <span class="section-label">
+          EXPLORE
+        </span>
+
+        <h3>
+          📂 Explore Categories
+        </h3>
+
+        <p>
+          Find applications based on what you're looking for.
+        </p>
       </div>
+
     </div>
+
+
+    <!-- Loading -->
+
+    <div
+      *ngIf="loadingCategories"
+      class="loading-message"
+    >
+
+      <mat-icon>
+        sync
+      </mat-icon>
+
+      <span>
+        Loading categories...
+      </span>
+
+    </div>
+
+
+    <!-- Categories -->
+
+    <div
+      class="category-grid"
+      *ngIf="!loadingCategories"
+    >
+
+      <div
+        class="category-card"
+        *ngFor="let cat of categories"
+        (click)="goToCategory(cat.id)"
+      >
+
+        <div class="category-icon">
+
+          <mat-icon>
+            category
+          </mat-icon>
+
+        </div>
+
+        <span class="category-name">
+          {{ cat.name }}
+        </span>
+
+        <mat-icon class="category-arrow">
+          arrow_forward
+        </mat-icon>
+
+      </div>
+
+    </div>
+
   </section>
+
 </div>
