@@ -1,55 +1,267 @@
-<div class="form-container">
-  <h2>Developer Registration</h2>
+<div class="developer-registration-page">
 
-  <form [formGroup]="developerForm" (ngSubmit)="onSubmit()" class="form-grid">
+  <!-- PAGE HEADER -->
+  <div class="page-header">
 
-    <div class="form-field">
-      <label>Name</label>
-      <input type="text" formControlName="name" [disabled]="true" />
+    <div class="header-icon">
+      👨‍💻
     </div>
 
-    <div class="form-field">
-      <label>Email</label>
-      <input type="email" formControlName="email" [disabled]="true" />
+    <div>
+      <h1>Developer Registration</h1>
+
+      <p>
+        Complete your developer profile to start publishing applications.
+      </p>
     </div>
 
-    <div class="form-field">
-      <label>Developer Type<span>*</span></label>
-      <select formControlName="developerType">
-        <option value="" disabled>Select developer type</option>
-        <option value="INDIVIDUAL">Individual</option>
-        <option value="COMPANY">Company</option>
-      </select>
-    </div>
+  </div>
 
-    <div class="form-field">
-      <label>Company Name</label>
-      <input type="text" formControlName="companyName" />
-    </div>
 
-    <div class="form-field">
-      <label>Website</label>
-      <input type="url" formControlName="website" />
-    </div>
+  <!-- FORM -->
+  <form
+    [formGroup]="developerForm"
+    (ngSubmit)="onSubmit()"
+    class="developer-form"
+  >
 
-    <div class="form-field">
-      <label>Logo URL</label>
-      <input type="url" formControlName="logoUrl" />
-    </div>
+    <div class="card">
 
-    <div class="form-field">
-      <label>Location</label>
-      <input type="text" formControlName="location" />
-    </div>
+      <!-- CARD HEADER -->
+      <div class="card-header">
 
-    <div class="form-field full-width">
-      <label>Bio<span>*</span></label>
-      <textarea rows="4" formControlName="bio" placeholder="Tell us about yourself..."></textarea>
-    </div>
+        <div>
+          <h2>Developer Profile</h2>
 
-    <div class="form-action">
-      <button type="submit" [disabled]="developerForm.invalid">Submit</button>
+          <p>
+            Provide information about yourself or your organization.
+          </p>
+        </div>
+
+      </div>
+
+
+      <!-- FORM CONTENT -->
+      <div class="form-grid">
+
+
+        <!-- NAME -->
+        <div class="form-group">
+
+          <label for="name">
+            Name
+          </label>
+
+          <input
+            id="name"
+            type="text"
+            formControlName="name"
+            placeholder="Your name"
+          />
+
+          <span class="field-info">
+            Name is taken from your account.
+          </span>
+
+        </div>
+
+
+        <!-- EMAIL -->
+        <div class="form-group">
+
+          <label for="email">
+            Email
+          </label>
+
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="Your email"
+          />
+
+          <span class="field-info">
+            Email is taken from your account.
+          </span>
+
+        </div>
+
+
+        <!-- DEVELOPER TYPE -->
+        <div class="form-group">
+
+          <label for="developerType">
+            Developer Type
+            <span class="required">*</span>
+          </label>
+
+          <select
+            id="developerType"
+            formControlName="developerType"
+          >
+
+            <option
+              value=""
+              disabled
+            >
+              Select developer type
+            </option>
+
+            <option value="INDIVIDUAL">
+              Individual
+            </option>
+
+            <option value="COMPANY">
+              Company
+            </option>
+
+          </select>
+
+          @if (
+            developerForm.get('developerType')?.invalid &&
+            developerForm.get('developerType')?.touched
+          ) {
+
+            <span class="error-message">
+              Please select a developer type.
+            </span>
+
+          }
+
+        </div>
+
+
+        <!-- COMPANY NAME -->
+        <div class="form-group">
+
+          <label for="companyName">
+            Company Name
+          </label>
+
+          <input
+            id="companyName"
+            type="text"
+            formControlName="companyName"
+            placeholder="Enter company name"
+          />
+
+        </div>
+
+
+        <!-- WEBSITE -->
+        <div class="form-group">
+
+          <label for="website">
+            Website
+          </label>
+
+          <input
+            id="website"
+            type="url"
+            formControlName="website"
+            placeholder="https://example.com"
+          />
+
+        </div>
+
+
+        <!-- LOGO -->
+        <div class="form-group">
+
+          <label for="logoUrl">
+            Logo URL
+          </label>
+
+          <input
+            id="logoUrl"
+            type="url"
+            formControlName="logoUrl"
+            placeholder="https://example.com/logo.png"
+          />
+
+        </div>
+
+
+        <!-- LOCATION -->
+        <div class="form-group">
+
+          <label for="location">
+            Location
+          </label>
+
+          <input
+            id="location"
+            type="text"
+            formControlName="location"
+            placeholder="City, Country"
+          />
+
+        </div>
+
+
+        <!-- BIO -->
+        <div class="form-group full-width">
+
+          <label for="bio">
+            Bio
+            <span class="required">*</span>
+          </label>
+
+          <textarea
+            id="bio"
+            rows="5"
+            formControlName="bio"
+            placeholder="Tell users about yourself, your company, your expertise..."
+          ></textarea>
+
+          @if (
+            developerForm.get('bio')?.invalid &&
+            developerForm.get('bio')?.touched
+          ) {
+
+            <span class="error-message">
+              Please provide a short bio.
+            </span>
+
+          }
+
+        </div>
+
+      </div>
+
+
+      <!-- FOOTER -->
+      <div class="card-footer">
+
+        <div class="required-info">
+          <span class="required">*</span>
+          Required fields
+        </div>
+
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="developerForm.invalid || isSubmitting"
+        >
+
+          @if (isSubmitting) {
+
+            <span class="spinner"></span>
+
+            Creating Profile...
+
+          } @else {
+
+            <span>Complete Registration</span>
+
+          }
+
+        </button>
+
+      </div>
+
     </div>
 
   </form>
+
 </div>

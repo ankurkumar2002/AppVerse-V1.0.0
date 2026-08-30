@@ -1,0 +1,403 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.edit-profile-page {
+    width: 100%;
+    padding: 2rem;
+    box-sizing: border-box;
+
+    /*
+     * Do NOT add a background here.
+     * UserLayout already provides the main page background.
+     */
+    background: transparent;
+    color: #f9fafb;
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.page-header {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+
+    h1 {
+        margin: 0;
+        font-size: 2rem;
+        font-weight: 700;
+        color: #f9fafb;
+    }
+
+    p {
+        margin: 0.5rem 0 0;
+        color: #9ca3af;
+        font-size: 0.95rem;
+    }
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.profile-form {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.card {
+    width: 100%;
+    box-sizing: border-box;
+
+    background: #1f2937;
+
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    border-radius: 18px;
+
+    overflow: hidden;
+
+    box-shadow: 0 12px 35px rgba(0, 0, 0, 0.25);
+}
+
+
+/* =========================================================
+   CARD HEADER
+   ========================================================= */
+
+.card-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    padding: 1.75rem;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+
+    h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+        color: #f9fafb;
+    }
+
+    p {
+        margin: 0.35rem 0 0;
+        color: #9ca3af;
+        font-size: 0.9rem;
+    }
+}
+
+
+/* =========================================================
+   HEADER ICON
+   ========================================================= */
+
+.header-icon {
+    width: 48px;
+    height: 48px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    flex-shrink: 0;
+
+    border-radius: 12px;
+
+    background: rgba(124, 58, 237, 0.15);
+
+    font-size: 1.4rem;
+}
+
+
+/* =========================================================
+   FORM GRID
+   ========================================================= */
+
+.form-grid {
+    display: grid;
+
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    gap: 1.5rem;
+
+    padding: 2rem;
+}
+
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    min-width: 0;
+}
+
+
+.full-width {
+    grid-column: 1 / -1;
+}
+
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.form-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #d1d5db;
+}
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.form-group input {
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 0.85rem 1rem;
+
+    background: #111827;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    border-radius: 10px;
+
+    color: #f9fafb;
+
+    font-size: 0.95rem;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.form-group input::placeholder {
+    color: #6b7280;
+}
+
+
+.form-group input:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+
+.form-group input:focus {
+    border-color: #7c3aed;
+
+    background: #151e2e;
+
+    box-shadow:
+        0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-message {
+    color: #f87171;
+    font-size: 0.8rem;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.card-footer {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    gap: 1rem;
+
+    padding: 1.5rem 2rem;
+
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+
+/* =========================================================
+   BUTTONS
+   ========================================================= */
+
+.cancel-btn,
+.save-btn {
+    border: none;
+
+    padding: 0.75rem 1.4rem;
+
+    border-radius: 10px;
+
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.2s ease,
+        background 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+/* =========================================================
+   CANCEL
+   ========================================================= */
+
+.cancel-btn {
+    background: rgba(255, 255, 255, 0.07);
+
+    color: #d1d5db;
+}
+
+
+.cancel-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+
+/* =========================================================
+   SAVE
+   ========================================================= */
+
+.save-btn {
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #6d28d9
+    );
+
+    color: white;
+
+    box-shadow:
+        0 6px 15px rgba(124, 58, 237, 0.25);
+}
+
+
+.save-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(124, 58, 237, 0.35);
+}
+
+
+.save-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   SPINNER
+   ========================================================= */
+
+.spinner {
+    display: inline-block;
+
+    width: 14px;
+    height: 14px;
+
+    margin-right: 0.5rem;
+
+    border: 2px solid rgba(255, 255, 255, 0.35);
+
+    border-top-color: white;
+
+    border-radius: 50%;
+
+    animation: spin 0.7s linear infinite;
+}
+
+
+@keyframes spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 700px) {
+
+    .edit-profile-page {
+        padding: 1rem;
+    }
+
+
+    .page-header {
+        margin-bottom: 1.5rem;
+
+        h1 {
+            font-size: 1.6rem;
+        }
+    }
+
+
+    .form-grid {
+        grid-template-columns: 1fr;
+
+        padding: 1.25rem;
+    }
+
+
+    .full-width {
+        grid-column: auto;
+    }
+
+
+    .card-header {
+        padding: 1.25rem;
+    }
+
+
+    .card-footer {
+        padding: 1.25rem;
+
+        flex-direction: column-reverse;
+
+        align-items: stretch;
+    }
+
+
+    .cancel-btn,
+    .save-btn {
+        width: 100%;
+    }
+
+}

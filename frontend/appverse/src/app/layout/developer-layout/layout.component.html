@@ -10,6 +10,7 @@
     mode="side"
     opened
     class="layout-sidenav"
+    [style.width.px]="isSidenavCollapsed ? 82 : 270"
   >
 
     <!-- Sidebar Header -->
@@ -138,7 +139,7 @@
 
 
         <!-- Create Profile -->
-        <!-- <a
+        <!-- 
           class="custom-list-item"
           routerLink="/developer/apps/create"
           routerLinkActive="active-link"

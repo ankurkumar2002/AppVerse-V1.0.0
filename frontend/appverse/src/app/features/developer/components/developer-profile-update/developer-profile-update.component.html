@@ -1,81 +1,107 @@
 <div class="profile-page-container">
   <p-toast position="top-center"></p-toast>
 
-  <!-- === PROFILE HEADER (RESTRUCTURED) === -->
   <div class="profile-header">
     <div class="profile-avatar">
-      <!-- Show logo preview if URL exists -->
       @if (logoPreviewUrl) {
-        <img [src]="logoPreviewUrl" alt="Profile Logo Preview">
+      <img [src]="logoPreviewUrl" alt="Profile Logo Preview">
+      } @else if (developerForm.get('name')?.value) {
+      <span class="avatar-initials">{{ getInitials(developerForm.get('name')?.value) }}</span>
       } @else {
-        <!-- Fallback icon -->
-        <i class="pi pi-image placeholder-icon"></i>
+      <i class="pi pi-user placeholder-icon"></i>
       }
     </div>
+
     <div class="profile-info">
-      <!-- Added gradient-text class for visual flair -->
+      <span class="profile-eyebrow">DEVELOPER PROFILE</span>
       <h1 class="gradient-text">Update Profile</h1>
       <p class="profile-email">{{ developerForm.get('email')?.value }}</p>
     </div>
   </div>
 
-  <!-- === FORM === -->
   <form [formGroup]="developerForm" (ngSubmit)="updateDeveloperProfile()">
-    <!-- Core Identity -->
+
     <fieldset class="form-section">
       <legend>Core Identity</legend>
+
       <div class="form-grid">
+
         <div class="form-group">
           <label for="name">Display Name</label>
+
           <input id="name" type="text" formControlName="name" pInputText placeholder="e.g., Jane Doe" />
+
           <small>Your publicly visible name.</small>
         </div>
+
         <div class="form-group">
           <label for="developerType">Developer Type</label>
-          <p-dropdown [options]="developerTypes" formControlName="developerType"
-            optionLabel="label" optionValue="value" placeholder="Select Type"></p-dropdown>
+
+          <p-dropdown [options]="developerTypes" formControlName="developerType" optionLabel="label" optionValue="value"
+            placeholder="Select Type" appendTo="body">
+          </p-dropdown>
+
           <small>Are you an individual or a company?</small>
         </div>
+
       </div>
     </fieldset>
 
-    <!-- Public Presence -->
     <fieldset class="form-section">
       <legend>Public Presence</legend>
+
       <div class="form-grid">
+
         <div class="form-group">
           <label for="logoUrl">Logo URL</label>
+
           <input id="logoUrl" type="text" formControlName="logoUrl" pInputText placeholder="https://.../logo.png" />
+
           <small>Link to a JPG or PNG for your avatar.</small>
         </div>
+
         <div class="form-group">
           <label for="website">Website</label>
+
           <input id="website" type="text" formControlName="website" pInputText placeholder="https://example.com" />
+
           <small>Your personal or company website.</small>
         </div>
+
         <div class="form-group">
           <label for="companyName">Company Name</label>
+
           <input id="companyName" type="text" formControlName="companyName" pInputText placeholder="e.g., Acme Inc." />
+
           <small>Optional legal or studio name.</small>
         </div>
+
         <div class="form-group">
           <label for="location">Location</label>
+
           <input id="location" type="text" formControlName="location" pInputText placeholder="e.g., Pune" />
+
           <small>Your city and state, or country.</small>
         </div>
+
         <div class="form-group full-width">
           <label for="bio">Bio</label>
+
           <textarea id="bio" formControlName="bio" pInputTextarea rows="4"
-            placeholder="Tell us a little about yourself or your company..."></textarea>
+            placeholder="Tell us a little about yourself or your company...">
+          </textarea>
+
           <small>A brief public summary. Markdown is supported.</small>
         </div>
+
       </div>
     </fieldset>
 
-    <!-- Save Button -->
     <div class="form-actions">
-      <button pButton type="submit" label="Save Changes" icon="pi pi-check"
-        [loading]="loading" [disabled]="developerForm.invalid || loading"></button>
+      <button pButton type="submit" label="Save Changes" icon="pi pi-check" [loading]="loading"
+        [disabled]="developerForm.invalid || loading">
+      </button>
     </div>
+
   </form>
 </div>

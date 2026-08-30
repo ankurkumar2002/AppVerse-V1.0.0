@@ -1,143 +1,630 @@
 <div class="create-app-container">
+
+  <div class="page-header">
+    <div class="page-header-content">
+      <div class="eyebrow">
+        APPLICATION
+      </div>
+
+      <h1>Create New Application</h1>
+
+      <p>
+        Publish your application with the details users need to discover it.
+      </p>
+    </div>
+
+    <button
+      mat-stroked-button
+      type="button"
+      class="back-button"
+      (click)="onCancel()">
+      <mat-icon>arrow_back</mat-icon>
+      Back to Apps
+    </button>
+  </div>
+
   <div class="create-app-layout">
-    <!-- === FORM PANEL (LEFT) === -->
-    <div class="form-panel">
-      <h2 class="form-title gradient-text">Create New Application</h2>
 
-      <form [formGroup]="applicationForm" (ngSubmit)="onSubmit()">
-        <!-- Group 1: Core Details -->
-        <div class="form-group">
-          <h3 class="form-section-title">Core Details</h3>
-          <div class="form-section">
-            <mat-form-field appearance="outline">
-              <mat-label>Application Name</mat-label>
-              <input matInput formControlName="name" required />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Category</mat-label>
-              <mat-select formControlName="categoryId" required>
-                <mat-option *ngFor="let cat of categories" [value]="cat.id">{{ cat.name }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
-          <mat-form-field appearance="outline">
-            <mat-label>Tagline</mat-label>
-            <input matInput formControlName="tagline" maxlength="100" />
-            <mat-hint>A catchy, one-liner for your app that will appear in listings.</mat-hint>
-          </mat-form-field>
-          <mat-form-field appearance="outline">
-            <mat-label>Description</mat-label>
-            <textarea matInput formControlName="description" rows="5"></textarea>
-          </mat-form-field>
-        </div>
+    <main class="form-panel">
 
-        <!-- Group 2: Monetization & Versioning -->
-        <div class="form-group">
-          <h3 class="form-section-title">Monetization & Version</h3>
-          <div class="form-section">
-            <mat-form-field appearance="outline">
-              <mat-label>Monetization Type</mat-label>
-              <mat-select formControlName="monetizationType">
-                <mat-option *ngFor="let type of monetizationTypes" [value]="type">
-                  {{ type | titlecase }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Version</mat-label>
-              <input matInput formControlName="version" placeholder="e.g., 1.0.0" />
-            </mat-form-field>
-          </div>
+      <form
+        [formGroup]="applicationForm"
+        (ngSubmit)="onSubmit()">
 
-          <div *ngIf="applicationForm.get('monetizationType')?.value !== 'FREE'" class="form-section" style="margin-top: 1rem;">
-            <mat-form-field appearance="outline">
-              <mat-label>Price</mat-label>
-              <input matInput type="number" formControlName="price" />
-            </mat-form-field>
-            <mat-form-field appearance="outline">
-              <mat-label>Currency</mat-label>
-              <mat-select formControlName="currency">
-                <mat-option *ngFor="let c of currencies" [value]="c">{{ c }}</mat-option>
-              </mat-select>
-            </mat-form-field>
-          </div>
+        <section class="form-card">
 
-          <mat-form-field appearance="outline" class="w-full">
-            <mat-label>Supported Platforms</mat-label>
-            <mat-select formControlName="platforms" multiple required>
-              <mat-option *ngFor="let platform of availablePlatforms" [value]="platform">
-                {{ platform }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-
-        <!-- Group 3: Media Uploads -->
-        <div class="form-group">
-          <h3 class="form-section-title">Promotional Media</h3>
-          <div class="form-section">
-            <!-- Thumbnail -->
-            <div class="file-input-container">
-              <label class="file-label">App Thumbnail</label>
-              <div class="thumbnail-preview" (click)="thumbnailInput.click()" tabindex="0">
-                <ng-container *ngIf="thumbnailPreviewUrl; else thumbnailPlaceholder">
-                  <img [src]="thumbnailPreviewUrl" alt="Thumbnail preview">
-                </ng-container>
-                <ng-template #thumbnailPlaceholder>
-                  <div class="thumbnail-placeholder">
-                    <mat-icon>add_photo_alternate</mat-icon>
-                    <span>Click to upload</span>
-                  </div>
-                </ng-template>
-              </div>
-              <input type="file" #thumbnailInput hidden (change)="onThumbnailSelected($event)" accept="image/png, image/jpeg" />
-              <mat-hint>Required. Recommended: 512x512px, JPG or PNG.</mat-hint>
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>apps</mat-icon>
             </div>
 
-            <!-- Screenshots -->
-            <div class="file-input-container">
-              <label class="file-label">Screenshots</label>
-              <button mat-stroked-button type="button" class="upload-button" (click)="screenshotsInput.click()">
-                <mat-icon>collections</mat-icon>
-                <span>Upload Screenshots</span>
-              </button>
-              <input type="file" #screenshotsInput hidden multiple (change)="onScreenshotsSelected($event)" accept="image/png, image/jpeg" />
+            <div>
+              <h2>Core Details</h2>
+              <p>Tell users what your application is about.</p>
+            </div>
+          </div>
 
-              <div *ngIf="screenshotFiles.length > 0" class="screenshot-previews">
-                <div *ngFor="let file of screenshotFiles; let i = index" class="screenshot-item">
-                  <mat-icon class="screenshot-icon">image</mat-icon>
-                  <span>{{ file.name }}</span>
+          <div class="form-grid">
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Application Name</mat-label>
+
+              <mat-icon matPrefix>apps</mat-icon>
+
+              <input
+                matInput
+                formControlName="name"
+                required />
+
+            </mat-form-field>
+
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Category</mat-label>
+
+              <mat-icon matPrefix>category</mat-icon>
+
+              <mat-select
+                formControlName="categoryId"
+                required
+                panelClass="appverse-select-panel">
+
+                <mat-option
+                  *ngFor="let cat of categories"
+                  [value]="cat.id">
+
+                  {{ cat.name }}
+
+                </mat-option>
+
+              </mat-select>
+
+            </mat-form-field>
+
+          </div>
+
+
+          <mat-form-field
+            appearance="outline"
+            class="theme-field full-width">
+
+            <mat-label>Tagline</mat-label>
+
+            <mat-icon matPrefix>short_text</mat-icon>
+
+            <input
+              matInput
+              formControlName="tagline"
+              maxlength="100" />
+
+            <mat-hint>
+              A short and memorable description for your application.
+            </mat-hint>
+
+          </mat-form-field>
+
+
+          <mat-form-field
+            appearance="outline"
+            class="theme-field full-width">
+
+            <mat-label>Description</mat-label>
+
+            <mat-icon matPrefix>description</mat-icon>
+
+            <textarea
+              matInput
+              formControlName="description"
+              rows="5"
+              maxlength="2000">
+            </textarea>
+
+            <mat-hint align="end">
+              {{ applicationForm.get('description')?.value?.length || 0 }}/2000
+            </mat-hint>
+
+          </mat-form-field>
+
+        </section>
+
+
+        <section class="form-card">
+
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>payments</mat-icon>
+            </div>
+
+            <div>
+              <h2>Monetization & Version</h2>
+              <p>Configure pricing and application version details.</p>
+            </div>
+          </div>
+
+
+          <div class="form-grid">
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Monetization Type</mat-label>
+
+              <mat-icon matPrefix>sell</mat-icon>
+
+              <mat-select
+                formControlName="monetizationType"
+                panelClass="appverse-select-panel">
+
+                <mat-option
+                  *ngFor="let type of monetizationTypes"
+                  [value]="type">
+
+                  {{ type | titlecase }}
+
+                </mat-option>
+
+              </mat-select>
+
+            </mat-form-field>
+
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Version</mat-label>
+
+              <mat-icon matPrefix>history</mat-icon>
+
+              <input
+                matInput
+                formControlName="version"
+                placeholder="1.0.0" />
+
+            </mat-form-field>
+
+          </div>
+
+
+          <div
+            class="form-grid"
+            *ngIf="applicationForm.get('monetizationType')?.value !== 'FREE'">
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Price</mat-label>
+
+              <mat-icon matPrefix>payments</mat-icon>
+
+              <input
+                matInput
+                type="number"
+                formControlName="price"
+                min="0.01" />
+
+            </mat-form-field>
+
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Currency</mat-label>
+
+              <mat-icon matPrefix>currency_exchange</mat-icon>
+
+              <mat-select
+                formControlName="currency"
+                panelClass="appverse-select-panel">
+
+                <mat-option
+                  *ngFor="let currency of currencies"
+                  [value]="currency">
+
+                  {{ currency }}
+
+                </mat-option>
+
+              </mat-select>
+
+            </mat-form-field>
+
+          </div>
+
+
+          <mat-form-field
+            appearance="outline"
+            class="theme-field full-width">
+
+            <mat-label>Supported Platforms</mat-label>
+
+            <mat-icon matPrefix>devices</mat-icon>
+
+            <mat-select
+              formControlName="platforms"
+              multiple
+              required
+              panelClass="appverse-select-panel">
+
+              <mat-option
+                *ngFor="let platform of availablePlatforms"
+                [value]="platform">
+
+                {{ platform }}
+
+              </mat-option>
+
+            </mat-select>
+
+            <mat-hint>
+              Select all platforms supported by your application.
+            </mat-hint>
+
+          </mat-form-field>
+
+        </section>
+
+
+        <section class="form-card">
+
+          <div class="section-header">
+            <div class="section-icon">
+              <mat-icon>perm_media</mat-icon>
+            </div>
+
+            <div>
+              <h2>Promotional Media</h2>
+              <p>Add images that will appear on your application listing.</p>
+            </div>
+          </div>
+
+
+          <div class="media-grid">
+
+            <div class="media-upload-card">
+
+              <div class="media-label">
+                <mat-icon>image</mat-icon>
+
+                <div>
+                  <strong>App Thumbnail</strong>
+                  <span>Recommended: 512 × 512px</span>
                 </div>
               </div>
+
+
+              <div
+                class="thumbnail-preview"
+                (click)="thumbnailInput.click()"
+                tabindex="0">
+
+                <ng-container
+                  *ngIf="thumbnailPreviewUrl; else thumbnailPlaceholder">
+
+                  <img
+                    [src]="thumbnailPreviewUrl"
+                    alt="Application thumbnail preview" />
+
+                  <div class="preview-overlay">
+                    <mat-icon>edit</mat-icon>
+                    <span>Change image</span>
+                  </div>
+
+                </ng-container>
+
+
+                <ng-template #thumbnailPlaceholder>
+
+                  <div class="thumbnail-placeholder">
+
+                    <div class="upload-icon">
+                      <mat-icon>cloud_upload</mat-icon>
+                    </div>
+
+                    <strong>Upload thumbnail</strong>
+
+                    <span>
+                      PNG or JPG
+                    </span>
+
+                  </div>
+
+                </ng-template>
+
+              </div>
+
+
+              <input
+                type="file"
+                #thumbnailInput
+                hidden
+                accept="image/png,image/jpeg"
+                (change)="onThumbnailSelected($event)" />
+
+
+              <div
+                class="upload-progress"
+                *ngIf="isUploadingThumbnail">
+
+                <div class="progress-info">
+                  <span>Uploading thumbnail...</span>
+                  <span>{{ thumbnailUploadProgress }}%</span>
+                </div>
+
+                <mat-progress-bar
+                  mode="determinate"
+                  [value]="thumbnailUploadProgress">
+                </mat-progress-bar>
+
+              </div>
+
             </div>
+
+
+            <div class="media-upload-card screenshots-card">
+
+              <div class="media-label">
+                <mat-icon>collections</mat-icon>
+
+                <div>
+                  <strong>Screenshots</strong>
+                  <span>Upload multiple images</span>
+                </div>
+              </div>
+
+
+              <button
+                mat-stroked-button
+                type="button"
+                class="upload-screenshots-button"
+                (click)="screenshotsInput.click()"
+                [disabled]="isUploading">
+
+                <mat-icon>cloud_upload</mat-icon>
+                Upload Screenshots
+
+              </button>
+
+
+              <input
+                type="file"
+                #screenshotsInput
+                hidden
+                multiple
+                accept="image/png,image/jpeg"
+                (change)="onScreenshotsSelected($event)" />
+
+
+              <div
+                class="upload-progress"
+                *ngIf="isUploadingScreenshots">
+
+                <div class="progress-info">
+                  <span>Uploading screenshots...</span>
+                  <span>{{ screenshotUploadProgress }}%</span>
+                </div>
+
+                <mat-progress-bar
+                  mode="determinate"
+                  [value]="screenshotUploadProgress">
+                </mat-progress-bar>
+
+              </div>
+
+
+              <div
+                class="screenshot-list"
+                *ngIf="screenshotFiles.length > 0">
+
+                <div
+                  class="screenshot-item"
+                  *ngFor="let file of screenshotFiles; let i = index">
+
+                  <div class="screenshot-preview">
+
+                    <img
+                      *ngIf="getScreenshotPreview(file)"
+                      [src]="getScreenshotPreview(file)"
+                      alt="Screenshot preview" />
+
+                    <mat-icon
+                      *ngIf="!getScreenshotPreview(file)">
+                      image
+                    </mat-icon>
+
+                  </div>
+
+
+                  <div class="screenshot-info">
+
+                    <span class="screenshot-name">
+                      {{ file.name }}
+                    </span>
+
+                    <span class="screenshot-size">
+                      {{ formatFileSize(file.size) }}
+                    </span>
+
+                  </div>
+
+
+                  <button
+                    mat-icon-button
+                    type="button"
+                    class="remove-file-button"
+                    matTooltip="Remove screenshot"
+                    (click)="removeScreenshot(i)"
+                    [disabled]="isUploading">
+
+                    <mat-icon>close</mat-icon>
+
+                  </button>
+
+                </div>
+
+              </div>
+
+
+              <div
+                class="empty-media"
+                *ngIf="screenshotFiles.length === 0">
+
+                <mat-icon>photo_library</mat-icon>
+
+                <span>No screenshots uploaded yet.</span>
+
+              </div>
+
+            </div>
+
           </div>
-        </div>
 
-        <!-- Form Actions -->
+        </section>
+
+
         <div class="form-actions">
-          <button mat-button type="button" (click)="onCancel()">Cancel</button>
-          <button mat-raised-button color="primary" type="submit" [disabled]="applicationForm.invalid || !thumbnailFile">
-            Create Application
-          </button>
-        </div>
-      </form>
-    </div>
 
-    <!-- === INFO PANEL (RIGHT) === -->
-    <div class="info-panel">
-      <div class="info-panel-content">
-        <h2 class="gradient-text">Launch Your Next Big Thing</h2>
+          <button
+            mat-button
+            type="button"
+            class="cancel-button"
+            (click)="onCancel()"
+            [disabled]="isUploading">
+
+            Cancel
+
+          </button>
+
+
+          <button
+            mat-flat-button
+            type="submit"
+            class="create-button"
+            [disabled]="applicationForm.invalid || !thumbnailFile || isUploading">
+
+            <mat-icon *ngIf="!isUploading">
+              add
+            </mat-icon>
+
+            <mat-spinner
+              *ngIf="isUploading"
+              diameter="18">
+            </mat-spinner>
+
+            <span>
+              {{ isUploading ? 'Uploading...' : 'Create Application' }}
+            </span>
+
+          </button>
+
+        </div>
+
+      </form>
+
+    </main>
+
+
+    <aside class="info-panel">
+
+      <div class="info-glow"></div>
+
+      <div class="info-content">
+
+        <div class="info-icon">
+          <mat-icon>rocket_launch</mat-icon>
+        </div>
+
+        <span class="info-eyebrow">
+          APPLICATION LISTING
+        </span>
+
+        <h2>
+          Launch your
+          <span>application.</span>
+        </h2>
+
         <p>
-          A great application listing is key to attracting users. Make a strong first impression with high-quality images and a clear, compelling description.
+          Give users the information they need to understand your
+          application and decide whether it is right for them.
         </p>
-        <h4 class="checklist-title">Quick Checklist</h4>
-        <ul>
-          <li><mat-icon>check_circle_outline</mat-icon><span>Compelling Name & Tagline</span></li>
-          <li><mat-icon>check_circle_outline</mat-icon><span>Clear, High-Resolution Thumbnail</span></li>
-          <li><mat-icon>check_circle_outline</mat-icon><span>Informative Screenshots</span></li>
-          <li><mat-icon>check_circle_outline</mat-icon><span>Accurate Category Selection</span></li>
-        </ul>
+
+
+        <div class="checklist">
+
+          <div class="check-item">
+
+            <div class="check-icon">
+              <mat-icon>check</mat-icon>
+            </div>
+
+            <div>
+              <strong>Clear identity</strong>
+              <span>Name, category and tagline are easy to understand.</span>
+            </div>
+
+          </div>
+
+
+          <div class="check-item">
+
+            <div class="check-icon">
+              <mat-icon>check</mat-icon>
+            </div>
+
+            <div>
+              <strong>Strong visuals</strong>
+              <span>Use a clean thumbnail and useful screenshots.</span>
+            </div>
+
+          </div>
+
+
+          <div class="check-item">
+
+            <div class="check-icon">
+              <mat-icon>check</mat-icon>
+            </div>
+
+            <div>
+              <strong>Accurate details</strong>
+              <span>Keep pricing, version and platform information correct.</span>
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div class="tip-box">
+
+          <div class="tip-icon">
+            <mat-icon>lightbulb</mat-icon>
+          </div>
+
+          <div>
+            <strong>Tip</strong>
+
+            <p>
+              Applications with clear descriptions and high-quality
+              screenshots are easier for users to evaluate.
+            </p>
+          </div>
+
+        </div>
+
       </div>
-    </div>
+
+    </aside>
+
   </div>
+
 </div>

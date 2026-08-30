@@ -1,45 +1,237 @@
-<div class="user-layout" [class.collapsed]="isCollapsed">
-  <!-- Sidebar -->
-  <aside class="sidebar">
-    <div class="sidebar-header">
-      <mat-icon class="logo">account_circle</mat-icon>
-      <span *ngIf="!isCollapsed" class="logo-text">AppVerse</span>
+<mat-sidenav-container
+  class="layout-container"
+  [class.sidenav-collapsed]="isCollapsed"
+>
+
+  <!-- =========================================================
+       SIDEBAR
+       ========================================================= -->
+
+  <mat-sidenav
+    #sidenav
+    mode="side"
+    opened
+    class="layout-sidenav"
+    [style.width.px]="isCollapsed ? 82 : 270"
+  >
+
+    <!-- ================= SIDEBAR HEADER ================= -->
+
+    <div class="sidenav-header">
+
+      <div class="brand-container">
+
+        <img
+          src="/assets/appverse_logo/appverse_logo.png"
+          alt="AppVerse"
+          class="brand-logo"
+        />
+
+      </div>
+
     </div>
 
-    <nav class="nav-links">
-      <a routerLink="/user/dashboard" routerLinkActive="active-link">
-        <mat-icon>dashboard</mat-icon>
-        <span *ngIf="!isCollapsed">Dashboard</span>
-      </a>
-      <a routerLink="/user/apps" routerLinkActive="active-link">
-        <mat-icon>apps</mat-icon>
-        <span *ngIf="!isCollapsed">Browse Apps</span>
-      </a>
-      <a routerLink="/user/profile" routerLinkActive="active-link">
-        <mat-icon>person</mat-icon>
-        <span *ngIf="!isCollapsed">Profile</span>
-      </a>
-    </nav>
 
-    <div class="sidebar-footer">
-      <button mat-icon-button (click)="toggleSidebar()" class="collapse-btn">
-        <mat-icon>{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</mat-icon>
+    <!-- ================= NAVIGATION ================= -->
+
+    <mat-nav-list class="navigation-list">
+
+      <!-- Dashboard -->
+
+      <div class="nav-section">
+
+        <a
+          class="custom-list-item"
+          routerLink="/user/dashboard"
+          routerLinkActive="active-link"
+          [routerLinkActiveOptions]="{ exact: true }"
+          matTooltip="Dashboard"
+          [matTooltipDisabled]="!isCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            dashboard
+          </mat-icon>
+
+          <span class="item-text">
+            Dashboard
+          </span>
+
+        </a>
+
+      </div>
+
+
+      <!-- Applications -->
+
+      <div class="nav-section">
+
+        <div class="section-title">
+          APPLICATIONS
+        </div>
+
+
+        <!-- Browse Apps -->
+
+        <a
+          class="custom-list-item"
+          routerLink="/user/apps"
+          routerLinkActive="active-link"
+          matTooltip="Browse Apps"
+          [matTooltipDisabled]="!isCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            apps
+          </mat-icon>
+
+          <span class="item-text">
+            Browse Apps
+          </span>
+
+        </a>
+
+      </div>
+
+
+      <!-- Account -->
+
+      <div class="nav-section">
+
+        <div class="section-title">
+          ACCOUNT
+        </div>
+
+
+        <!-- Profile -->
+
+        <a
+          class="custom-list-item"
+          routerLink="/user/profile"
+          routerLinkActive="active-link"
+          matTooltip="Profile"
+          [matTooltipDisabled]="!isCollapsed"
+        >
+
+          <mat-icon class="item-icon">
+            person
+          </mat-icon>
+
+          <span class="item-text">
+            Profile
+          </span>
+
+        </a>
+
+      </div>
+
+    </mat-nav-list>
+
+
+    <!-- ================= USER PROFILE ================= -->
+
+    <div class="profile-section">
+
+      <div class="profile-pic">
+        <mat-icon>
+          person
+        </mat-icon>
+      </div>
+
+
+      <div class="profile-info">
+
+        <span class="profile-name">
+          User
+        </span>
+
+        <span class="profile-email">
+          AppVerse Account
+        </span>
+
+      </div>
+
+    </div>
+
+  </mat-sidenav>
+
+
+  <!-- =========================================================
+       MAIN CONTENT
+       ========================================================= -->
+
+  <mat-sidenav-content class="layout-content">
+
+
+    <!-- ================= TOP BAR ================= -->
+
+    <mat-toolbar class="layout-toolbar">
+
+      <!-- Sidebar Toggle -->
+
+      <button
+        mat-icon-button
+        class="menu-button"
+        type="button"
+        (click)="toggleSidebar()"
+        aria-label="Toggle sidebar"
+      >
+
+        <mat-icon>
+          menu
+        </mat-icon>
+
       </button>
-    </div>
-  </aside>
 
-  <!-- Main content -->
-  <main class="main-content">
-    <mat-toolbar class="toolbar">
-      <span class="toolbar-title">User Dashboard</span>
+
+      <!-- Page Heading -->
+
+      <div class="toolbar-heading">
+
+        <span class="toolbar-title">
+          User Panel
+        </span>
+
+        <span class="toolbar-subtitle">
+          AppVerse
+        </span>
+
+      </div>
+
+
       <span class="spacer"></span>
-      <button mat-icon-button (click)="logout()">
-        <mat-icon>logout</mat-icon>
+
+
+      <!-- Logout -->
+
+      <button
+        mat-button
+        class="logout-button"
+        type="button"
+        (click)="logout()"
+      >
+
+        <mat-icon>
+          logout
+        </mat-icon>
+
+        <span>
+          Logout
+        </span>
+
       </button>
+
     </mat-toolbar>
 
-    <div class="content-body">
+
+    <!-- ================= PAGE CONTENT ================= -->
+
+    <main class="main-content">
+
       <router-outlet></router-outlet>
-    </div>
-  </main>
-</div>
+
+    </main>
+
+  </mat-sidenav-content>
+
+</mat-sidenav-container>

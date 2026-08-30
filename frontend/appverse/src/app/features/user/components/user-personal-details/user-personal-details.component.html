@@ -2,113 +2,600 @@
 
 <div class="profile-page">
 
-    <div class="profile-card">
+    <!-- =====================================================
+       PAGE HEADER
+       ===================================================== -->
+
+    <div class="page-header">
+
+        <div>
+            <h1>My Profile</h1>
+
+            <p>
+                Manage your personal information and account settings.
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- =====================================================
+       PROFILE HERO
+       ===================================================== -->
+
+    <section class="profile-card profile-hero">
 
         <div class="profile-header">
 
-            <div class="profile-avatar">
-                {{ response.firstName[0] }}{{ response.lastName[0] }}
+            <!-- PROFILE IMAGE -->
+
+            <div class="profile-avatar-wrapper">
+
+                <span class="profile-initials">
+                    {{ response.firstName?.charAt(0)?.toUpperCase() || '' }}{{
+                    response.lastName?.charAt(0)?.toUpperCase() || '' }}
+                </span>
+
             </div>
+
+
+
+
+            <!-- USER INFORMATION -->
 
             <div class="profile-info">
-                <h1>{{ response.firstName }} {{ response.lastName }}</h1>
+
+                <div class="name-row">
+
+                    <h2>
+                        {{ response.firstName }}
+                        {{ response.lastName }}
+                    </h2>
+
+                    <span class="role-badge">
+                        {{ response.role }}
+                    </span>
+
+                </div>
+
 
                 <p class="username">
-                    Username: {{ response.username }}
+                    <mat-icon>alternate_email</mat-icon>
+
+                    {{ response.username }}
                 </p>
+
 
                 <p class="email">
+                    <mat-icon>email</mat-icon>
+
                     {{ response.email }}
                 </p>
+
             </div>
 
-            <button class="edit-btn" [routerLink]="['/user/edit-personal-details']">
-                ✏️ Edit Personel Details
-            </button>
-            <button class="edit-btn" [routerLink]="['/user/update-password']">
-                ✏️ Edit Password
-            </button>
+
+            <!-- ACTIONS -->
+
+            <div class="profile-actions">
+
+                <button class="edit-btn" type="button" [routerLink]="['/user/edit-personal-details']">
+
+                    <mat-icon>
+                        edit
+                    </mat-icon>
+
+                    <span>
+                        Edit Personal Details
+                    </span>
+
+                </button>
+
+
+                <button class="password-btn" type="button" [routerLink]="['/user/update-password']">
+
+                    <mat-icon>
+                        lock
+                    </mat-icon>
+
+                    <span>
+                        Change Password
+                    </span>
+
+                </button>
+
+            </div>
 
         </div>
 
+
+        <!-- ===================================================
+         ACCOUNT STATUS
+         =================================================== -->
+
         <div class="badges">
 
+            <!-- ROLE -->
+
             <span class="badge role">
+
+                <mat-icon>
+                    person
+                </mat-icon>
+
                 {{ response.role }}
+
             </span>
 
+
+            <!-- STATUS -->
+
             <span class="badge status">
+
+                <mat-icon>
+                    check_circle
+                </mat-icon>
+
                 {{ response.status }}
+
             </span>
+
+
+            <!-- EMAIL -->
 
             <span class="badge" [class.verified]="response.emailVerified"
                 [class.not-verified]="!response.emailVerified">
 
-                {{ response.emailVerified ? 'Verified Email' : 'Email Not Verified' }}
+                <mat-icon>
+                    {{ response.emailVerified ? 'verified' : 'warning' }}
+                </mat-icon>
+
+                {{ response.emailVerified
+                ? 'Verified Email'
+                : 'Email Not Verified'
+                }}
 
             </span>
 
         </div>
 
-        <div class="details-grid">
+    </section>
 
-            <div class="detail-card">
-                <label>Username</label>
-                <span>{{ response.username }}</span>
+
+    <!-- =====================================================
+       ACCOUNT INFORMATION
+       ===================================================== -->
+
+    <section class="profile-card">
+
+        <div class="section-header">
+
+            <div class="section-icon">
+
+                <mat-icon>
+                    person
+                </mat-icon>
+
             </div>
 
-            <div class="detail-card">
-                <label>Email</label>
-                <span>{{ response.email }}</span>
-            </div>
+            <div>
 
-            <div class="detail-card">
-                <label>Phone</label>
-                <span>{{ response.phone || 'Not Provided' }}</span>
-            </div>
+                <h2>
+                    Personal Information
+                </h2>
 
-            <div class="detail-card">
-                <label>Role</label>
-                <span>{{ response.role }}</span>
-            </div>
+                <p>
+                    Your basic account information.
+                </p>
 
-            <div class="detail-card">
-                <label>Status</label>
-                <span>{{ response.status }}</span>
-            </div>
-
-            <div class="detail-card">
-                <label>Email Verified</label>
-                <span>
-                    {{ response.emailVerified ? 'Yes' : 'No' }}
-                </span>
-            </div>
-
-            <div class="detail-card">
-                <label>Created At</label>
-                <span>{{ response.createdAt }}</span>
-            </div>
-
-            <div class="detail-card">
-                <label>Updated At</label>
-                <span>{{ response.updatedAt || 'N/A' }}</span>
-            </div>
-
-            <div class="detail-card">
-                <label>Last Login</label>
-                <span>{{ response.lastLoginAt || 'Never' }}</span>
             </div>
 
         </div>
 
-    </div>
+
+        <div class="details-grid">
+
+
+            <!-- FIRST NAME -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        badge
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        First Name
+                    </label>
+
+                    <span>
+                        {{ response.firstName || 'Not Provided' }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- LAST NAME -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        badge
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Last Name
+                    </label>
+
+                    <span>
+                        {{ response.lastName || 'Not Provided' }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- USERNAME -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        alternate_email
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Username
+                    </label>
+
+                    <span>
+                        {{ response.username }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- EMAIL -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        email
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Email
+                    </label>
+
+                    <span>
+                        {{ response.email }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- PHONE -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        phone
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Phone
+                    </label>
+
+                    <span>
+                        {{ response.phone || 'Not Provided' }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ROLE -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        security
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Role
+                    </label>
+
+                    <span>
+                        {{ response.role }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- STATUS -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        account_circle
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Account Status
+                    </label>
+
+                    <span>
+                        {{ response.status }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- EMAIL VERIFIED -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        verified
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Email Verification
+                    </label>
+
+                    <span [class.success-text]="response.emailVerified" [class.warning-text]="!response.emailVerified">
+
+                        {{ response.emailVerified
+                        ? 'Verified'
+                        : 'Not Verified'
+                        }}
+
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- CREATED -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        calendar_today
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Account Created
+                    </label>
+
+                    <span>
+                        {{ response.createdAt | date:'medium' }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- UPDATED -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        update
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Last Updated
+                    </label>
+
+                    <span>
+                        {{ response.updatedAt
+                        ? (response.updatedAt | date:'medium')
+                        : 'N/A'
+                        }}
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- LAST LOGIN -->
+
+            <div class="detail-card">
+
+                <div class="detail-icon">
+
+                    <mat-icon>
+                        login
+                    </mat-icon>
+
+                </div>
+
+                <div class="detail-content">
+
+                    <label>
+                        Last Login
+                    </label>
+
+                    <span>
+                        {{ response.lastLoginAt
+                        ? (response.lastLoginAt | date:'medium')
+                        : 'Never'
+                        }}
+                    </span>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- =====================================================
+       SECURITY
+       ===================================================== -->
+
+    <section class="profile-card security-card">
+
+        <div class="section-header">
+
+            <div class="section-icon">
+
+                <mat-icon>
+                    security
+                </mat-icon>
+
+            </div>
+
+            <div>
+
+                <h2>
+                    Security
+                </h2>
+
+                <p>
+                    Manage your account security.
+                </p>
+
+            </div>
+
+        </div>
+
+
+        <div class="security-content">
+
+            <div class="security-info">
+
+                <div class="security-status-icon">
+
+                    <mat-icon>
+                        lock
+                    </mat-icon>
+
+                </div>
+
+                <div>
+
+                    <h3>
+                        Password
+                    </h3>
+
+                    <p>
+                        Keep your account secure by regularly updating your password.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <button class="security-btn" type="button" [routerLink]="['/user/update-password']">
+
+                Change Password
+
+                <mat-icon>
+                    arrow_forward
+                </mat-icon>
+
+            </button>
+
+        </div>
+
+    </section>
 
 </div>
 
 } @else {
 
 <div class="loading-container">
-    <h3>Loading Profile...</h3>
+
+    <div class="loading-spinner"></div>
+
+    <h3>
+        Loading Profile...
+    </h3>
+
+    <p>
+        Please wait while we fetch your account information.
+    </p>
+
 </div>
 
 }

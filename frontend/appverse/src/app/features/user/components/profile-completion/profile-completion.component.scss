@@ -1,0 +1,475 @@
+:host {
+    display: block;
+    width: 100%;
+}
+
+
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.profile-completion-page {
+    width: 100%;
+    min-height: calc(100vh - 70px);
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    padding: 2rem;
+
+    box-sizing: border-box;
+
+    color: #f9fafb;
+}
+
+
+/* =========================================================
+   CARD
+   ========================================================= */
+
+.completion-card {
+    width: 100%;
+    max-width: 520px;
+
+    background: #1f2937;
+
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    border-radius: 20px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.completion-header {
+    display: flex;
+
+    align-items: center;
+
+    gap: 1rem;
+
+    padding: 2rem;
+
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+
+/* =========================================================
+   HEADER ICON
+   ========================================================= */
+
+.header-icon {
+    width: 52px;
+    height: 52px;
+
+    min-width: 52px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background: rgba(124, 58, 237, 0.15);
+
+    border: 1px solid rgba(124, 58, 237, 0.2);
+
+    box-shadow:
+        0 8px 20px rgba(124, 58, 237, 0.12);
+
+    font-size: 1.35rem;
+}
+
+
+.header-icon span {
+    filter: grayscale(0.1);
+}
+
+
+/* =========================================================
+   HEADER TEXT
+   ========================================================= */
+
+.completion-header h1 {
+    margin: 0;
+
+    font-size: 1.45rem;
+
+    font-weight: 700;
+
+    color: #f9fafb;
+}
+
+
+.completion-header p {
+    margin: 0.4rem 0 0;
+
+    color: #9ca3af;
+
+    font-size: 0.9rem;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   FORM
+   ========================================================= */
+
+.completion-form {
+    padding: 2rem;
+}
+
+
+/* =========================================================
+   FORM GROUP
+   ========================================================= */
+
+.form-group {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 0.55rem;
+
+    margin-bottom: 1.5rem;
+}
+
+
+/* =========================================================
+   LABEL
+   ========================================================= */
+
+.form-group label {
+    font-size: 0.9rem;
+
+    font-weight: 600;
+
+    color: #d1d5db;
+}
+
+
+/* =========================================================
+   INPUT
+   ========================================================= */
+
+.form-group input {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    padding: 0.9rem 1rem;
+
+    background: #111827;
+
+    border: 1px solid rgba(255, 255, 255, 0.1);
+
+    border-radius: 10px;
+
+    color: #f9fafb;
+
+    font-size: 0.95rem;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.form-group input::placeholder {
+    color: #6b7280;
+}
+
+
+.form-group input:hover {
+    border-color: rgba(255, 255, 255, 0.18);
+}
+
+
+.form-group input:focus {
+    border-color: #7c3aed;
+
+    background: #151e2e;
+
+    box-shadow:
+        0 0 0 3px rgba(124, 58, 237, 0.15);
+}
+
+
+/* =========================================================
+   INVALID INPUT
+   ========================================================= */
+
+.form-group input.ng-invalid.ng-touched {
+    border-color: #ef4444;
+}
+
+
+.form-group input.ng-invalid.ng-touched:focus {
+    border-color: #ef4444;
+
+    box-shadow:
+        0 0 0 3px rgba(239, 68, 68, 0.12);
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-message {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 0.2rem;
+
+    color: #f87171;
+
+    font-size: 0.8rem;
+}
+
+
+/* =========================================================
+   INFORMATION BOX
+   ========================================================= */
+
+.info-box {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 0.75rem;
+
+    padding: 1rem;
+
+    margin-bottom: 1.75rem;
+
+    border-radius: 12px;
+
+    background: rgba(59, 130, 246, 0.07);
+
+    border: 1px solid rgba(59, 130, 246, 0.14);
+}
+
+
+.info-icon {
+    width: 22px;
+    height: 22px;
+
+    min-width: 22px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: rgba(59, 130, 246, 0.15);
+
+    color: #60a5fa;
+
+    font-size: 0.75rem;
+
+    font-weight: 700;
+}
+
+
+.info-box strong {
+    display: block;
+
+    margin-bottom: 0.25rem;
+
+    color: #dbeafe;
+
+    font-size: 0.85rem;
+}
+
+
+.info-box p {
+    margin: 0;
+
+    color: #93c5fd;
+
+    font-size: 0.8rem;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+
+.form-footer {
+    display: flex;
+
+    justify-content: flex-end;
+}
+
+
+/* =========================================================
+   CONTINUE BUTTON
+   ========================================================= */
+
+.continue-btn {
+    width: 100%;
+
+    min-height: 46px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 0.6rem;
+
+    border: none;
+
+    border-radius: 10px;
+
+    padding: 0.8rem 1.4rem;
+
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #6d28d9
+    );
+
+    color: white;
+
+    font-size: 0.9rem;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 6px 15px rgba(124, 58, 237, 0.25);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        opacity 0.2s ease;
+}
+
+
+.continue-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 8px 20px rgba(124, 58, 237, 0.35);
+}
+
+
+.continue-btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+
+.continue-btn:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   ARROW
+   ========================================================= */
+
+.arrow {
+    font-size: 1.1rem;
+
+    transition: transform 0.2s ease;
+}
+
+
+.continue-btn:hover:not(:disabled) .arrow {
+    transform: translateX(3px);
+}
+
+
+/* =========================================================
+   SPINNER
+   ========================================================= */
+
+.spinner {
+    width: 14px;
+    height: 14px;
+
+    border: 2px solid rgba(255, 255, 255, 0.35);
+
+    border-top-color: white;
+
+    border-radius: 50%;
+
+    animation: spin 0.7s linear infinite;
+}
+
+
+@keyframes spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+
+@media (max-width: 600px) {
+
+    .profile-completion-page {
+        min-height: auto;
+
+        padding: 1rem;
+    }
+
+
+    .completion-card {
+        border-radius: 16px;
+    }
+
+
+    .completion-header {
+        padding: 1.5rem;
+    }
+
+
+    .completion-form {
+        padding: 1.5rem;
+    }
+
+
+    .completion-header h1 {
+        font-size: 1.25rem;
+    }
+
+
+    .header-icon {
+        width: 46px;
+        height: 46px;
+
+        min-width: 46px;
+    }
+
+}

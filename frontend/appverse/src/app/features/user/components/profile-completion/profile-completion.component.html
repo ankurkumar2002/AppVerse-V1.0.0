@@ -1,58 +1,124 @@
-<div class="max-w-md mx-auto mt-10 bg-gray-900 text-white shadow-2xl rounded-2xl p-8 border border-gray-800">
+<div class="profile-completion-page">
 
-  <div class="mb-6 text-center">
-    <h2 class="text-3xl font-bold mb-2">
-      Complete Your Profile
-    </h2>
+    <div class="completion-card">
 
-    <p class="text-gray-400 text-sm">
-      Add your phone number to continue
-    </p>
-  </div>
+        <!-- HEADER -->
+        <div class="completion-header">
 
-  <form
-    [formGroup]="profileForm"
-    (ngSubmit)="submitProfile()"
-    class="space-y-5"
-  >
+            <div class="header-icon">
+                <span>👤</span>
+            </div>
 
-    <!-- Phone -->
-    <div>
-      <label class="block text-sm font-medium mb-2 text-gray-300">
-        Phone Number
-      </label>
+            <div>
+                <h1>Complete Your Profile</h1>
 
-      <input
-        formControlName="phone"
-        type="tel"
-        placeholder="Enter your phone number"
-        class="w-full px-4 py-3 rounded-xl bg-gray-800 border border-gray-700 
-               text-white placeholder-gray-500
-               focus:outline-none focus:ring-2 focus:ring-blue-500 
-               focus:border-blue-500 transition"
-      />
+                <p>
+                    Add your phone number to complete your profile.
+                </p>
+            </div>
 
-      @if (profileForm.get('phone')?.invalid &&
-            profileForm.get('phone')?.touched) {
+        </div>
 
-        <p class="text-red-400 text-sm mt-2">
-          Enter a valid 10 digit phone number
-        </p>
-      }
+
+        <!-- FORM -->
+        <form
+            [formGroup]="profileForm"
+            (ngSubmit)="submitProfile()"
+            class="completion-form"
+        >
+
+            <!-- PHONE -->
+            <div class="form-group">
+
+                <label for="phone">
+                    Phone Number
+                </label>
+
+                <input
+                    id="phone"
+                    type="tel"
+                    formControlName="phone"
+                    placeholder="Enter your 10 digit phone number"
+                    maxlength="10"
+                    autocomplete="tel"
+                />
+
+                @if (
+                    profileForm.get('phone')?.invalid &&
+                    profileForm.get('phone')?.touched
+                ) {
+
+                    <div class="error-message">
+
+                        @if (profileForm.get('phone')?.errors?.['required']) {
+                            <span>
+                                Phone number is required.
+                            </span>
+                        }
+
+                        @if (profileForm.get('phone')?.errors?.['pattern']) {
+                            <span>
+                                Enter a valid 10 digit phone number.
+                            </span>
+                        }
+
+                    </div>
+
+                }
+
+            </div>
+
+
+            <!-- INFORMATION -->
+            <div class="info-box">
+
+                <div class="info-icon">
+                    ℹ
+                </div>
+
+                <div>
+                    <strong>Why do we need this?</strong>
+
+                    <p>
+                        Your phone number helps us keep your account
+                        information complete and secure.
+                    </p>
+                </div>
+
+            </div>
+
+
+            <!-- FOOTER -->
+            <div class="form-footer">
+
+                <button
+                    type="submit"
+                    class="continue-btn"
+                    [disabled]="loading || profileForm.invalid"
+                >
+
+                    @if (loading) {
+
+                        <span class="spinner"></span>
+
+                        Saving Profile...
+
+                    } @else {
+
+                        Continue
+
+                        <span class="arrow">
+                            →
+                        </span>
+
+                    }
+
+                </button>
+
+            </div>
+
+        </form>
 
     </div>
 
-    <!-- Submit -->
-    <button
-      type="submit"
-      [disabled]="loading || profileForm.invalid"
-      class="w-full py-3 rounded-xl font-semibold
-             bg-blue-600 hover:bg-blue-700
-             disabled:bg-gray-700 disabled:cursor-not-allowed
-             transition duration-200"
-    >
-      {{ loading ? 'Saving Profile...' : 'Continue' }}
-    </button>
-
-  </form>
 </div>
