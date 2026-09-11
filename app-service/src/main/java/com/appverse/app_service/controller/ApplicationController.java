@@ -157,6 +157,15 @@ public class ApplicationController {
         }
     }
 
+    @GetMapping("/published/{id}")
+    @PreAuthorize("hasRole('USER')")
+    public ResponseEntity<ApplicationResponse> getPublishedApplication(
+            @PathVariable String id) {
+                log.info("Request is coming to getpublished applications with id: "+ id);
+        return ResponseEntity.ok(
+                applicationService.getPublishedApplicationById(id));
+    }
+
     @GetMapping("/my-apps")
     @PreAuthorize("hasRole('DEVELOPER')")
     public ResponseEntity<?> getMyApplications(@AuthenticationPrincipal Jwt jwt) {
@@ -240,7 +249,7 @@ public class ApplicationController {
     @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<ApplicationResponse> getApplicationInternal(
             @PathVariable String id) {
-                log.info("Request is coming and getting processed");
+        log.info("Request is coming and getting processed");
         return ResponseEntity.ok(
                 applicationService.getApplicationById(id));
     }

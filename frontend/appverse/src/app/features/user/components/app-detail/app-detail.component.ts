@@ -1,357 +1,643 @@
-import {
-  Component,
-  OnDestroy,
-  OnInit
-} from '@angular/core';
-
 import { CommonModule } from '@angular/common';
-import { ActivatedRoute } from '@angular/router';
-import { RouterModule } from '@angular/router';
-
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import {
-  ApplicationDetail,
+  ActivatedRoute,
+  Router,
+  RouterModule
+} from '@angular/router';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatSnackBar,
+  MatSnackBarModule
+} from '@angular/material/snack-bar';
+
+import { ApplicationService } from '../../../application/services/application.service';
+import { ApplicationResponse } from '../../../application/models/application-response';
+import {
   Screenshot
 } from '../../../application/models/application-detail';
-
-import {
-  ApplicationService
-} from '../../../application/services/application.service';
-
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-
+import { CartService } from '../../../cart/services/cart.service';
 
 @Component({
   selector: 'app-app-detail',
-
   standalone: true,
-
   imports: [
     CommonModule,
     RouterModule,
-    MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatSnackBarModule
   ],
-
   templateUrl: './app-detail.component.html',
-
   styleUrl: './app-detail.component.scss'
 })
-export class AppDetailComponent
-  implements OnInit, OnDestroy {
+export class AppDetailComponent implements OnInit, OnDestroy {
 
-  // ==========================================================
-  // DATA
-  // ==========================================================
-
-  appId!: string;
-
-  application!: ApplicationDetail;
-
-
-  // ==========================================================
-  // IMAGES
-  // ==========================================================
-
-  thumbnailBlobUrl: string | null = null;
-
-  screenshotBlobUrls: {
-    [key: string]: string
-  } = {};
-
-
-  // ==========================================================
-  // STATE
-  // ==========================================================
+  application: ApplicationResponse | null = null;
 
   isLoading = true;
 
-  errorMessage = '';
+  imageLoading = true;
+  imageLoadFailed = false;
+
+  cartLoading = false;
+  isInCart = false;
+
+  thumbnailUrl: string | null = null;
+
+  /*
+   * Screenshot blob URLs
+   * Key = screenshot._id
+   */
+  screenshotUrls: {
+    [key: string]: string
+  } = {};
+
+  screenshotLoading: {
+    [key: string]: boolean
+  } = {};
+
+  screenshotFailed: {
+    [key: string]: boolean
+  } = {};
+
+  /*
+   * Demo rating
+   */
+  readonly demoRating = 4.5;
+
+  /*
+   * Image lightbox
+   */
+  isImageViewerOpen = false;
+
+  selectedImageUrl: string | null = null;
+
+  selectedImageAlt = '';
+
+  private applicationId: string | null = null;
 
 
   constructor(
-    private appService: ApplicationService,
-    private route: ActivatedRoute
-  ) {}
+    private route: ActivatedRoute,
+    private router: Router,
+    private applicationService: ApplicationService,
+    private cartService: CartService,
+    private snackBar: MatSnackBar
+  ) { }
 
-
-  // ==========================================================
-  // INIT
-  // ==========================================================
 
   ngOnInit(): void {
 
-    this.appId =
-      this.route.snapshot.paramMap.get('id')!;
+    this.applicationId =
+      this.route.snapshot.paramMap.get('id');
 
-    if (!this.appId) {
+    if (!this.applicationId) {
 
-      this.isLoading = false;
+      this.showMessage(
+        'Application ID is missing'
+      );
 
-      this.errorMessage =
-        'Application ID was not provided.';
+      this.router.navigate([
+        '/user/apps'
+      ]);
 
       return;
-
     }
 
-    this.loadApplicationDetails();
+    this.loadApplication(
+      this.applicationId
+    );
 
+    this.loadCart();
   }
 
 
-  // ==========================================================
-  // LOAD APPLICATION
-  // ==========================================================
+  /*
+   * ==========================================
+   * APPLICATION
+   * ==========================================
+   */
 
-  loadApplicationDetails(): void {
+  loadApplication(id: string): void {
 
     this.isLoading = true;
 
-    this.errorMessage = '';
-
-    this.appService
-      .getApplicationById(this.appId)
+    this.applicationService
+      .getPublishedApplicationById(id)
       .subscribe({
 
-        next: (app) => {
+        next: (response: ApplicationResponse) => {
 
-          this.application = app;
+          this.application = response;
 
           this.isLoading = false;
 
+          this.loadThumbnail(response);
 
-          // -----------------------------------------------
-          // THUMBNAIL
-          // -----------------------------------------------
-
-          this.loadThumbnailImage(
-            app.thumbnailUrl
-          );
-
-
-          // -----------------------------------------------
-          // SCREENSHOTS
-          // -----------------------------------------------
-
-          this.loadScreenshotImages(
-            app.screenshots
-          );
-
+          this.loadScreenshots(response);
         },
 
-
-        error: (err) => {
+        error: (error) => {
 
           console.error(
-            'Failed to load application details:',
-            err
+            'Error loading application:',
+            error
           );
 
           this.isLoading = false;
 
-          this.errorMessage =
-            'Unable to load this application.';
+          this.showMessage(
+            'Application not found or no longer published'
+          );
 
+          this.router.navigate([
+            '/user/apps'
+          ]);
         }
-
       });
-
   }
 
 
-  // ==========================================================
-  // THUMBNAIL
-  // ==========================================================
+  /*
+   * ==========================================
+   * THUMBNAIL
+   * ==========================================
+   */
 
-  private loadThumbnailImage(
-    imagePath?: string
+  loadThumbnail(
+    application: ApplicationResponse
   ): void {
 
-    if (!imagePath) {
+    this.imageLoading = true;
+    this.imageLoadFailed = false;
 
-      this.thumbnailBlobUrl = null;
+    if (!application.thumbnailUrl) {
+
+      this.imageLoading = false;
+      this.imageLoadFailed = true;
 
       return;
-
     }
 
-
     const filename =
-      this.extractFileName(imagePath);
-
+      this.extractFileName(
+        application.thumbnailUrl
+      );
 
     if (!filename) {
 
-      this.thumbnailBlobUrl = null;
+      this.imageLoading = false;
+      this.imageLoadFailed = true;
 
       return;
-
     }
 
-
-    this.appService
+    this.applicationService
       .getImageAsBlob(
         'thumbnails',
         filename
       )
       .subscribe({
 
-        next: (blob) => {
+        next: (blob: Blob) => {
 
-          this.thumbnailBlobUrl =
+          if (this.thumbnailUrl) {
+
+            URL.revokeObjectURL(
+              this.thumbnailUrl
+            );
+          }
+
+          this.thumbnailUrl =
             URL.createObjectURL(blob);
 
+          this.imageLoading = false;
+          this.imageLoadFailed = false;
         },
 
-
-        error: (err) => {
+        error: (error) => {
 
           console.error(
-            `Error fetching thumbnail '${filename}':`,
-            err
+            `Error loading thumbnail '${filename}':`,
+            error
           );
 
-          this.thumbnailBlobUrl = null;
-
+          this.imageLoading = false;
+          this.imageLoadFailed = true;
         }
-
       });
-
   }
 
 
-  // ==========================================================
-  // SCREENSHOTS
-  // ==========================================================
+  /*
+   * ==========================================
+   * SCREENSHOTS
+   * ==========================================
+   */
 
-  private loadScreenshotImages(
-    screenshots?: Screenshot[]
-  ): void {
+  loadScreenshots(application: any): void {
 
-    if (!screenshots?.length) {
+    this.screenshotUrls = {};
+    this.screenshotLoading = {};
+    this.screenshotFailed = {};
 
+    if (
+      !application?.screenshots ||
+      application.screenshots.length === 0
+    ) {
       return;
-
     }
 
+    application.screenshots.forEach(
+      (screenshot: any, index: number) => {
 
-    screenshots.forEach(
-      (screenshot: Screenshot) => {
+        const imagePath =
+          screenshot?.imageUrl ||
+          screenshot?.url;
 
-        if (!screenshot.imageUrl) {
+        if (!imagePath) {
+
+          this.screenshotFailed[index] = true;
+          this.screenshotLoading[index] = false;
 
           return;
-
         }
 
-
         const filename =
-          this.extractFileName(
-            screenshot.imageUrl
-          );
-
+          this.extractFileName(imagePath);
 
         if (!filename) {
 
-          return;
+          this.screenshotFailed[index] = true;
+          this.screenshotLoading[index] = false;
 
+          return;
         }
 
+        this.screenshotLoading[index] = true;
+        this.screenshotFailed[index] = false;
 
-        this.appService
+        this.applicationService
           .getImageAsBlob(
             'screenshots',
             filename
           )
           .subscribe({
 
-            next: (blob) => {
+            next: (blob: Blob) => {
 
-              this.screenshotBlobUrls[
-                screenshot._id
-              ] =
+              if (this.screenshotUrls[index]) {
+                URL.revokeObjectURL(
+                  this.screenshotUrls[index]
+                );
+              }
+
+              this.screenshotUrls[index] =
                 URL.createObjectURL(blob);
 
+              this.screenshotLoading[index] = false;
+              this.screenshotFailed[index] = false;
             },
 
-
-            error: (err) => {
+            error: (error) => {
 
               console.error(
-                `Error fetching screenshot '${filename}':`,
-                err
+                `Failed to load screenshot ${index}:`,
+                error
               );
 
+              this.screenshotLoading[index] = false;
+              this.screenshotFailed[index] = true;
             }
-
           });
-
       }
     );
-
   }
 
 
-  // ==========================================================
-  // FILE NAME
-  // ==========================================================
+  /*
+   * ==========================================
+   * FILE NAME
+   * ==========================================
+   */
 
   extractFileName(
     fullPath: string
   ): string {
 
     if (!fullPath) {
-
       return '';
-
     }
 
-
-    /*
-     * Handles both:
-     *
-     * /uploads/image.png
-     *
-     * C:\uploads\image.png
-     */
-
-    const normalized =
-      fullPath.replace(/\\/g, '/');
-
-
     return (
-      normalized
+      fullPath
         .split('/')
-        .pop() || ''
+        .pop()
+        ?.split('?')[0]
+        .split('#')[0] || ''
     );
-
   }
 
 
-  // ==========================================================
-  // CLEANUP
-  // ==========================================================
+  /*
+   * ==========================================
+   * IMAGE VIEWER
+   * ==========================================
+   */
+
+  openImageViewer(
+    imageUrl: string,
+    altText: string
+  ): void {
+
+    this.selectedImageUrl =
+      imageUrl;
+
+    this.selectedImageAlt =
+      altText;
+
+    this.isImageViewerOpen = true;
+
+    document.body.style.overflow =
+      'hidden';
+  }
+
+
+  closeImageViewer(): void {
+
+    this.isImageViewerOpen = false;
+
+    this.selectedImageUrl = null;
+
+    this.selectedImageAlt = '';
+
+    document.body.style.overflow =
+      '';
+  }
+
+
+  onImageViewerKeydown(
+    event: KeyboardEvent
+  ): void {
+
+    if (
+      event.key === 'Escape' &&
+      this.isImageViewerOpen
+    ) {
+
+      this.closeImageViewer();
+    }
+  }
+
+
+  /*
+   * ==========================================
+   * CART
+   * ==========================================
+   */
+
+  loadCart(): void {
+
+    this.cartService
+      .getCart()
+      .subscribe({
+
+        next: (cart) => {
+
+          if (!cart?.items) {
+
+            this.isInCart = false;
+
+            return;
+          }
+
+          this.isInCart =
+            cart.items.some(
+              (item: any) =>
+                item.applicationId ===
+                this.applicationId
+            );
+        },
+
+        error: () => {
+
+          this.isInCart = false;
+        }
+      });
+  }
+
+
+  addToCart(): void {
+
+    if (
+      !this.applicationId ||
+      this.cartLoading
+    ) {
+      return;
+    }
+
+    this.cartLoading = true;
+
+    this.cartService
+      .addToCart({
+        applicationId: this.applicationId,
+        quantity: 1
+      })
+      .subscribe({
+
+        next: () => {
+
+          this.isInCart = true;
+
+          this.cartLoading = false;
+
+          this.showMessage(
+            'Application added to cart'
+          );
+        },
+
+        error: (error) => {
+
+          this.cartLoading = false;
+
+          if (error?.status === 409) {
+
+            this.isInCart = true;
+
+            this.showMessage(
+              'Application is already in your cart'
+            );
+
+          } else {
+
+            this.showMessage(
+              'Unable to add application to cart'
+            );
+          }
+        }
+      });
+  }
+
+
+  removeFromCart(): void {
+
+    if (
+      !this.applicationId ||
+      this.cartLoading
+    ) {
+      return;
+    }
+
+    this.cartLoading = true;
+
+    this.cartService
+      .removeItemFromCart(
+        this.applicationId
+      )
+      .subscribe({
+
+        next: () => {
+
+          this.isInCart = false;
+
+          this.cartLoading = false;
+
+          this.showMessage(
+            'Application removed from cart'
+          );
+        },
+
+        error: () => {
+
+          this.cartLoading = false;
+
+          this.showMessage(
+            'Unable to remove application from cart'
+          );
+        }
+      });
+  }
+
+
+  /*
+   * ==========================================
+   * EXTERNAL LINKS
+   * ==========================================
+   */
+
+  visitSupport(): void {
+
+    if (!this.application?.supportUrl) {
+      return;
+    }
+
+    window.open(
+      this.application.supportUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+
+  visitApplication(): void {
+
+    if (!this.application?.accessUrl) {
+
+      this.showMessage(
+        'Application access URL is not available'
+      );
+
+      return;
+    }
+
+    window.open(
+      this.application.accessUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+
+  visitWebsite(): void {
+
+    if (!this.application?.websiteUrl) {
+
+      this.showMessage(
+        'Application website is not available'
+      );
+
+      return;
+    }
+
+    window.open(
+      this.application.websiteUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+
+  /*
+   * ==========================================
+   * NAVIGATION
+   * ==========================================
+   */
+
+  goBack(): void {
+
+    this.router.navigate([
+      '/user/apps'
+    ]);
+  }
+
+
+  /*
+   * ==========================================
+   * MESSAGES
+   * ==========================================
+   */
+
+  showMessage(
+    message: string
+  ): void {
+
+    this.snackBar.open(
+      message,
+      'Close',
+      {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'bottom'
+      }
+    );
+  }
+
+
+  /*
+   * ==========================================
+   * CLEANUP
+   * ==========================================
+   */
 
   ngOnDestroy(): void {
 
-    if (this.thumbnailBlobUrl) {
+    if (this.thumbnailUrl) {
 
       URL.revokeObjectURL(
-        this.thumbnailBlobUrl
+        this.thumbnailUrl
       );
-
     }
 
-
-    Object
-      .values(this.screenshotBlobUrls)
-      .forEach(url => {
+    Object.values(
+      this.screenshotUrls
+    ).forEach(
+      (url: string) => {
 
         URL.revokeObjectURL(url);
+      }
+    );
 
-      });
-
+    document.body.style.overflow =
+      '';
   }
-
 }

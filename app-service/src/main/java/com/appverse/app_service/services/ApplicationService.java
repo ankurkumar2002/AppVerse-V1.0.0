@@ -35,4 +35,6 @@ public interface ApplicationService {
 
         Page<ApplicationResponse> getPublishedApplications(int page, int size);
 
+        ApplicationResponse getPublishedApplicationById(String id);
+
 }

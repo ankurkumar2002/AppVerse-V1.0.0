@@ -1,71 +1,809 @@
-<!-- Loading Spinner -->
-<div *ngIf="!application" class="loading-container">
-  <mat-spinner color="accent"></mat-spinner>
-  <p>Loading Application Details...</p>
+<!-- =========================================================
+     LOADING
+     ========================================================= -->
+
+<div
+  *ngIf="isLoading"
+  class="loading-container">
+
+  <div class="loading-card">
+
+    <mat-spinner
+      diameter="46">
+    </mat-spinner>
+
+    <h3>Loading application</h3>
+
+    <p>
+      Fetching your application details...
+    </p>
+
+  </div>
+
 </div>
 
-<!-- Main Application Detail View -->
-<div *ngIf="application as app" class="app-detail-container">
-  <mat-card>
-    <!-- ===== HEADER SECTION ===== -->
-    <header class="app-header">
-      <!-- App Icon (using the thumbnail) -->
-      <!-- The class "app-icon" is what makes it small -->
-      <img [src]="thumbnailBlobUrl" alt="{{ app.name }} icon" class="app-icon" *ngIf="thumbnailBlobUrl">
 
-      <div class="app-title-block">
-        <h1>{{ app.name }}</h1>
-        <!-- Using a non-clickable span for now. You can fetch and link this later. -->
-        <span class="developer-link">By Developer Name Placeholder</span>
-        <span class="category-badge">Category Placeholder</span>
-      </div>
+<!-- =========================================================
+     APPLICATION
+     ========================================================= -->
 
-      <!-- Action Button (Links to external site) -->
-      <div class="app-actions" *ngIf="app.websiteUrl">
-        <!-- NOTE: This button will only show if 'websiteUrl' exists in your data -->
-        <a mat-raised-button color="accent" [href]="app.websiteUrl" target="_blank" rel="noopener noreferrer">
-          Visit Website
-        </a>
-      </div>
-    </header>
+<div
+  *ngIf="!isLoading && application as app"
+  class="page-container">
 
-    <mat-card-content>
-      <!-- ===== SCREENSHOTS (now more prominent) ===== -->
-      <section *ngIf="app.screenshots && app.screenshots.length > 0" class="screenshots-section">
-        <div class="screenshot-gallery">
-          <div *ngFor="let screenshot of app.screenshots" class="screenshot-item">
-            <img [src]="screenshotBlobUrls[screenshot._id]" [alt]="screenshot.caption || 'Screenshot ' + screenshot.order" *ngIf="screenshotBlobUrls[screenshot._id]">
-          </div>
+
+  <!-- =======================================================
+       TOP NAVIGATION
+       ======================================================= -->
+
+  <div class="top-bar">
+
+    <button
+      mat-button
+      class="back-button"
+      type="button"
+      (click)="goBack()">
+
+      <mat-icon>
+        arrow_back
+      </mat-icon>
+
+      <span>
+        My Applications
+      </span>
+
+    </button>
+
+
+    <div class="top-actions">
+
+      <button
+        mat-stroked-button
+        class="edit-button"
+        type="button"
+        (click)="editApplication()">
+
+        <mat-icon>
+          edit
+        </mat-icon>
+
+        Edit Application
+
+      </button>
+
+
+      <button
+        mat-stroked-button
+        class="delete-button"
+        type="button"
+        (click)="openDeleteDialog()">
+
+        <mat-icon>
+          delete_outline
+        </mat-icon>
+
+        Delete
+
+      </button>
+
+    </div>
+
+  </div>
+
+
+  <!-- =======================================================
+       MAIN CARD
+       ======================================================= -->
+
+  <mat-card class="application-card">
+
+
+    <!-- =====================================================
+         HERO
+         ===================================================== -->
+
+    <section class="hero-section">
+
+
+      <!-- Thumbnail -->
+
+      <div
+        class="thumbnail-wrapper"
+        [class.clickable]="thumbnailBlobUrl"
+        (click)="thumbnailBlobUrl &&
+          openImageViewer(
+            thumbnailBlobUrl,
+            app.name + ' icon'
+          )">
+
+        <img
+          *ngIf="thumbnailBlobUrl"
+          [src]="thumbnailBlobUrl"
+          [alt]="app.name + ' icon'"
+          class="app-icon" />
+
+        <div
+          *ngIf="!thumbnailBlobUrl"
+          class="thumbnail-placeholder">
+
+          <mat-icon>
+            apps
+          </mat-icon>
+
         </div>
-      </section>
 
-      <!-- ===== DESCRIPTION ===== -->
-      <section class="description-section">
-        <h3>About this app</h3>
-        <!-- FIX: Removed the non-existent 'newline' pipe. The CSS will handle line breaks. -->
-        <p>{{ app.description }}</p>
-      </section>
+        <div
+          *ngIf="thumbnailBlobUrl"
+          class="image-hover">
 
-      <!-- ===== METADATA (now integrated below) ===== -->
-      <section class="about-section">
-        <h3>Additional Information</h3>
-        <ul class="metadata-list">
-          <li>
-            <strong>Version</strong>
-            <span>{{ app.version }}</span>
-          </li>
-           <li>
-            <strong>Price</strong>
-            <div [ngSwitch]="app.monetizationType">
-              <span *ngSwitchCase="'FREE'" class="price-free">Free</span>
-              <span *ngSwitchCase="'ONE_TIME_PURCHASE'" class="price-display">{{ app.price | currency:'USD' }}</span>
-              <span *ngSwitchCase="'SUBSCRIPTION_ONLY'" class="price-subscription">Subscription Based</span>
-              <span *ngSwitchCase="'ONE_TIME_OR_SUBSCRIPTION'" class="price-display">{{ app.price | currency:'USD' }}</span>
-              <span *ngSwitchDefault class="price-display">N/A</span>
-            </div>
-          </li>
-        </ul>
-      </section>
-    </mat-card-content>
+          <mat-icon>
+            zoom_in
+          </mat-icon>
+
+          <span>
+            View
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- Application information -->
+
+      <div class="hero-content">
+
+        <div class="status-row">
+
+          <span class="status-badge">
+            <span class="status-dot"></span>
+            Published
+          </span>
+
+          <span class="version-badge">
+            v{{ app.version }}
+          </span>
+
+        </div>
+
+
+        <h1>
+          {{ app.name }}
+        </h1>
+
+
+        <p
+          *ngIf="app.tagline"
+          class="tagline">
+
+          {{ app.tagline }}
+
+        </p>
+
+
+        <div class="hero-meta">
+
+          <span>
+            <mat-icon>
+              person_outline
+            </mat-icon>
+
+            Your Application
+          </span>
+
+          <span *ngIf="app.categoryId">
+            <mat-icon>
+              category
+            </mat-icon>
+
+            Category
+          </span>
+
+        </div>
+
+
+        <div class="hero-actions">
+
+          <button
+            mat-flat-button
+            class="primary-action"
+            type="button"
+            (click)="editApplication()">
+
+            <mat-icon>
+              edit
+            </mat-icon>
+
+            Edit Application
+
+          </button>
+
+
+          <button
+            *ngIf="app.websiteUrl"
+            mat-stroked-button
+            class="website-button"
+            type="button"
+            (click)="visitWebsite()">
+
+            <mat-icon>
+              open_in_new
+            </mat-icon>
+
+            Visit Website
+
+          </button>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         DIVIDER
+         ===================================================== -->
+
+    <div class="section-divider"></div>
+
+
+    <!-- =====================================================
+         SCREENSHOTS
+         ===================================================== -->
+
+    <section
+      *ngIf="
+        app.screenshots &&
+        app.screenshots.length > 0
+      "
+      class="content-section">
+
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="section-label">
+            VISUALS
+          </span>
+
+          <h2>
+            Screenshots
+          </h2>
+
+          <p>
+            Preview how your application appears to users.
+          </p>
+
+        </div>
+
+        <span class="count-badge">
+          {{ app.screenshots.length }}
+        </span>
+
+      </div>
+
+
+      <div class="screenshot-grid">
+
+        <div
+          *ngFor="
+            let screenshot of app.screenshots
+          "
+          class="screenshot-card"
+          [class.has-image]="
+            screenshotBlobUrls[screenshot._id]
+          "
+          (click)="
+            screenshotBlobUrls[screenshot._id] &&
+            openImageViewer(
+              screenshotBlobUrls[screenshot._id],
+              screenshot.caption ||
+              'Application screenshot'
+            )
+          ">
+
+
+          <!-- Loading -->
+
+          <div
+            *ngIf="
+              screenshotLoading[screenshot._id]
+            "
+            class="screenshot-loading">
+
+            <mat-spinner
+              diameter="30">
+            </mat-spinner>
+
+            <span>
+              Loading...
+            </span>
+
+          </div>
+
+
+          <!-- Image -->
+
+          <img
+            *ngIf="
+              screenshotBlobUrls[screenshot._id] &&
+              !screenshotLoading[screenshot._id]
+            "
+            [src]="
+              screenshotBlobUrls[screenshot._id]
+            "
+            [alt]="
+              screenshot.caption ||
+              'Application screenshot'
+            "
+            class="screenshot-image" />
+
+
+          <!-- Failed -->
+
+          <div
+            *ngIf="
+              screenshotFailed[screenshot._id]
+            "
+            class="screenshot-error">
+
+            <mat-icon>
+              broken_image
+            </mat-icon>
+
+            <span>
+              Image unavailable
+            </span>
+
+          </div>
+
+
+          <!-- Hover -->
+
+          <div
+            *ngIf="
+              screenshotBlobUrls[screenshot._id]
+            "
+            class="screenshot-overlay">
+
+            <mat-icon>
+              zoom_in
+            </mat-icon>
+
+            <span>
+              View larger
+            </span>
+
+          </div>
+
+
+          <!-- Caption -->
+
+          <div
+            *ngIf="screenshot.caption"
+            class="screenshot-caption">
+
+            {{ screenshot.caption }}
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         ABOUT
+         ===================================================== -->
+
+    <section class="content-section">
+
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="section-label">
+            DESCRIPTION
+          </span>
+
+          <h2>
+            About this application
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="description-card">
+
+        <p>
+          {{ app.description || 'No description provided.' }}
+        </p>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         INFORMATION
+         ===================================================== -->
+
+    <section class="content-section">
+
+
+      <div class="section-heading">
+
+        <div>
+
+          <span class="section-label">
+            DETAILS
+          </span>
+
+          <h2>
+            Application Information
+          </h2>
+
+        </div>
+
+      </div>
+
+
+      <div class="info-grid">
+
+
+        <!-- Version -->
+
+        <div class="info-card">
+
+          <div class="info-icon">
+            <mat-icon>
+              new_releases
+            </mat-icon>
+          </div>
+
+          <div>
+
+            <span class="info-label">
+              Version
+            </span>
+
+            <strong>
+              {{ app.version || 'N/A' }}
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- Price -->
+
+        <div class="info-card">
+
+          <div class="info-icon">
+            <mat-icon>
+              payments
+            </mat-icon>
+          </div>
+
+          <div>
+
+            <span class="info-label">
+              Pricing
+            </span>
+
+            <strong
+              *ngIf="app.monetizationType === 'FREE'"
+              class="free-price">
+
+              Free
+
+            </strong>
+
+            <strong
+              *ngIf="
+                app.monetizationType ===
+                'ONE_TIME_PURCHASE'
+              ">
+
+              {{ app.price | currency:'USD' }}
+
+            </strong>
+
+            <strong
+              *ngIf="
+                app.monetizationType ===
+                'SUBSCRIPTION_ONLY'
+              ">
+
+              Subscription
+
+            </strong>
+
+            <strong
+              *ngIf="
+                app.monetizationType ===
+                'ONE_TIME_OR_SUBSCRIPTION'
+              ">
+
+              {{ app.price | currency:'USD' }}
+
+            </strong>
+
+            <strong
+              *ngIf="
+                !app.monetizationType
+              ">
+
+              N/A
+
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- Monetization -->
+
+        <div class="info-card">
+
+          <div class="info-icon">
+            <mat-icon>
+              account_balance_wallet
+            </mat-icon>
+          </div>
+
+          <div>
+
+            <span class="info-label">
+              Monetization
+            </span>
+
+            <strong>
+              {{
+                app.monetizationType ||
+                'N/A'
+              }}
+            </strong>
+
+          </div>
+
+        </div>
+
+
+        <!-- Website -->
+
+        <div class="info-card">
+
+          <div class="info-icon">
+            <mat-icon>
+              language
+            </mat-icon>
+          </div>
+
+          <div>
+
+            <span class="info-label">
+              Website
+            </span>
+
+            <strong
+              *ngIf="app.websiteUrl">
+
+              Available
+
+            </strong>
+
+            <strong
+              *ngIf="!app.websiteUrl"
+              class="muted-value">
+
+              Not provided
+
+            </strong>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </section>
+
+
+    <!-- =====================================================
+         BOTTOM ACTIONS
+         ===================================================== -->
+
+    <section class="bottom-actions">
+
+      <div>
+
+        <span class="bottom-title">
+          Manage your application
+        </span>
+
+        <span class="bottom-subtitle">
+          Update information or permanently remove this application.
+        </span>
+
+      </div>
+
+
+      <div class="bottom-buttons">
+
+        <button
+          mat-stroked-button
+          class="edit-button"
+          type="button"
+          (click)="editApplication()">
+
+          <mat-icon>
+            edit
+          </mat-icon>
+
+          Edit
+
+        </button>
+
+
+        <button
+          mat-stroked-button
+          class="delete-button"
+          type="button"
+          (click)="openDeleteDialog()">
+
+          <mat-icon>
+            delete_outline
+          </mat-icon>
+
+          Delete Application
+
+        </button>
+
+      </div>
+
+    </section>
+
   </mat-card>
+
+</div>
+
+
+<!-- =========================================================
+     IMAGE LIGHTBOX
+     ========================================================= -->
+
+<div
+  *ngIf="isImageViewerOpen && selectedImageUrl"
+  class="image-viewer"
+  (click)="closeImageViewer()">
+
+
+  <button
+    type="button"
+    class="viewer-close"
+    (click)="closeImageViewer(); $event.stopPropagation()">
+
+    <mat-icon>
+      close
+    </mat-icon>
+
+  </button>
+
+
+  <div
+    class="viewer-content"
+    (click)="$event.stopPropagation()">
+
+    <img
+      [src]="selectedImageUrl"
+      [alt]="selectedImageAlt"
+      class="viewer-image" />
+
+  </div>
+
+</div>
+
+
+<!-- =========================================================
+     DELETE CONFIRMATION DIALOG
+     ========================================================= -->
+
+<div
+  *ngIf="isDeleteDialogOpen"
+  class="dialog-backdrop"
+  (click)="!isDeleting && closeDeleteDialog()">
+
+
+  <div
+    class="delete-dialog"
+    (click)="$event.stopPropagation()">
+
+
+    <div class="dialog-icon">
+
+      <mat-icon>
+        delete_forever
+      </mat-icon>
+
+    </div>
+
+
+    <div class="dialog-content">
+
+      <span class="dialog-label">
+        DELETE APPLICATION
+      </span>
+
+      <h2>
+        Delete "{{ application?.name }}"?
+      </h2>
+
+      <p>
+        This action will permanently delete this application.
+        This cannot be undone.
+      </p>
+
+    </div>
+
+
+    <div class="dialog-actions">
+
+      <button
+        mat-button
+        class="cancel-button"
+        type="button"
+        [disabled]="isDeleting"
+        (click)="closeDeleteDialog()">
+
+        Cancel
+
+      </button>
+
+
+      <button
+        mat-flat-button
+        class="confirm-delete-button"
+        type="button"
+        [disabled]="isDeleting"
+        (click)="deleteApplication()">
+
+
+        <mat-spinner
+          *ngIf="isDeleting"
+          diameter="20">
+        </mat-spinner>
+
+
+        <mat-icon
+          *ngIf="!isDeleting">
+
+          delete_forever
+
+        </mat-icon>
+
+
+        <span>
+          {{
+            isDeleting
+              ? 'Deleting...'
+              : 'Delete Application'
+          }}
+        </span>
+
+      </button>
+
+    </div>
+
+  </div>
+
 </div>

@@ -1,355 +1,734 @@
-<div class="app-detail-page">
+<!-- ============================================================
+     LOADING
+     ============================================================ -->
 
-  <!-- =====================================================
-       HERO
-       ===================================================== -->
+<div
+  *ngIf="isLoading"
+  class="loading-container"
+>
 
-  <section class="hero-section">
+  <div class="loading-spinner"></div>
 
-    <!-- APP IMAGE -->
-    <div class="hero-media">
+  <p>
+    Loading application details...
+  </p>
 
-      <div class="thumbnail-wrapper">
+</div>
 
-        @if (thumbnailBlobUrl) {
 
-          <img
-            [src]="thumbnailBlobUrl"
-            [alt]="application.name"
-            class="app-thumbnail"
-          />
+<!-- ============================================================
+     APPLICATION
+     ============================================================ -->
 
-        } @else {
+<div
+  *ngIf="!isLoading && application"
+  class="app-detail-page"
+>
 
-          <div class="thumbnail-placeholder">
+  <div class="page-content">
 
-            <mat-icon>apps</mat-icon>
 
-            <span>
-              {{ application.name?.charAt(0) || 'A' }}
-            </span>
+    <!-- ========================================================
+         BACK
+         ======================================================== -->
 
-          </div>
+    <button
+      type="button"
+      class="back-button"
+      (click)="goBack()"
+    >
+      <span>←</span>
+      Back to Applications
+    </button>
 
-        }
+
+    <!-- ========================================================
+         HERO
+         ======================================================== -->
+
+    <section class="hero-section">
+
+
+      <!-- ======================================================
+           THUMBNAIL
+           ====================================================== -->
+
+      <div
+        class="thumbnail-box"
+        [class.clickable]="
+          !!thumbnailUrl
+        "
+        (click)="
+          thumbnailUrl &&
+          openImageViewer(
+            thumbnailUrl,
+            application.name
+          )
+        "
+      >
+
+        <!-- Loading -->
+
+        <div
+          *ngIf="imageLoading"
+          class="image-loading"
+        >
+
+          <div class="loading-spinner"></div>
+
+        </div>
+
+
+        <!-- Image -->
+
+        <img
+          *ngIf="
+            thumbnailUrl &&
+            !imageLoadFailed
+          "
+          [src]="thumbnailUrl"
+          [alt]="application.name"
+          class="hero-image"
+        />
+
+
+        <!-- Error -->
+
+        <div
+          *ngIf="imageLoadFailed"
+          class="image-unavailable"
+        >
+          <span>Image unavailable</span>
+        </div>
+
+
+        <!-- Hover -->
+
+        <div
+          *ngIf="
+            thumbnailUrl &&
+            !imageLoadFailed
+          "
+          class="image-hover-overlay"
+        >
+          Click to enlarge
+        </div>
 
       </div>
 
-    </div>
 
+      <!-- ======================================================
+           HERO INFORMATION
+           ====================================================== -->
 
-    <!-- APP INFORMATION -->
-    <div class="hero-content">
+      <div class="hero-info">
 
-      <!-- CATEGORY -->
-      <div class="category-label">
-
-        <mat-icon>category</mat-icon>
-
-        <span>
-          {{ application.categoryId }}
+        <span class="section-label">
+          APPLICATION
         </span>
 
-      </div>
-
-
-      <!-- TITLE -->
-      <div class="title-row">
 
         <h1>
           {{ application.name }}
         </h1>
 
-        @if (application.isFree) {
 
-          <span class="price-badge free">
-            FREE
-          </span>
-
-        } @else {
-
-          <span class="price-badge paid">
-
-            ₹{{ application.price }}
-
-          </span>
-
-        }
-
-      </div>
-
-
-      <!-- TAGLINE -->
-      @if (application.tagline) {
-
-        <p class="tagline">
+        <p
+          *ngIf="application.tagline"
+          class="tagline"
+        >
           {{ application.tagline }}
         </p>
 
-      }
 
-
-      <!-- META -->
-      <div class="meta-grid">
-
-        <div class="meta-item">
-
-          <mat-icon>verified</mat-icon>
-
-          <div>
-            <span class="meta-label">
-              Version
-            </span>
-
-            <span class="meta-value">
-              {{ application.version }}
-            </span>
-          </div>
-
-        </div>
-
-
-        <div class="meta-item">
-
-          <mat-icon>payments</mat-icon>
-
-          <div>
-            <span class="meta-label">
-              Monetization
-            </span>
-
-            <span class="meta-value">
-              {{ application.monetizationType }}
-            </span>
-          </div>
-
-        </div>
-
-
-        <div class="meta-item">
-
-          <mat-icon>apps</mat-icon>
-
-          <div>
-            <span class="meta-label">
-              Category
-            </span>
-
-            <span class="meta-value">
-              {{ application.categoryId }}
-            </span>
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- ACTIONS -->
-      <div class="hero-actions">
-
-        <button
-          mat-raised-button
-          class="primary-action"
-          type="button"
-        >
-
-          <mat-icon>
-            download
-          </mat-icon>
-
-          Install / Access
-
-        </button>
-
-
-        @if (application.websiteUrl) {
-
-          <a
-            mat-stroked-button
-            class="secondary-action"
-            [href]="application.websiteUrl"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-
-            <mat-icon>
-              open_in_new
-            </mat-icon>
-
-            Visit Website
-
-          </a>
-
-        }
-
-      </div>
-
-    </div>
-
-  </section>
-
-
-  <!-- =====================================================
-       DESCRIPTION
-       ===================================================== -->
-
-  <section class="content-card">
-
-    <div class="section-header">
-
-      <div class="section-icon">
-
-        <mat-icon>
-          description
-        </mat-icon>
-
-      </div>
-
-      <div>
-
-        <h2>
-          About This Application
-        </h2>
-
-        <span>
-          Application overview
-        </span>
-
-      </div>
-
-    </div>
-
-
-    <div class="description">
-
-      @if (application.description) {
-
-        <p>
-          {{ application.description }}
+        <p class="developer">
+          Application by Developer
         </p>
 
-      } @else {
 
-        <p class="empty-text">
-          No description has been provided for this application.
-        </p>
+        <!-- ====================================================
+             META
+             ==================================================== -->
 
-      }
-
-    </div>
-
-  </section>
+        <div class="hero-meta">
 
 
-  <!-- =====================================================
-       SCREENSHOTS
-       ===================================================== -->
+          <!-- PRICE -->
 
-  @if (application.screenshots?.length) {
+          <span class="price">
 
-    <section class="content-card">
+            <ng-container
+              [ngSwitch]="
+                application.monetizationType
+              "
+            >
 
-      <div class="section-header">
+              <span
+                *ngSwitchCase="'FREE'"
+              >
+                Free
+              </span>
 
-        <div class="section-icon">
 
-          <mat-icon>
-            photo_library
-          </mat-icon>
+              <span
+                *ngSwitchCase="'ONE_TIME_PURCHASE'"
+              >
+                {{ application.price | currency:'INR' }}
+              </span>
 
-        </div>
 
-        <div>
+              <span
+                *ngSwitchCase="'SUBSCRIPTION_ONLY'"
+              >
+                Subscription
+              </span>
 
-          <h2>
-            Screenshots
-          </h2>
 
-          <span>
-            Explore the application interface
+              <span
+                *ngSwitchCase="'SUBSCRIPTION'"
+              >
+                Subscription
+              </span>
+
+
+              <span
+                *ngSwitchCase="'ONE_TIME_OR_SUBSCRIPTION'"
+              >
+                {{ application.price | currency:'INR' }}
+              </span>
+
+
+              <span
+                *ngSwitchDefault
+              >
+                {{
+                  application.isFree
+                    ? 'Free'
+                    : (application.price
+                        ? (application.price | currency:'INR')
+                        : 'N/A')
+                }}
+              </span>
+
+            </ng-container>
+
+          </span>
+
+
+          <!-- DEMO RATING -->
+
+          <span class="rating">
+
+            <span class="star">
+              ★
+            </span>
+
+            {{ demoRating }}
+
+            <span class="demo-badge">
+              DEMO
+            </span>
+
           </span>
 
         </div>
 
-      </div>
+
+        <!-- ====================================================
+             ACTIONS
+             ==================================================== -->
+
+        <div class="hero-actions">
 
 
-      <div class="screenshots-grid">
+          <!-- ADD TO CART -->
 
-        @for (
-          shot of application.screenshots;
-          track shot._id
-        ) {
+          <button
+            *ngIf="!isInCart"
+            type="button"
+            class="primary-button"
+            [disabled]="cartLoading"
+            (click)="addToCart()"
+          >
 
-          <div class="screenshot-card">
+            {{
+              cartLoading
+                ? 'Adding...'
+                : 'Add to Cart'
+            }}
 
-            @if (screenshotBlobUrls[shot._id]) {
-
-              <img
-                [src]="screenshotBlobUrls[shot._id]"
-                [alt]="shot.caption || 'Application Screenshot'"
-              />
-
-            } @else {
-
-              <div class="screenshot-placeholder">
-
-                <mat-icon>
-                  image
-                </mat-icon>
-
-                <span>
-                  Loading image...
-                </span>
-
-              </div>
-
-            }
+          </button>
 
 
-            @if (shot.caption) {
+          <!-- REMOVE FROM CART -->
 
-              <div class="screenshot-caption">
+          <button
+            *ngIf="isInCart"
+            type="button"
+            class="remove-button"
+            [disabled]="cartLoading"
+            (click)="removeFromCart()"
+          >
 
-                {{ shot.caption }}
+            {{
+              cartLoading
+                ? 'Removing...'
+                : 'Remove from Cart'
+            }}
 
-              </div>
+          </button>
 
-            }
 
-          </div>
+          <!-- VISIT APPLICATION -->
 
-        }
+          <button
+            *ngIf="application.accessUrl"
+            type="button"
+            class="secondary-button"
+            (click)="visitApplication()"
+          >
+            Open Application
+          </button>
+
+
+          <!-- WEBSITE -->
+
+          <button
+            *ngIf="application.websiteUrl"
+            type="button"
+            class="secondary-button"
+            (click)="visitWebsite()"
+          >
+            Website
+          </button>
+
+        </div>
 
       </div>
 
     </section>
 
-  }
+
+    <!-- ========================================================
+         CONTENT
+         ======================================================== -->
+
+    <div class="details-layout">
 
 
-  <!-- =====================================================
-       BACK
-       ===================================================== -->
+      <!-- ======================================================
+           MAIN
+           ====================================================== -->
 
-  <div class="back-section">
+      <main>
 
-    <button
-      mat-button
-      class="back-button"
-      routerLink="/user/apps"
-      type="button"
-    >
 
-      <mat-icon>
-        arrow_back
-      </mat-icon>
+        <!-- ====================================================
+             ABOUT
+             ==================================================== -->
 
-      Back to Applications
+        <section class="section-card">
 
-    </button>
+          <span class="section-label">
+            ABOUT
+          </span>
 
+
+          <h2>
+            About this application
+          </h2>
+
+
+          <p
+            *ngIf="application.description"
+            class="description"
+          >
+            {{ application.description }}
+          </p>
+
+
+          <p
+            *ngIf="!application.description"
+            class="empty-text"
+          >
+            No description available.
+          </p>
+
+        </section>
+
+
+        <!-- ====================================================
+             SCREENSHOTS
+             ==================================================== -->
+
+        <section
+          *ngIf="
+            application.screenshots &&
+            application.screenshots.length > 0
+          "
+          class="section-card screenshots-section"
+        >
+
+
+          <div class="section-header">
+
+            <div>
+
+              <span class="section-label">
+                SCREENSHOTS
+              </span>
+
+              <h2>
+                See it in action
+              </h2>
+
+            </div>
+
+
+            <span class="screenshot-count">
+              {{ application.screenshots.length }}
+            </span>
+
+          </div>
+
+
+          <div class="screenshots-grid">
+
+
+            <div
+              *ngFor="
+                let screenshot of application.screenshots;
+                let i = index
+              "
+              class="screenshot-card"
+            >
+
+
+              <!-- =================================================
+                   LOADING
+                   ================================================= -->
+
+              <div
+                *ngIf="
+                  screenshotLoading[i]
+                "
+                class="screenshot-image-box"
+              >
+
+                <div class="loading-spinner"></div>
+
+              </div>
+
+
+              <!-- =================================================
+                   IMAGE
+                   ================================================= -->
+
+              <div
+                *ngIf="
+                  screenshotUrls[i] &&
+                  !screenshotFailed[i] &&
+                  !screenshotLoading[i]
+                "
+                class="screenshot-image-box"
+                (click)="
+                  openImageViewer(
+                    screenshotUrls[i],
+                    screenshot.caption ||
+                    application.name
+                  )
+                "
+              >
+
+                <img
+                  [src]="screenshotUrls[i]"
+                  [alt]="
+                    screenshot.caption ||
+                    application.name
+                  "
+                  class="screenshot-image"
+                />
+
+
+                <div class="screenshot-hover">
+                  <span>Click to enlarge</span>
+                </div>
+
+              </div>
+
+
+              <!-- =================================================
+                   ERROR
+                   ================================================= -->
+
+              <div
+                *ngIf="
+                  screenshotFailed[i]
+                "
+                class="
+                  screenshot-image-box
+                  image-error
+                "
+              >
+
+                <span class="unavailable-icon">
+                  ⛶
+                </span>
+
+                <span>
+                  Image unavailable
+                </span>
+
+              </div>
+
+
+              <!-- =================================================
+                   CAPTION
+                   ================================================= -->
+
+              <p
+                *ngIf="screenshot.caption"
+                class="screenshot-caption"
+              >
+                {{ screenshot.caption }}
+              </p>
+
+            </div>
+
+          </div>
+
+        </section>
+
+
+        <!-- ====================================================
+             NO SCREENSHOTS
+             ==================================================== -->
+
+        <section
+          *ngIf="
+            !application.screenshots ||
+            application.screenshots.length === 0
+          "
+          class="section-card"
+        >
+
+          <span class="section-label">
+            SCREENSHOTS
+          </span>
+
+          <h2>
+            Screenshots
+          </h2>
+
+          <p class="empty-text">
+            No screenshots are available for this application.
+          </p>
+
+        </section>
+
+      </main>
+
+
+      <!-- ======================================================
+           SIDEBAR
+           ====================================================== -->
+
+      <aside class="sidebar-card">
+
+
+        <!-- PRICE -->
+
+        <div class="sidebar-item">
+
+          <span>
+            PRICE
+          </span>
+
+          <strong>
+
+            <ng-container
+              [ngSwitch]="
+                application.monetizationType
+              "
+            >
+
+              <span
+                *ngSwitchCase="'FREE'"
+              >
+                Free
+              </span>
+
+              <span
+                *ngSwitchCase="'SUBSCRIPTION'"
+              >
+                Subscription
+              </span>
+
+              <span
+                *ngSwitchCase="'SUBSCRIPTION_ONLY'"
+              >
+                Subscription
+              </span>
+
+              <span
+                *ngSwitchDefault
+              >
+                {{
+                  application.isFree
+                    ? 'Free'
+                    : (
+                      application.price
+                        ? (application.price | currency:'INR')
+                        : 'N/A'
+                    )
+                }}
+              </span>
+
+            </ng-container>
+
+          </strong>
+
+        </div>
+
+
+        <!-- VERSION -->
+
+        <div class="sidebar-item">
+
+          <span>
+            VERSION
+          </span>
+
+          <strong>
+            {{ application.version || 'N/A' }}
+          </strong>
+
+        </div>
+
+
+        <!-- RATING -->
+
+        <div class="sidebar-item">
+
+          <span>
+            RATING
+          </span>
+
+          <strong class="sidebar-rating">
+
+            <span class="star">
+              ★
+            </span>
+
+            {{ demoRating }} / 5
+
+            <span class="demo-badge">
+              DEMO
+            </span>
+
+          </strong>
+
+        </div>
+
+
+        <!-- MONETIZATION -->
+
+        <div class="sidebar-item">
+
+          <span>
+            TYPE
+          </span>
+
+          <strong>
+            {{
+              application.monetizationType ||
+              (application.isFree
+                ? 'Free'
+                : 'Paid')
+            }}
+          </strong>
+
+        </div>
+
+
+        <!-- WEBSITE -->
+
+        <div
+          *ngIf="application.websiteUrl"
+          class="sidebar-link"
+          (click)="visitWebsite()"
+        >
+          Visit application website →
+        </div>
+
+
+        <!-- SUPPORT -->
+
+        <div
+          *ngIf="application.supportUrl"
+          class="sidebar-link"
+          (click)="visitSupport()"
+        >
+          Contact support →
+        </div>
+
+      </aside>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<!-- ============================================================
+     IMAGE LIGHTBOX
+     ============================================================ -->
+
+<div
+  *ngIf="
+    isImageViewerOpen &&
+    selectedImageUrl
+  "
+  class="image-viewer"
+  (click)="closeImageViewer()"
+  (window:keydown)="
+    onImageViewerKeydown($event)
+  "
+>
+
+
+  <!-- CLOSE -->
+
+  <button
+    type="button"
+    class="image-viewer-close"
+    aria-label="Close image"
+    (click)="closeImageViewer()"
+  >
+    ×
+  </button>
+
+
+  <!-- IMAGE -->
+
+  <div
+    class="image-viewer-content"
+    (click)="$event.stopPropagation()"
+  >
+
+    <img
+      [src]="selectedImageUrl"
+      [alt]="selectedImageAlt"
+    />
+
+  </div>
+
+
+  <!-- HINT -->
+
+  <div class="image-viewer-hint">
+    Click outside or press Esc to close
   </div>
 
 </div>

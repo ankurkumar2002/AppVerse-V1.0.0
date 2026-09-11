@@ -12,35 +12,80 @@ export const roleGuard = (expectedRoles: string[]): CanActivateFn => {
 
       const kc = getKeycloak();
 
-      // FORCE TOKEN REFRESH
-      await kc.updateToken(0);
-
       if (!kc.authenticated) {
         return router.createUrlTree(['/landing']);
       }
+
+      await kc.updateToken(30);
 
       const token = kc.tokenParsed as any;
 
       const userRoles: string[] =
         token?.realm_access?.roles ?? [];
 
-      console.log('UPDATED USER ROLES:', userRoles);
+      console.log('USER ROLES:', userRoles);
+      console.log('EXPECTED ROLES:', expectedRoles);
 
-      const hasRole = expectedRoles.some(role =>
-        userRoles.some(r => r.toLowerCase() === role.toLowerCase())
+      const hasRole = expectedRoles.some(expectedRole =>
+        userRoles.some(userRole =>
+          userRole.toLowerCase() === expectedRole.toLowerCase()
+        )
       );
 
       if (!hasRole) {
-        return router.createUrlTree(['/landing']);
+
+        console.warn(
+          'Unauthorized access attempt.',
+          {
+            userRoles,
+            expectedRoles
+          }
+        );
+
+        sessionStorage.setItem(
+          'authError',
+          'You do not have permission to access this page. Please login with the correct credentials.'
+        );
+
+        await kc.logout({
+          redirectUri: `${window.location.origin}/landing`
+        });
+
+        return false;
       }
 
       return true;
 
     } catch (error) {
 
-      console.error(error);
+      console.error(
+        'Role authorization check failed:',
+        error
+      );
 
-      return router.createUrlTree(['/landing']);
+      sessionStorage.setItem(
+        'authError',
+        'Unable to verify your permissions. Please login again with the correct credentials.'
+      );
+
+      try {
+
+        const kc = getKeycloak();
+
+        await kc.logout({
+          redirectUri: `${window.location.origin}/landing`
+        });
+
+      } catch (logoutError) {
+
+        console.error(
+          'Keycloak logout failed:',
+          logoutError
+        );
+
+      }
+
+      return false;
     }
   };
 };

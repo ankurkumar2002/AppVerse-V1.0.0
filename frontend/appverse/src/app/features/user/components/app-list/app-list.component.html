@@ -1,492 +1,321 @@
-<!-- =========================================================
-     PAGE HEADER
-     ========================================================= -->
+<div class="app-list-page">
 
-<div class="page-header">
-
-  <div>
-    <span class="eyebrow">DISCOVER</span>
-
-    <h1>
-      Explore Applications
-    </h1>
-
-    <p>
-      Discover applications published by developers across AppVerse.
-    </p>
+  <div class="page-header">
+    <div>
+      <span class="eyebrow">DISCOVER</span>
+      <h1>Explore Applications</h1>
+      <p>Discover applications built by developers on AppVerse.</p>
+    </div>
   </div>
 
-</div>
+  <div class="apps-toolbar">
 
+    <div class="search-box">
+      <mat-icon>search</mat-icon>
 
-<!-- =========================================================
-     SEARCH / FILTER / SORT
-     ========================================================= -->
+      <input type="text" placeholder="Search applications..." [value]="searchTerm" (input)="onSearch($event)" />
+    </div>
 
-<div class="apps-toolbar">
+    <div class="filter-control">
+      <mat-icon>category</mat-icon>
 
+      <select [value]="selectedCategoryId" (change)="onCategoryChange($event)">
 
-  <!-- SEARCH -->
-
-  <div class="search-box">
-
-    <mat-icon>
-      search
-    </mat-icon>
-
-    <input
-      type="text"
-      placeholder="Search apps, developers, tags..."
-      [value]="searchTerm"
-      (input)="onSearch($event)"
-    />
-
-  </div>
-
-
-  <!-- CATEGORY -->
-
-  <div class="filter-control">
-
-    <mat-icon>
-      category
-    </mat-icon>
-
-    <select
-      [value]="selectedCategoryId"
-      (change)="onCategoryChange($event)"
-    >
-
-      <option value="">
-        All Categories
-      </option>
-
-      @for (
-        category of categories;
-        track category.id
-      ) {
-
-        <option
-          [value]="category.id"
-        >
-
-          {{ category.name }}
-
+        <option value="">
+          All Categories
         </option>
 
-      }
+        @for (category of categories; track category.id) {
+        <option [value]="category.id">
+          {{ category.name }}
+        </option>
+        }
 
-    </select>
+      </select>
 
-  </div>
-
-
-  <!-- SORT -->
-
-  <div class="filter-control">
-
-    <mat-icon>
-      sort
-    </mat-icon>
-
-    <select
-      [value]="sortOption"
-      (change)="onSortChange($event)"
-    >
-
-      <option value="default">
-        Sort By
-      </option>
-
-      <option value="name-asc">
-        Name: A → Z
-      </option>
-
-      <option value="name-desc">
-        Name: Z → A
-      </option>
-
-      <option value="rating-high">
-        Rating: High → Low
-      </option>
-
-      <option value="rating-low">
-        Rating: Low → High
-      </option>
-
-      <option value="price-low">
-        Price: Low → High
-      </option>
-
-      <option value="price-high">
-        Price: High → Low
-      </option>
-
-    </select>
-
-  </div>
-
-
-  <!-- RESET -->
-
-  <button
-    class="reset-btn"
-    type="button"
-    (click)="resetFilters()"
-  >
-
-    <mat-icon>
-      refresh
-    </mat-icon>
-
-    Reset
-
-  </button>
-
-</div>
-
-
-<!-- =========================================================
-     ACTIVE FILTER INFO
-     ========================================================= -->
-
-<div class="results-info">
-
-  <span>
-
-    Showing
-
-    <strong>
-      {{ dataSource.data.length }}
-    </strong>
-
-    applications
-
-  </span>
-
-
-  @if (searchTerm) {
-
-    <span class="active-filter">
-
-      Search:
-      "{{ searchTerm }}"
-
-    </span>
-
-  }
-
-
-  @if (selectedCategoryId) {
-
-    <span class="active-filter">
-
-      Category filter active
-
-    </span>
-
-  }
-
-</div>
-
-
-<!-- =========================================================
-     LOADING
-     ========================================================= -->
-
-@if (isLoading) {
-
-  <div class="loading-state">
-
-    <mat-icon>
-      hourglass_empty
-    </mat-icon>
-
-    Loading applications...
-
-  </div>
-
-}
-
-
-<!-- =========================================================
-     EMPTY STATE
-     ========================================================= -->
-
-@if (
-  !isLoading &&
-  dataSource.data.length === 0
-) {
-
-  <div class="empty-state">
-
-    <mat-icon>
-      search_off
-    </mat-icon>
-
-    <h3>
-      No applications found
-    </h3>
-
-    <p>
-      Try changing your search or category filters.
-    </p>
-
-    <button
-      class="reset-btn"
-      type="button"
-      (click)="resetFilters()"
-    >
-
-      <mat-icon>
-        refresh
+      <mat-icon class="select-arrow">
+        expand_more
       </mat-icon>
+    </div>
 
-      Reset Filters
+    <div class="filter-control">
+      <mat-icon>sort</mat-icon>
 
+      <select [value]="sortOption" (change)="onSortChange($event)">
+
+        <option value="default">
+          Sort By
+        </option>
+
+        <option value="name-asc">
+          Name A-Z
+        </option>
+
+        <option value="name-desc">
+          Name Z-A
+        </option>
+
+        <option value="rating-high">
+          Rating: High to Low
+        </option>
+
+        <option value="rating-low">
+          Rating: Low to High
+        </option>
+
+        <option value="price-low">
+          Price: Low to High
+        </option>
+
+        <option value="price-high">
+          Price: High to Low
+        </option>
+
+      </select>
+
+      <mat-icon class="select-arrow">
+        expand_more
+      </mat-icon>
+    </div>
+
+    <button type="button" class="reset-btn" (click)="resetFilters()">
+
+      <mat-icon>restart_alt</mat-icon>
+
+      Reset
     </button>
 
   </div>
 
-}
+  <div class="results-info">
 
+    <span>
+      Showing {{ dataSource.data.length }}
+      application{{ dataSource.data.length === 1 ? '' : 's' }}
+    </span>
 
-<!-- =========================================================
-     APPLICATION GRID
-     ========================================================= -->
+    @if (searchTerm) {
+    <span class="filter-pill">
+      "{{ searchTerm }}"
+    </span>
+    }
 
-<div
-  class="apps-grid"
-  *ngIf="
-    !isLoading &&
-    dataSource.data.length > 0
-  "
->
+    @if (selectedCategoryId) {
+    <span class="filter-pill">
+      {{ getCategoryName() }}
+    </span>
+    }
 
-  @for (
-    app of dataSource.data;
-    track app.id
-  ) {
+  </div>
 
+  @if (isLoading) {
 
-    <!-- =====================================================
-         APP CARD
-         ===================================================== -->
+  <div class="loading-state">
+    <div class="loading-spinner"></div>
+    <p>Loading applications...</p>
+  </div>
 
-    <div class="app-card">
+  } @else if (dataSource.data.length === 0) {
 
+  <div class="empty-state">
+    <mat-icon>search_off</mat-icon>
 
-      <!-- ===================================================
-           THUMBNAIL
-           =================================================== -->
+    <h3>No applications found</h3>
 
-      <div class="app-thumbnail">
+    <p>
+      Try changing your search or filter criteria.
+    </p>
+  </div>
 
-        <img
-          [src]="
-            imageUrls[app.id]
-              || 'assets/default-app.png'
-          "
-          [alt]="app.name"
-        />
+  } @else {
 
+  <div class="apps-grid">
+
+    @for (app of dataSource.data; track app.id) {
+
+    <article class="app-card">
+
+      <div class="app-thumbnail clickable" [routerLink]="['/apps/details', app.id]">
+
+        @if (imageLoading[app.id]) {
+
+        <div class="thumbnail-loading">
+          <div class="thumbnail-spinner"></div>
+        </div>
+
+        }
+
+        @if (
+        !imageLoading[app.id] &&
+        imageUrls[app.id] &&
+        !imageLoadFailed[app.id]
+        ) {
+
+        <img [src]="imageUrls[app.id]" [alt]="app.name" (load)="onImageLoaded(app.id)" (error)="onImageError(app.id)" />
+
+        }
+
+        @if (
+        !imageLoading[app.id] &&
+        imageLoadFailed[app.id]
+        ) {
+
+        <div class="thumbnail-fallback">
+          <mat-icon>
+            image_not_supported
+          </mat-icon>
+        </div>
+
+        }
 
         <div class="category-badge">
-
           {{ app.categoryName || 'General' }}
-
         </div>
 
       </div>
 
-
-      <!-- ===================================================
-           CONTENT
-           =================================================== -->
-
       <div class="app-content">
-
-
-        <!-- TITLE -->
 
         <div class="app-header">
 
-          <div>
+          <h2>
+            {{ app.name }}
+          </h2>
 
-            <h2>
-              {{ app.name }}
-            </h2>
+          @if (isPaidApplication(app)) {
 
-            <p class="tagline">
+          <span class="paid-badge">
+            PAID
+          </span>
 
-              {{
-                app.tagline ||
-                'Discover this amazing platform'
-              }}
+          } @else {
 
-            </p>
+          <span class="free-badge">
+            FREE
+          </span>
 
-          </div>
+          }
 
         </div>
 
+        @if (app.tagline) {
 
-        <!-- DESCRIPTION -->
-
-        <p class="description">
-
-          {{
-            app.description ||
-            'No description available.'
-          }}
-
+        <p class="app-tagline">
+          {{ app.tagline }}
         </p>
-
-
-        <!-- TAGS -->
-
-        @if (
-          app.tags &&
-          app.tags.length > 0
-        ) {
-
-          <div class="tags">
-
-            @for (
-              tag of app.tags.slice(0, 3);
-              track tag
-            ) {
-
-              <span class="tag">
-
-                {{ tag }}
-
-              </span>
-
-            }
-
-          </div>
 
         }
 
+        <p class="app-description">
+          {{ app.description || 'No description available.' }}
+        </p>
 
-        <!-- FOOTER -->
+        @if (app.tags?.length) {
+
+        <div class="tags">
+
+          @for (tag of app.tags; track tag) {
+
+          <span class="tag">
+            {{ tag }}
+          </span>
+
+          }
+
+        </div>
+
+        }
 
         <div class="app-footer">
 
-
-          <!-- META -->
-
           <div class="app-meta">
 
-            <div class="developer">
+            <span class="developer-name">
+              {{ app.developerName || 'Developer' }}
+            </span>
 
-              <mat-icon>
-                person
-              </mat-icon>
-
-              <span>
-                {{ app.developerName || 'Developer' }}
-              </span>
-
-            </div>
-
-
-            <div class="rating">
+            <span class="rating">
 
               <mat-icon>
                 star
               </mat-icon>
 
-              <span>
+              {{ app.averageRating || 0 | number:'1.1-1' }}
 
-                {{
-                  app.averageRating || 0
-                }}
-
-              </span>
-
-            </div>
+            </span>
 
           </div>
 
-
-          <!-- ACTIONS -->
-
-          <div class="app-actions">
-
-
-            <!-- WEBSITE -->
+          <div class="actions">
 
             @if (app.websiteUrl) {
 
-              <a
-                class="visit-btn"
-                [href]="app.websiteUrl"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
+            <a class="visit-btn" [href]="app.websiteUrl" target="_blank" rel="noopener noreferrer">
 
-                Visit
+              <mat-icon>
+                open_in_new
+              </mat-icon>
 
-              </a>
+              Visit
+
+            </a>
 
             }
 
+            <a class="details-btn" [routerLink]="['/user/apps', app.id]">
 
-            <!-- DETAILS -->
-
-            <button
-              class="details-btn"
-              type="button"
-              [routerLink]="[
-                '/user/apps',
-                app.id
-              ]"
-            >
+              <mat-icon>
+                info_outline
+              </mat-icon>
 
               Details
 
+            </a>
+
+            @if (isPaidApplication(app)) {
+
+            @if (cartAppIds.has(app.id)) {
+
+            <button type="button" class="cart-btn in-cart" [disabled]="cartLoading[app.id]"
+              (click)="removeFromCart(app.id)">
+
+              @if (cartLoading[app.id]) {
+
+              <span class="cart-spinner"></span>
+
+              } @else {
+
+              <mat-icon>
+                shopping_cart
+              </mat-icon>
+
+              In Cart
+
+              }
+
             </button>
 
+            } @else {
 
-            <!-- =================================================
-                 CART
-                 ================================================= -->
+            <button type="button" class="cart-btn" [disabled]="cartLoading[app.id]" (click)="addToCart(app.id)">
 
-            @if (!cartAppIds.has(app.id)) {
+              @if (cartLoading[app.id]) {
 
-              <button
-                class="cart-btn"
-                type="button"
-                (click)="addToCart(app.id)"
-              >
+              <span class="cart-spinner"></span>
 
-                <mat-icon>
-                  shopping_cart
-                </mat-icon>
+              } @else {
 
-                Add
+              <mat-icon>
+                add_shopping_cart
+              </mat-icon>
 
-              </button>
+              Add to Cart
+
+              }
+
+            </button>
 
             }
-
-            @else {
-
-              <button
-                class="cart-btn in-cart-btn"
-                type="button"
-                (click)="removeFromCart(app.id)"
-              >
-
-                <mat-icon>
-                  remove_shopping_cart
-                </mat-icon>
-
-                Remove
-
-              </button>
 
             }
 
@@ -496,69 +325,43 @@
 
       </div>
 
-    </div>
+    </article>
 
-  }
+    }
 
-</div>
+  </div>
 
-
-<!-- =========================================================
-     PAGINATION
-     ========================================================= -->
-
-@if (totalPages > 1) {
+  @if (totalPages > 1) {
 
   <div class="pagination">
 
-
-    <button
-      class="page-btn"
-      type="button"
-      [disabled]="currentPage === 0"
-      (click)="previousPage()"
-    >
+    <button type="button" class="pagination-nav" [disabled]="currentPage === 0" (click)="previousPage()">
 
       <mat-icon>
         chevron_left
       </mat-icon>
 
-      Previous
+      <span>Previous</span>
 
     </button>
 
+    <div class="page-numbers">
 
-    @for (
-      page of pages;
-      track page
-    ) {
+      @for (page of pages; track page) {
 
-      <button
-        class="page-number"
-        type="button"
-        [class.active]="
-          page === currentPage
-        "
-        (click)="goToPage(page)"
-      >
+      <button type="button" class="page-number" [class.active]="page === currentPage" (click)="goToPage(page)">
 
         {{ page + 1 }}
 
       </button>
 
-    }
+      }
 
+    </div>
 
-    <button
-      class="page-btn"
-      type="button"
-      [disabled]="
-        currentPage >= totalPages - 1
-      "
-      (click)="nextPage()"
-    >
+    <button type="button" class="pagination-nav" [disabled]="currentPage === totalPages - 1" (click)="nextPage()">
 
-      Next
+      <span>Next</span>
 
       <mat-icon>
         chevron_right
@@ -568,4 +371,8 @@
 
   </div>
 
-}
+  }
+
+  }
+
+</div>

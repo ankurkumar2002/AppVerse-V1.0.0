@@ -67,7 +67,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationValidator applicationValidator;
 
     @Override
-    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
+    @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
     public MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail,
             List<MultipartFile> screenshots, List<ScreenshotRequest> metadata, String developerId) {
 
@@ -243,7 +243,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     // }
 
     @Override
-    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
+    @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
     @Transactional
     public MessageResponse updateApplication(String id, UpdateApplicationRequest request,
             MultipartFile thumbnail,
@@ -304,7 +304,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
+    @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
     @Transactional
     public void deleteApplication(String id, String developerId) {
         log.info("Attempting to delete application with ID: {}", id);
@@ -330,6 +330,20 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
+    // @Cacheable(value = "publishedApplicationById")
+    @Transactional(readOnly = true)
+    public ApplicationResponse getPublishedApplicationById(String id) {
+        log.debug("Fetching published application by ID: {}", id);
+
+        Application application = applicationRepository
+                .findByIdAndStatus(id, ApplicationStatus.PUBLISHED)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Application not found with ID: " + id));
+
+        return applicationMapper.toResponse(application);
+    }
+
+    @Override
     @Cacheable("allApplications")
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getAllApplications() {
@@ -339,7 +353,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @CacheEvict(value = { "applicationById", "allApplications" }, allEntries = true)
+    @CacheEvict(value = { "applicationById", "allApplications","publishedApplicationById" }, allEntries = true)
     @Transactional
     public MessageResponse updateApplicationStatus(
             String appId,
