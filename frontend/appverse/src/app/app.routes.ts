@@ -80,6 +80,5 @@ export const routes: Routes = [
       { path: 'update-password', component: EditPasswordComponent, canActivate: [roleGuard(['USER'])] }
     ]
   },
-  // FALLBACK
-  { path: '**', redirectTo: 'landing' }
+  // { path: '**', redirectTo: 'landing' }
 ];

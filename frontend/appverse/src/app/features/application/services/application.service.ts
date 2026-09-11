@@ -51,9 +51,9 @@ export class ApplicationService {
     return this.http.get<ApplicationResponse[]>('http://localhost:9000/api/apps/my-apps');
   }
 
-  getPublushedApplications(page: number, size: number): Observable<PageResponse<ApplicationResponse>>{
+  getPublushedApplications(page: number, size: number): Observable<PageResponse<ApplicationResponse>> {
     const params = new HttpParams().set('page', page.toString()).set('size', size.toString());
-    return this.http.get<PageResponse<ApplicationResponse>>(`${this.baseUrl}/online`, {params})
+    return this.http.get<PageResponse<ApplicationResponse>>(`${this.baseUrl}/online`, { params })
   }
 
 
@@ -90,9 +90,14 @@ export class ApplicationService {
     return this.http.delete<void>(`${this.baseUrl}/${id}`);
   }
 
+  getPublishedApplicationById(id: string): Observable<ApplicationResponse> {
+    return this.http.get<ApplicationResponse>(
+      `${this.baseUrl}/published/${id}`
+    );
+  }
+
   // --- CORRECTED METHOD ---
   getImageAsBlob(type: 'thumbnails' | 'screenshots', filename: string): Observable<Blob> {
-    // We build the URL by adding '/images/...' to our existing baseUrl
     return this.http.get(`${this.baseUrl}/images/${type}/${filename}`, {
       responseType: 'blob'
     });

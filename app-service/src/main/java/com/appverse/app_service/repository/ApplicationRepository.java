@@ -1,6 +1,7 @@
 package com.appverse.app_service.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -18,5 +19,7 @@ public interface ApplicationRepository extends MongoRepository<Application, Stri
     List<Application> findByDeveloperId(String developerId);
 
     Page<Application> findByStatus(ApplicationStatus status, Pageable pageable);
+
+    Optional<Application> findByIdAndStatus(String id, ApplicationStatus published);
     
 }
