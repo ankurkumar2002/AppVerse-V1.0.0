@@ -27,6 +27,7 @@ import { EditUserComponent } from './features/user/components/edit-user/edit-use
 import { EditPasswordComponent } from './features/user/components/edit-password/edit-password.component';
 import { UpdatePersonelDetailsComponent } from './features/developer/components/update-personel-details/update-personel-details.component';
 import { UpdatePasswordComponent } from './features/developer/components/update-password/update-password.component';
+import { CartComponent } from './features/user/components/cart/cart.component';
 
 
 export const routes: Routes = [
@@ -77,7 +78,8 @@ export const routes: Routes = [
       { path: 'apps/:id', component: AppDetailComponent, canActivate: [roleGuard(['USER'])] },
       { path: 'profile', component: UserProfileComponent, canActivate: [roleGuard(['USER'])] },
       { path: 'edit-personal-details', component: EditUserComponent, canActivate: [roleGuard(['USER'])] },
-      { path: 'update-password', component: EditPasswordComponent, canActivate: [roleGuard(['USER'])] }
+      { path: 'update-password', component: EditPasswordComponent, canActivate: [roleGuard(['USER'])] },
+      { path: 'cart', component: CartComponent, canActivate: [roleGuard(['USER'])] }
     ]
   },
   // { path: '**', redirectTo: 'landing' }

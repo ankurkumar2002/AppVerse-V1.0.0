@@ -1,31 +1,18 @@
 <div class="create-app-container">
 
-  <div class="page-header">
-    <div class="page-header-content">
-      <div class="eyebrow">
-        APPLICATION
-      </div>
-
-      <h1>Create New Application</h1>
-
-      <p>
-        Publish your application with the details users need to discover it.
-      </p>
-    </div>
-
-    <button
-      mat-stroked-button
-      type="button"
-      class="back-button"
-      (click)="onCancel()">
-      <mat-icon>arrow_back</mat-icon>
-      Back to Apps
-    </button>
-  </div>
-
   <div class="create-app-layout">
 
     <main class="form-panel">
+
+      <div class="form-heading">
+        <span class="eyebrow">APPLICATION</span>
+
+        <h1>Create New Application</h1>
+
+        <p>
+          Add the information users need to discover and access your application.
+        </p>
+      </div>
 
       <form
         [formGroup]="applicationForm"
@@ -34,15 +21,21 @@
         <section class="form-card">
 
           <div class="section-header">
+
             <div class="section-icon">
               <mat-icon>apps</mat-icon>
             </div>
 
             <div>
               <h2>Core Details</h2>
-              <p>Tell users what your application is about.</p>
+
+              <p>
+                Tell users what your application is about.
+              </p>
             </div>
+
           </div>
+
 
           <div class="form-grid">
 
@@ -52,12 +45,22 @@
 
               <mat-label>Application Name</mat-label>
 
-              <mat-icon matPrefix>apps</mat-icon>
+              <mat-icon matPrefix>
+                apps
+              </mat-icon>
 
               <input
                 matInput
                 formControlName="name"
+                maxlength="100"
                 required />
+
+              <mat-error
+                *ngIf="applicationForm.get('name')?.hasError('required')">
+
+                Application name is required.
+
+              </mat-error>
 
             </mat-form-field>
 
@@ -68,7 +71,9 @@
 
               <mat-label>Category</mat-label>
 
-              <mat-icon matPrefix>category</mat-icon>
+              <mat-icon matPrefix>
+                category
+              </mat-icon>
 
               <mat-select
                 formControlName="categoryId"
@@ -85,6 +90,13 @@
 
               </mat-select>
 
+              <mat-error
+                *ngIf="applicationForm.get('categoryId')?.hasError('required')">
+
+                Category is required.
+
+              </mat-error>
+
             </mat-form-field>
 
           </div>
@@ -96,7 +108,9 @@
 
             <mat-label>Tagline</mat-label>
 
-            <mat-icon matPrefix>short_text</mat-icon>
+            <mat-icon matPrefix>
+              short_text
+            </mat-icon>
 
             <input
               matInput
@@ -116,7 +130,9 @@
 
             <mat-label>Description</mat-label>
 
-            <mat-icon matPrefix>description</mat-icon>
+            <mat-icon matPrefix>
+              description
+            </mat-icon>
 
             <textarea
               matInput
@@ -137,14 +153,19 @@
         <section class="form-card">
 
           <div class="section-header">
+
             <div class="section-icon">
               <mat-icon>payments</mat-icon>
             </div>
 
             <div>
               <h2>Monetization & Version</h2>
-              <p>Configure pricing and application version details.</p>
+
+              <p>
+                Configure pricing and application version details.
+              </p>
             </div>
+
           </div>
 
 
@@ -156,7 +177,9 @@
 
               <mat-label>Monetization Type</mat-label>
 
-              <mat-icon matPrefix>sell</mat-icon>
+              <mat-icon matPrefix>
+                sell
+              </mat-icon>
 
               <mat-select
                 formControlName="monetizationType"
@@ -181,7 +204,9 @@
 
               <mat-label>Version</mat-label>
 
-              <mat-icon matPrefix>history</mat-icon>
+              <mat-icon matPrefix>
+                history
+              </mat-icon>
 
               <input
                 matInput
@@ -194,8 +219,11 @@
 
 
           <div
-            class="form-grid"
-            *ngIf="applicationForm.get('monetizationType')?.value !== 'FREE'">
+            *ngIf="
+              applicationForm.get('monetizationType')?.value !== 'FREE' &&
+              applicationForm.get('monetizationType')?.value !== 'SUBSCRIPTION'
+            "
+            class="form-grid pricing-grid">
 
             <mat-form-field
               appearance="outline"
@@ -203,13 +231,30 @@
 
               <mat-label>Price</mat-label>
 
-              <mat-icon matPrefix>payments</mat-icon>
+              <mat-icon matPrefix>
+                payments
+              </mat-icon>
 
               <input
                 matInput
                 type="number"
                 formControlName="price"
-                min="0.01" />
+                min="0.01"
+                step="0.01" />
+
+              <mat-error
+                *ngIf="applicationForm.get('price')?.hasError('required')">
+
+                Price is required.
+
+              </mat-error>
+
+              <mat-error
+                *ngIf="applicationForm.get('price')?.hasError('min')">
+
+                Price must be greater than zero.
+
+              </mat-error>
 
             </mat-form-field>
 
@@ -220,7 +265,9 @@
 
               <mat-label>Currency</mat-label>
 
-              <mat-icon matPrefix>currency_exchange</mat-icon>
+              <mat-icon matPrefix>
+                currency_exchange
+              </mat-icon>
 
               <mat-select
                 formControlName="currency"
@@ -240,14 +287,168 @@
 
           </div>
 
+        </section>
+
+
+        <section class="form-card">
+
+          <div class="section-header">
+
+            <div class="section-icon">
+              <mat-icon>link</mat-icon>
+            </div>
+
+            <div>
+              <h2>Application Access</h2>
+
+              <p>
+                Provide the URL users will use to access your application.
+              </p>
+            </div>
+
+          </div>
+
 
           <mat-form-field
             appearance="outline"
             class="theme-field full-width">
 
-            <mat-label>Supported Platforms</mat-label>
+            <mat-label>Access URL</mat-label>
 
-            <mat-icon matPrefix>devices</mat-icon>
+            <mat-icon matPrefix>
+              open_in_new
+            </mat-icon>
+
+            <input
+              matInput
+              type="url"
+              formControlName="accessUrl"
+              placeholder="https://your-application.com"
+              required />
+
+            <mat-hint>
+              Required. Users will use this URL to access your application.
+            </mat-hint>
+
+            <mat-error
+              *ngIf="applicationForm.get('accessUrl')?.hasError('required')">
+
+              Access URL is required.
+
+            </mat-error>
+
+            <mat-error
+              *ngIf="applicationForm.get('accessUrl')?.hasError('pattern')">
+
+              Please enter a valid URL starting with http:// or https://.
+
+            </mat-error>
+
+          </mat-form-field>
+
+
+          <div class="form-grid">
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Website URL</mat-label>
+
+              <mat-icon matPrefix>
+                language
+              </mat-icon>
+
+              <input
+                matInput
+                type="url"
+                formControlName="websiteUrl"
+                placeholder="https://your-website.com" />
+
+              <mat-hint>
+                Optional application website.
+              </mat-hint>
+
+            </mat-form-field>
+
+
+            <mat-form-field
+              appearance="outline"
+              class="theme-field">
+
+              <mat-label>Support URL</mat-label>
+
+              <mat-icon matPrefix>
+                support_agent
+              </mat-icon>
+
+              <input
+                matInput
+                type="url"
+                formControlName="supportUrl"
+                placeholder="https://your-website.com/support" />
+
+              <mat-hint>
+                Optional support or help page.
+              </mat-hint>
+
+            </mat-form-field>
+
+          </div>
+
+
+          <mat-form-field
+            appearance="outline"
+            class="theme-field full-width">
+
+            <mat-label>Tags</mat-label>
+
+            <mat-icon matPrefix>
+              sell
+            </mat-icon>
+
+            <input
+              matInput
+              formControlName="tags"
+              placeholder="productivity, utility, business" />
+
+            <mat-hint>
+              Separate multiple tags with commas.
+            </mat-hint>
+
+          </mat-form-field>
+
+        </section>
+
+
+        <section class="form-card">
+
+          <div class="section-header">
+
+            <div class="section-icon">
+              <mat-icon>devices</mat-icon>
+            </div>
+
+            <div>
+              <h2>Supported Platforms</h2>
+
+              <p>
+                Select the platforms your application supports.
+              </p>
+            </div>
+
+          </div>
+
+
+          <mat-form-field
+            appearance="outline"
+            class="theme-field full-width">
+
+            <mat-label>Platforms</mat-label>
+
+            <mat-icon matPrefix>
+              devices
+            </mat-icon>
 
             <mat-select
               formControlName="platforms"
@@ -277,14 +478,19 @@
         <section class="form-card">
 
           <div class="section-header">
+
             <div class="section-icon">
               <mat-icon>perm_media</mat-icon>
             </div>
 
             <div>
-              <h2>Promotional Media</h2>
-              <p>Add images that will appear on your application listing.</p>
+              <h2>Application Media</h2>
+
+              <p>
+                Add a thumbnail and screenshots to represent your application.
+              </p>
             </div>
+
           </div>
 
 
@@ -292,72 +498,90 @@
 
             <div class="media-upload-card">
 
-              <div class="media-label">
-                <mat-icon>image</mat-icon>
+              <div class="media-card-header">
 
                 <div>
-                  <strong>App Thumbnail</strong>
-                  <span>Recommended: 512 × 512px</span>
+                  <h3>Application Thumbnail</h3>
+
+                  <p>
+                    This image represents your application in listings.
+                  </p>
                 </div>
-              </div>
 
-
-              <div
-                class="thumbnail-preview"
-                (click)="thumbnailInput.click()"
-                tabindex="0">
-
-                <ng-container
-                  *ngIf="thumbnailPreviewUrl; else thumbnailPlaceholder">
-
-                  <img
-                    [src]="thumbnailPreviewUrl"
-                    alt="Application thumbnail preview" />
-
-                  <div class="preview-overlay">
-                    <mat-icon>edit</mat-icon>
-                    <span>Change image</span>
-                  </div>
-
-                </ng-container>
-
-
-                <ng-template #thumbnailPlaceholder>
-
-                  <div class="thumbnail-placeholder">
-
-                    <div class="upload-icon">
-                      <mat-icon>cloud_upload</mat-icon>
-                    </div>
-
-                    <strong>Upload thumbnail</strong>
-
-                    <span>
-                      PNG or JPG
-                    </span>
-
-                  </div>
-
-                </ng-template>
+                <span class="required-badge">
+                  Required
+                </span>
 
               </div>
 
 
-              <input
-                type="file"
-                #thumbnailInput
-                hidden
-                accept="image/png,image/jpeg"
-                (change)="onThumbnailSelected($event)" />
+              <div
+                class="thumbnail-upload-area"
+                [class.has-preview]="thumbnailPreviewUrl">
+
+                <img
+                  *ngIf="thumbnailPreviewUrl"
+                  [src]="thumbnailPreviewUrl"
+                  alt="Application thumbnail preview"
+                  class="thumbnail-preview" />
+
+                <div
+                  *ngIf="!thumbnailPreviewUrl"
+                  class="upload-placeholder">
+
+                  <div class="upload-icon">
+                    <mat-icon>image</mat-icon>
+                  </div>
+
+                  <strong>
+                    Add application thumbnail
+                  </strong>
+
+                  <span>
+                    PNG or JPEG
+                  </span>
+
+                </div>
+
+                <button
+                  mat-stroked-button
+                  type="button"
+                  class="upload-button"
+                  (click)="thumbnailInput.click()"
+                  [disabled]="isUploading">
+
+                  <mat-icon>
+                    cloud_upload
+                  </mat-icon>
+
+                  {{ thumbnailPreviewUrl ? 'Change Thumbnail' : 'Upload Thumbnail' }}
+
+                </button>
+
+                <input
+                  type="file"
+                  #thumbnailInput
+                  hidden
+                  accept="image/png,image/jpeg"
+                  (change)="onThumbnailSelected($event)" />
+
+              </div>
 
 
               <div
-                class="upload-progress"
-                *ngIf="isUploadingThumbnail">
+                *ngIf="isUploadingThumbnail"
+                class="upload-progress">
 
                 <div class="progress-info">
-                  <span>Uploading thumbnail...</span>
-                  <span>{{ thumbnailUploadProgress }}%</span>
+
+                  <span>
+                    Uploading thumbnail...
+                  </span>
+
+                  <span>
+                    {{ thumbnailUploadProgress }}%
+                  </span>
+
                 </div>
 
                 <mat-progress-bar
@@ -370,15 +594,22 @@
             </div>
 
 
-            <div class="media-upload-card screenshots-card">
+            <div class="media-upload-card">
 
-              <div class="media-label">
-                <mat-icon>collections</mat-icon>
+              <div class="media-card-header">
 
                 <div>
-                  <strong>Screenshots</strong>
-                  <span>Upload multiple images</span>
+                  <h3>Application Screenshots</h3>
+
+                  <p>
+                    Show users the important features of your application.
+                  </p>
                 </div>
+
+                <span class="optional-badge">
+                  Optional
+                </span>
+
               </div>
 
 
@@ -389,7 +620,10 @@
                 (click)="screenshotsInput.click()"
                 [disabled]="isUploading">
 
-                <mat-icon>cloud_upload</mat-icon>
+                <mat-icon>
+                  cloud_upload
+                </mat-icon>
+
                 Upload Screenshots
 
               </button>
@@ -405,12 +639,19 @@
 
 
               <div
-                class="upload-progress"
-                *ngIf="isUploadingScreenshots">
+                *ngIf="isUploadingScreenshots"
+                class="upload-progress">
 
                 <div class="progress-info">
-                  <span>Uploading screenshots...</span>
-                  <span>{{ screenshotUploadProgress }}%</span>
+
+                  <span>
+                    Uploading screenshots...
+                  </span>
+
+                  <span>
+                    {{ screenshotUploadProgress }}%
+                  </span>
+
                 </div>
 
                 <mat-progress-bar
@@ -422,12 +663,12 @@
 
 
               <div
-                class="screenshot-list"
-                *ngIf="screenshotFiles.length > 0">
+                *ngIf="screenshotFiles.length > 0"
+                class="screenshot-list">
 
                 <div
-                  class="screenshot-item"
-                  *ngFor="let file of screenshotFiles; let i = index">
+                  *ngFor="let file of screenshotFiles; let i = index"
+                  class="screenshot-item">
 
                   <div class="screenshot-preview">
 
@@ -461,11 +702,12 @@
                     mat-icon-button
                     type="button"
                     class="remove-file-button"
-                    matTooltip="Remove screenshot"
                     (click)="removeScreenshot(i)"
                     [disabled]="isUploading">
 
-                    <mat-icon>close</mat-icon>
+                    <mat-icon>
+                      close
+                    </mat-icon>
 
                   </button>
 
@@ -475,12 +717,16 @@
 
 
               <div
-                class="empty-media"
-                *ngIf="screenshotFiles.length === 0">
+                *ngIf="screenshotFiles.length === 0"
+                class="empty-media">
 
-                <mat-icon>photo_library</mat-icon>
+                <mat-icon>
+                  photo_library
+                </mat-icon>
 
-                <span>No screenshots uploaded yet.</span>
+                <span>
+                  No screenshots uploaded yet.
+                </span>
 
               </div>
 
@@ -509,10 +755,14 @@
             mat-flat-button
             type="submit"
             class="create-button"
-            [disabled]="applicationForm.invalid || !thumbnailFile || isUploading">
+            [disabled]="
+              applicationForm.invalid ||
+              !thumbnailFile ||
+              isUploading
+            ">
 
             <mat-icon *ngIf="!isUploading">
-              add
+              rocket_launch
             </mat-icon>
 
             <mat-spinner
@@ -521,7 +771,7 @@
             </mat-spinner>
 
             <span>
-              {{ isUploading ? 'Uploading...' : 'Create Application' }}
+              {{ isUploading ? 'Creating...' : 'Create Application' }}
             </span>
 
           </button>
@@ -535,12 +785,12 @@
 
     <aside class="info-panel">
 
-      <div class="info-glow"></div>
-
       <div class="info-content">
 
         <div class="info-icon">
-          <mat-icon>rocket_launch</mat-icon>
+          <mat-icon>
+            rocket_launch
+          </mat-icon>
         </div>
 
         <span class="info-eyebrow">
@@ -554,7 +804,7 @@
 
         <p>
           Give users the information they need to understand your
-          application and decide whether it is right for them.
+          application and access it easily.
         </p>
 
 
@@ -563,12 +813,19 @@
           <div class="check-item">
 
             <div class="check-icon">
-              <mat-icon>check</mat-icon>
+              <mat-icon>
+                check
+              </mat-icon>
             </div>
 
             <div>
-              <strong>Clear identity</strong>
-              <span>Name, category and tagline are easy to understand.</span>
+              <strong>
+                Clear identity
+              </strong>
+
+              <span>
+                Name, category and tagline make your application easy to understand.
+              </span>
             </div>
 
           </div>
@@ -577,12 +834,19 @@
           <div class="check-item">
 
             <div class="check-icon">
-              <mat-icon>check</mat-icon>
+              <mat-icon>
+                check
+              </mat-icon>
             </div>
 
             <div>
-              <strong>Strong visuals</strong>
-              <span>Use a clean thumbnail and useful screenshots.</span>
+              <strong>
+                Strong visuals
+              </strong>
+
+              <span>
+                Use a clean thumbnail and useful screenshots.
+              </span>
             </div>
 
           </div>
@@ -591,12 +855,19 @@
           <div class="check-item">
 
             <div class="check-icon">
-              <mat-icon>check</mat-icon>
+              <mat-icon>
+                check
+              </mat-icon>
             </div>
 
             <div>
-              <strong>Accurate details</strong>
-              <span>Keep pricing, version and platform information correct.</span>
+              <strong>
+                Direct access
+              </strong>
+
+              <span>
+                Every application has a URL users can use to access it.
+              </span>
             </div>
 
           </div>
@@ -607,16 +878,22 @@
         <div class="tip-box">
 
           <div class="tip-icon">
-            <mat-icon>lightbulb</mat-icon>
+            <mat-icon>
+              lightbulb
+            </mat-icon>
           </div>
 
           <div>
-            <strong>Tip</strong>
+
+            <strong>
+              Tip
+            </strong>
 
             <p>
-              Applications with clear descriptions and high-quality
-              screenshots are easier for users to evaluate.
+              Applications with clear descriptions, useful visuals and a working
+              access URL are easier for users to evaluate.
             </p>
+
           </div>
 
         </div>

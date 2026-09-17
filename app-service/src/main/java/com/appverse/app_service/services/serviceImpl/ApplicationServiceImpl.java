@@ -67,7 +67,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     private final ApplicationValidator applicationValidator;
 
     @Override
-    @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
+    // @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
     public MessageResponse createApplication(ApplicationRequest request, MultipartFile thumbnail,
             List<MultipartFile> screenshots, List<ScreenshotRequest> metadata, String developerId) {
 
@@ -243,7 +243,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     // }
 
     @Override
-    @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
+    // @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
     @Transactional
     public MessageResponse updateApplication(String id, UpdateApplicationRequest request,
             MultipartFile thumbnail,
@@ -304,7 +304,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
+    // @CacheEvict(value = { "applicationById","publishedApplicationById", "allApplications" }, allEntries = true)
     @Transactional
     public void deleteApplication(String id, String developerId) {
         log.info("Attempting to delete application with ID: {}", id);
@@ -320,7 +320,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @Cacheable(value = "applicationById", key = "#id")
+    // @Cacheable(value = "applicationById", key = "#id")
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationById(String id) {
         log.debug("Fetching application by ID: {}", id);
@@ -344,7 +344,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @Cacheable("allApplications")
+    // @Cacheable("allApplications")
     @Transactional(readOnly = true)
     public List<ApplicationResponse> getAllApplications() {
         log.debug("Fetching all applications.");
@@ -353,7 +353,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     }
 
     @Override
-    @CacheEvict(value = { "applicationById", "allApplications","publishedApplicationById" }, allEntries = true)
+    // @CacheEvict(value = { "applicationById", "allApplications","publishedApplicationById" }, allEntries = true)
     @Transactional
     public MessageResponse updateApplicationStatus(
             String appId,
