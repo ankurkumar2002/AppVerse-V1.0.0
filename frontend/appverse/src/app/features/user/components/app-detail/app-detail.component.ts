@@ -1,436 +1,249 @@
-import { CommonModule } from '@angular/common';
 import { Component, OnDestroy, OnInit } from '@angular/core';
-import {
-  ActivatedRoute,
-  Router,
-  RouterModule
-} from '@angular/router';
-import { MatIconModule } from '@angular/material/icon';
-import {
-  MatSnackBar,
-  MatSnackBarModule
-} from '@angular/material/snack-bar';
+import { CommonModule } from '@angular/common';
+import { ActivatedRoute, Router } from '@angular/router';
+import { Subscription } from 'rxjs';
 
-import { ApplicationService } from '../../../application/services/application.service';
 import { ApplicationResponse } from '../../../application/models/application-response';
-import {
-  Screenshot
-} from '../../../application/models/application-detail';
+import { ApplicationService } from '../../../application/services/application.service';
 import { CartService } from '../../../cart/services/cart.service';
+
+interface ScreenshotView {
+  id: string;
+  filename: string;
+  caption: string;
+  order: number;
+  imageUrl: string;
+  loading: boolean;
+  error: boolean;
+}
 
 @Component({
   selector: 'app-app-detail',
   standalone: true,
-  imports: [
-    CommonModule,
-    RouterModule,
-    MatIconModule,
-    MatSnackBarModule
-  ],
+  imports: [CommonModule],
   templateUrl: './app-detail.component.html',
-  styleUrl: './app-detail.component.scss'
+  styleUrls: ['./app-detail.component.scss']
 })
 export class AppDetailComponent implements OnInit, OnDestroy {
 
   application: ApplicationResponse | null = null;
 
-  isLoading = true;
+  loading = true;
+  error = '';
 
-  imageLoading = true;
-  imageLoadFailed = false;
+  thumbnailUrl = '';
+  thumbnailLoading = false;
+  thumbnailError = false;
 
-  cartLoading = false;
+  screenshots: ScreenshotView[] = [];
+
   isInCart = false;
+  cartLoading = false;
 
-  thumbnailUrl: string | null = null;
-
-  /*
-   * Screenshot blob URLs
-   * Key = screenshot._id
-   */
-  screenshotUrls: {
-    [key: string]: string
-  } = {};
-
-  screenshotLoading: {
-    [key: string]: boolean
-  } = {};
-
-  screenshotFailed: {
-    [key: string]: boolean
-  } = {};
-
-  /*
-   * Demo rating
-   */
-  readonly demoRating = 4.5;
-
-  /*
-   * Image lightbox
-   */
-  isImageViewerOpen = false;
-
-  selectedImageUrl: string | null = null;
-
+  imageViewerOpen = false;
+  selectedImageUrl = '';
   selectedImageAlt = '';
 
-  private applicationId: string | null = null;
-
+  private routeSubscription?: Subscription;
+  private objectUrls: string[] = [];
 
   constructor(
     private route: ActivatedRoute,
     private router: Router,
     private applicationService: ApplicationService,
-    private cartService: CartService,
-    private snackBar: MatSnackBar
-  ) { }
-
+    private cartService: CartService
+  ) {}
 
   ngOnInit(): void {
+    this.routeSubscription = this.route.paramMap.subscribe(params => {
+      const id = params.get('id');
 
-    this.applicationId =
-      this.route.snapshot.paramMap.get('id');
+      if (!id) {
+        this.loading = false;
+        this.error = 'Application ID is missing.';
+        return;
+      }
 
-    if (!this.applicationId) {
-
-      this.showMessage(
-        'Application ID is missing'
-      );
-
-      this.router.navigate([
-        '/user/apps'
-      ]);
-
-      return;
-    }
-
-    this.loadApplication(
-      this.applicationId
-    );
-
-    this.loadCart();
+      this.loadApplication(id);
+    });
   }
 
+  ngOnDestroy(): void {
+    this.routeSubscription?.unsubscribe();
 
-  /*
-   * ==========================================
-   * APPLICATION
-   * ==========================================
-   */
+    this.objectUrls.forEach(url => {
+      URL.revokeObjectURL(url);
+    });
+
+    this.objectUrls = [];
+  }
 
   loadApplication(id: string): void {
+    this.loading = true;
+    this.error = '';
+    this.application = null;
+    this.screenshots = [];
+    this.thumbnailUrl = '';
+    this.thumbnailError = false;
+    this.thumbnailLoading = false;
+    this.isInCart = false;
 
-    this.isLoading = true;
+    this.applicationService.getPublishedApplicationById(id).subscribe({
+      next: application => {
+        this.application = application;
+        this.loading = false;
 
-    this.applicationService
-      .getPublishedApplicationById(id)
-      .subscribe({
+        this.loadThumbnail();
+        this.prepareScreenshots();
+        this.checkCartStatus();
+      },
+      error: error => {
+        console.error('Failed to load application:', error);
 
-        next: (response: ApplicationResponse) => {
+        this.loading = false;
 
-          this.application = response;
-
-          this.isLoading = false;
-
-          this.loadThumbnail(response);
-
-          this.loadScreenshots(response);
-        },
-
-        error: (error) => {
-
-          console.error(
-            'Error loading application:',
-            error
-          );
-
-          this.isLoading = false;
-
-          this.showMessage(
-            'Application not found or no longer published'
-          );
-
-          this.router.navigate([
-            '/user/apps'
-          ]);
-        }
-      });
-  }
-
-
-  /*
-   * ==========================================
-   * THUMBNAIL
-   * ==========================================
-   */
-
-  loadThumbnail(
-    application: ApplicationResponse
-  ): void {
-
-    this.imageLoading = true;
-    this.imageLoadFailed = false;
-
-    if (!application.thumbnailUrl) {
-
-      this.imageLoading = false;
-      this.imageLoadFailed = true;
-
-      return;
-    }
-
-    const filename =
-      this.extractFileName(
-        application.thumbnailUrl
-      );
-
-    if (!filename) {
-
-      this.imageLoading = false;
-      this.imageLoadFailed = true;
-
-      return;
-    }
-
-    this.applicationService
-      .getImageAsBlob(
-        'thumbnails',
-        filename
-      )
-      .subscribe({
-
-        next: (blob: Blob) => {
-
-          if (this.thumbnailUrl) {
-
-            URL.revokeObjectURL(
-              this.thumbnailUrl
-            );
-          }
-
-          this.thumbnailUrl =
-            URL.createObjectURL(blob);
-
-          this.imageLoading = false;
-          this.imageLoadFailed = false;
-        },
-
-        error: (error) => {
-
-          console.error(
-            `Error loading thumbnail '${filename}':`,
-            error
-          );
-
-          this.imageLoading = false;
-          this.imageLoadFailed = true;
-        }
-      });
-  }
-
-
-  /*
-   * ==========================================
-   * SCREENSHOTS
-   * ==========================================
-   */
-
-  loadScreenshots(application: any): void {
-
-    this.screenshotUrls = {};
-    this.screenshotLoading = {};
-    this.screenshotFailed = {};
-
-    if (
-      !application?.screenshots ||
-      application.screenshots.length === 0
-    ) {
-      return;
-    }
-
-    application.screenshots.forEach(
-      (screenshot: any, index: number) => {
-
-        const imagePath =
-          screenshot?.imageUrl ||
-          screenshot?.url;
-
-        if (!imagePath) {
-
-          this.screenshotFailed[index] = true;
-          this.screenshotLoading[index] = false;
-
-          return;
-        }
-
-        const filename =
-          this.extractFileName(imagePath);
-
-        if (!filename) {
-
-          this.screenshotFailed[index] = true;
-          this.screenshotLoading[index] = false;
-
-          return;
-        }
-
-        this.screenshotLoading[index] = true;
-        this.screenshotFailed[index] = false;
-
-        this.applicationService
-          .getImageAsBlob(
-            'screenshots',
-            filename
-          )
-          .subscribe({
-
-            next: (blob: Blob) => {
-
-              if (this.screenshotUrls[index]) {
-                URL.revokeObjectURL(
-                  this.screenshotUrls[index]
-                );
-              }
-
-              this.screenshotUrls[index] =
-                URL.createObjectURL(blob);
-
-              this.screenshotLoading[index] = false;
-              this.screenshotFailed[index] = false;
-            },
-
-            error: (error) => {
-
-              console.error(
-                `Failed to load screenshot ${index}:`,
-                error
-              );
-
-              this.screenshotLoading[index] = false;
-              this.screenshotFailed[index] = true;
-            }
-          });
+        this.error =
+          error?.error?.message ||
+          error?.message ||
+          'Unable to load application details.';
       }
-    );
+    });
   }
 
-
-  /*
-   * ==========================================
-   * FILE NAME
-   * ==========================================
-   */
-
-  extractFileName(
-    fullPath: string
-  ): string {
-
-    if (!fullPath) {
-      return '';
+  loadThumbnail(): void {
+    if (!this.application?.thumbnailUrl) {
+      this.thumbnailError = true;
+      return;
     }
 
-    return (
-      fullPath
-        .split('/')
-        .pop()
-        ?.split('?')[0]
-        .split('#')[0] || ''
-    );
-  }
+    this.thumbnailLoading = true;
+    this.thumbnailError = false;
 
-
-  /*
-   * ==========================================
-   * IMAGE VIEWER
-   * ==========================================
-   */
-
-  openImageViewer(
-    imageUrl: string,
-    altText: string
-  ): void {
-
-    this.selectedImageUrl =
-      imageUrl;
-
-    this.selectedImageAlt =
-      altText;
-
-    this.isImageViewerOpen = true;
-
-    document.body.style.overflow =
-      'hidden';
-  }
-
-
-  closeImageViewer(): void {
-
-    this.isImageViewerOpen = false;
-
-    this.selectedImageUrl = null;
-
-    this.selectedImageAlt = '';
-
-    document.body.style.overflow =
-      '';
-  }
-
-
-  onImageViewerKeydown(
-    event: KeyboardEvent
-  ): void {
-
-    if (
-      event.key === 'Escape' &&
-      this.isImageViewerOpen
-    ) {
-
-      this.closeImageViewer();
-    }
-  }
-
-
-  /*
-   * ==========================================
-   * CART
-   * ==========================================
-   */
-
-  loadCart(): void {
-
-    this.cartService
-      .getCart()
+    this.applicationService
+      .getImageAsBlob('thumbnails', this.application.thumbnailUrl)
       .subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
 
-        next: (cart) => {
-
-          if (!cart?.items) {
-
-            this.isInCart = false;
-
-            return;
-          }
-
-          this.isInCart =
-            cart.items.some(
-              (item: any) =>
-                item.applicationId ===
-                this.applicationId
-            );
+          this.objectUrls.push(url);
+          this.thumbnailUrl = url;
+          this.thumbnailLoading = false;
         },
+        error: error => {
+          console.error('Failed to load thumbnail:', error);
 
-        error: () => {
-
-          this.isInCart = false;
+          this.thumbnailLoading = false;
+          this.thumbnailError = true;
         }
       });
   }
 
+  prepareScreenshots(): void {
+    const sourceScreenshots = this.application?.screenshots;
+
+    if (!Array.isArray(sourceScreenshots)) {
+      this.screenshots = [];
+      return;
+    }
+
+    this.screenshots = sourceScreenshots.map((screenshot, index) => ({
+      id: String(screenshot?.id ?? index),
+      filename: screenshot?.filename ?? '',
+      caption:
+        screenshot?.caption ||
+        screenshot?.filename ||
+        `Screenshot ${index + 1}`,
+      order: screenshot?.order ?? index,
+      imageUrl: '',
+      loading: false,
+      error: false
+    }));
+
+    this.screenshots.forEach((screenshot, index) => {
+      this.loadScreenshot(
+        screenshot,
+        sourceScreenshots[index]
+      );
+    });
+  }
+
+  loadScreenshot(
+    view: ScreenshotView,
+    source: any
+  ): void {
+    const imagePath =
+      source?.url ||
+      source?.imageUrl ||
+      source?.filename ||
+      '';
+
+    if (!imagePath) {
+      view.error = true;
+      return;
+    }
+
+    view.loading = true;
+    view.error = false;
+
+    this.applicationService
+      .getImageAsBlob('screenshots', imagePath)
+      .subscribe({
+        next: blob => {
+          const url = URL.createObjectURL(blob);
+
+          this.objectUrls.push(url);
+          view.imageUrl = url;
+          view.loading = false;
+        },
+        error: error => {
+          console.error(
+            `Failed to load screenshot ${view.id}:`,
+            error
+          );
+
+          view.loading = false;
+          view.error = true;
+        }
+      });
+  }
+
+  checkCartStatus(): void {
+    if (!this.application?.id) {
+      this.isInCart = false;
+      return;
+    }
+
+    if (this.isFreeApplication()) {
+      this.isInCart = false;
+      return;
+    }
+
+    this.cartService.getCart().subscribe({
+      next: cart => {
+        const items = Array.isArray(cart?.items)
+          ? cart.items
+          : [];
+
+        this.isInCart = items.some(
+          (item: any) =>
+            item?.applicationId === this.application?.id
+        );
+      },
+      error: error => {
+        console.error(
+          'Failed to check cart status:',
+          error
+        );
+
+        this.isInCart = false;
+      }
+    });
+  }
 
   addToCart(): void {
-
     if (
-      !this.applicationId ||
+      !this.application?.id ||
+      !this.isPaidApplication() ||
       this.cartLoading
     ) {
       return;
@@ -440,49 +253,29 @@ export class AppDetailComponent implements OnInit, OnDestroy {
 
     this.cartService
       .addToCart({
-        applicationId: this.applicationId,
+        applicationId: this.application.id,
         quantity: 1
       })
       .subscribe({
-
         next: () => {
-
           this.isInCart = true;
-
           this.cartLoading = false;
-
-          this.showMessage(
-            'Application added to cart'
-          );
         },
-
-        error: (error) => {
+        error: error => {
+          console.error(
+            'Failed to add application to cart:',
+            error
+          );
 
           this.cartLoading = false;
-
-          if (error?.status === 409) {
-
-            this.isInCart = true;
-
-            this.showMessage(
-              'Application is already in your cart'
-            );
-
-          } else {
-
-            this.showMessage(
-              'Unable to add application to cart'
-            );
-          }
         }
       });
   }
 
-
   removeFromCart(): void {
-
     if (
-      !this.applicationId ||
+      !this.application?.id ||
+      !this.isInCart ||
       this.cartLoading
     ) {
       return;
@@ -491,42 +284,60 @@ export class AppDetailComponent implements OnInit, OnDestroy {
     this.cartLoading = true;
 
     this.cartService
-      .removeItemFromCart(
-        this.applicationId
-      )
+      .removeItemFromCart(this.application.id)
       .subscribe({
-
         next: () => {
-
           this.isInCart = false;
-
           this.cartLoading = false;
-
-          this.showMessage(
-            'Application removed from cart'
-          );
         },
-
-        error: () => {
+        error: error => {
+          console.error(
+            'Failed to remove application from cart:',
+            error
+          );
 
           this.cartLoading = false;
-
-          this.showMessage(
-            'Unable to remove application from cart'
-          );
         }
       });
   }
 
+  goToCart(): void {
+    this.router.navigate(['/user/cart']);
+  }
 
-  /*
-   * ==========================================
-   * EXTERNAL LINKS
-   * ==========================================
-   */
+  goBack(): void {
+    this.router.navigate(['/user/apps']);
+  }
+
+  visitApplication(): void {
+    if (
+      !this.application ||
+      !this.isFreeApplication() ||
+      !this.application.accessUrl
+    ) {
+      return;
+    }
+
+    window.open(
+      this.application.accessUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+  visitWebsite(): void {
+    if (!this.application?.websiteUrl) {
+      return;
+    }
+
+    window.open(
+      this.application.websiteUrl,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
 
   visitSupport(): void {
-
     if (!this.application?.supportUrl) {
       return;
     }
@@ -538,106 +349,116 @@ export class AppDetailComponent implements OnInit, OnDestroy {
     );
   }
 
-
-  visitApplication(): void {
-
-    if (!this.application?.accessUrl) {
-
-      this.showMessage(
-        'Application access URL is not available'
-      );
-
-      return;
-    }
-
-    window.open(
-      this.application.accessUrl,
-      '_blank',
-      'noopener,noreferrer'
-    );
-  }
-
-
-  visitWebsite(): void {
-
-    if (!this.application?.websiteUrl) {
-
-      this.showMessage(
-        'Application website is not available'
-      );
-
-      return;
-    }
-
-    window.open(
-      this.application.websiteUrl,
-      '_blank',
-      'noopener,noreferrer'
-    );
-  }
-
-
-  /*
-   * ==========================================
-   * NAVIGATION
-   * ==========================================
-   */
-
-  goBack(): void {
-
-    this.router.navigate([
-      '/user/apps'
-    ]);
-  }
-
-
-  /*
-   * ==========================================
-   * MESSAGES
-   * ==========================================
-   */
-
-  showMessage(
-    message: string
+  openImage(
+    imageUrl: string,
+    alt: string
   ): void {
+    if (!imageUrl) {
+      return;
+    }
 
-    this.snackBar.open(
-      message,
-      'Close',
-      {
-        duration: 3000,
-        horizontalPosition: 'right',
-        verticalPosition: 'bottom'
-      }
+    this.selectedImageUrl = imageUrl;
+    this.selectedImageAlt = alt;
+    this.imageViewerOpen = true;
+  }
+
+  closeImageViewer(): void {
+    this.imageViewerOpen = false;
+    this.selectedImageUrl = '';
+    this.selectedImageAlt = '';
+  }
+
+  isFreeApplication(): boolean {
+    return this.application?.monetizationType === 'FREE';
+  }
+
+  isPaidApplication(): boolean {
+    const type = this.application?.monetizationType;
+
+    return (
+      type === 'PAID' ||
+      type === 'SUBSCRIPTION'
     );
   }
 
+  getMonetizationLabel(): string {
+    const type = this.application?.monetizationType;
 
-  /*
-   * ==========================================
-   * CLEANUP
-   * ==========================================
-   */
+    switch (type) {
+      case 'FREE':
+        return 'Free';
 
-  ngOnDestroy(): void {
+      case 'PAID':
+        return 'Paid';
 
-    if (this.thumbnailUrl) {
+      case 'SUBSCRIPTION':
+        return 'Subscription';
 
-      URL.revokeObjectURL(
-        this.thumbnailUrl
-      );
+      default:
+        return 'Application';
+    }
+  }
+
+  getPriceLabel(): string {
+    if (!this.application) {
+      return '';
     }
 
-    Object.values(
-      this.screenshotUrls
-    ).forEach(
-      (url: string) => {
+    if (this.application.monetizationType === 'FREE') {
+      return 'Free';
+    }
 
-        URL.revokeObjectURL(url);
-      }
+    const price = this.application.price ?? 0;
+
+    if (price === 0) {
+      return 'Contact developer';
+    }
+
+    return `${this.application.currency || 'INR'} ${price}`;
+  }
+
+  getRatingStars(): number[] {
+    return [1, 2, 3, 4, 5];
+  }
+
+  isFilledStar(star: number): boolean {
+    const rating =
+      this.application?.averageRating ?? 0;
+
+    return star <= Math.round(rating);
+  }
+
+  getRating(): string {
+    const rating =
+      this.application?.averageRating ?? 0;
+
+    return rating > 0
+      ? rating.toFixed(1)
+      : 'No rating';
+  }
+
+  getRatingCount(): number {
+    return this.application?.ratingCount ?? 0;
+  }
+
+  getDeveloperName(): string {
+    return (
+      this.application?.developerName ||
+      'Unknown developer'
     );
+  }
 
-    document.body.style.overflow =
-      '';
+  getCategoryName(): string {
+    return (
+      this.application?.categoryName ||
+      'Uncategorized'
+    );
+  }
+
+  getVersion(): string {
+    return (
+      this.application?.version ||
+      'N/A'
+    );
   }
 }

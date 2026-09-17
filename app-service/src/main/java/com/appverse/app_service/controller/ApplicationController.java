@@ -93,8 +93,18 @@ public class ApplicationController {
         System.out.println("Metadata list created: " + (metadata != null));
         System.out.println("Metadata list size: " + (metadata != null ? metadata.size() : 0));
 
-        return ResponseEntity
-                .ok(applicationService.createApplication(request, thumbnail, screenshots, metadata, jwt.getSubject()));
+        logger.info("CONTROLLER: About to call applicationService.createApplication()");
+
+        MessageResponse response = applicationService.createApplication(
+                request,
+                thumbnail,
+                screenshots,
+                metadata,
+                jwt.getSubject());
+
+        logger.info("CONTROLLER: applicationService.createApplication() returned");
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}")
@@ -161,7 +171,7 @@ public class ApplicationController {
     @PreAuthorize("hasRole('USER')")
     public ResponseEntity<ApplicationResponse> getPublishedApplication(
             @PathVariable String id) {
-                log.info("Request is coming to getpublished applications with id: "+ id);
+        log.info("Request is coming to getpublished applications with id: " + id);
         return ResponseEntity.ok(
                 applicationService.getPublishedApplicationById(id));
     }

@@ -1,17 +1,13 @@
 import {
   Component,
   OnInit,
-  OnDestroy,
-  ViewChild
+  OnDestroy
 } from '@angular/core';
 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 
-import { MatTableDataSource } from '@angular/material/table';
-import { MatPaginator } from '@angular/material/paginator';
-import { MatSort } from '@angular/material/sort';
 import { MatIconModule } from '@angular/material/icon';
 
 import { ApplicationService } from '../../../application/services/application.service';
@@ -36,31 +32,13 @@ import { Category } from '../../../../models/category';
 })
 export class AppListComponent implements OnInit, OnDestroy {
 
-  displayedColumns = [
-    'name',
-    'description',
-    'version',
-    'categoryId',
-    'currency',
-    'price',
-    'platforms',
-    'accessUrl',
-    'websiteUrl'
-  ];
+  applications: ApplicationResponse[] = [];
 
-  dataSource = new MatTableDataSource<ApplicationResponse>();
-
-  isLoading = false;
-
-  @ViewChild(MatPaginator)
-  paginator!: MatPaginator;
-
-  @ViewChild(MatSort)
-  sort!: MatSort;
-
-  allApplications: ApplicationResponse[] = [];
+  filteredApplications: ApplicationResponse[] = [];
 
   categories: Category[] = [];
+
+  isLoading = false;
 
   selectedCategoryId = '';
 
@@ -87,10 +65,11 @@ export class AppListComponent implements OnInit, OnDestroy {
   imageLoadFailed: Record<string, boolean> = {};
 
   constructor(
-    private appService: ApplicationService,
+    private applicationService: ApplicationService,
     private cartService: CartService,
-    private categoryService: CategoryService
-  ) { }
+    private categoryService: CategoryService,
+    private router: Router
+  ) {}
 
   ngOnInit(): void {
     this.loadApplications();
@@ -101,45 +80,55 @@ export class AppListComponent implements OnInit, OnDestroy {
   loadApplications(): void {
     this.isLoading = true;
 
-    this.appService
+    this.applicationService
       .getPublushedApplications(
         this.currentPage,
         this.pageSize
       )
       .subscribe({
         next: (data) => {
-          this.allApplications = [...data.content];
 
-          this.totalPages = data.totalPages;
+          this.applications = [
+            ...data.content
+          ];
+
+          this.totalPages =
+            data.totalPages;
 
           this.pages = Array.from(
-            { length: this.totalPages },
+            {
+              length: this.totalPages
+            },
             (_, index) => index
           );
 
           this.applyFilters();
 
-          data.content.forEach(app => {
-            this.loadThumbnail(app);
-          });
+          this.applications.forEach(
+            app => this.loadThumbnail(app)
+          );
 
           this.isLoading = false;
         },
 
-        error: (err) => {
+        error: (error) => {
+
           console.error(
             'Failed to load applications:',
-            err
+            error
           );
 
-          this.allApplications = [];
-          this.dataSource.data = [];
+          this.applications = [];
+
+          this.filteredApplications = [];
+
           this.isLoading = false;
         }
       });
   }
 
   loadCategories(): void {
+
     this.categoryService
       .getAll()
       .subscribe({
@@ -147,10 +136,11 @@ export class AppListComponent implements OnInit, OnDestroy {
           this.categories = categories;
         },
 
-        error: (err) => {
+        error: (error) => {
+
           console.error(
             'Failed to load categories:',
-            err
+            error
           );
 
           this.categories = [];
@@ -158,17 +148,156 @@ export class AppListComponent implements OnInit, OnDestroy {
       });
   }
 
-  onCategoryChange(event: Event): void {
-    const select =
-      event.target as HTMLSelectElement;
+  loadCart(): void {
 
-    this.selectedCategoryId =
-      select.value || '';
+    this.cartService
+      .getCart()
+      .subscribe({
 
-    this.applyFilters();
+        next: (cart) => {
+
+          this.cartAppIds.clear();
+
+          if (!cart?.items) {
+            return;
+          }
+
+          cart.items.forEach(item => {
+
+            this.cartAppIds.add(
+              item.applicationId
+            );
+          });
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Failed to load cart:',
+            error
+          );
+        }
+      });
+  }
+
+  applyFilters(): void {
+
+    let result =
+      [...this.applications];
+
+    if (this.selectedCategoryId) {
+
+      result = result.filter(
+        app =>
+          String(app.categoryId) ===
+          String(this.selectedCategoryId)
+      );
+    }
+
+    if (this.searchTerm) {
+
+      const search =
+        this.searchTerm.toLowerCase();
+
+      result = result.filter(app => {
+
+        const name =
+          app.name?.toLowerCase() || '';
+
+        const description =
+          app.description?.toLowerCase() || '';
+
+        const tagline =
+          app.tagline?.toLowerCase() || '';
+
+        const developer =
+          app.developerName?.toLowerCase() || '';
+
+        const category =
+          app.categoryName?.toLowerCase() || '';
+
+        const tags =
+          app.tags?.join(' ')
+            .toLowerCase() || '';
+
+        return (
+          name.includes(search) ||
+          description.includes(search) ||
+          tagline.includes(search) ||
+          developer.includes(search) ||
+          category.includes(search) ||
+          tags.includes(search)
+        );
+      });
+    }
+
+    switch (this.sortOption) {
+
+      case 'name-asc':
+
+        result.sort((a, b) =>
+          (a.name || '').localeCompare(
+            b.name || ''
+          )
+        );
+
+        break;
+
+      case 'name-desc':
+
+        result.sort((a, b) =>
+          (b.name || '').localeCompare(
+            a.name || ''
+          )
+        );
+
+        break;
+
+      case 'rating-high':
+
+        result.sort((a, b) =>
+          (b.averageRating || 0) -
+          (a.averageRating || 0)
+        );
+
+        break;
+
+      case 'rating-low':
+
+        result.sort((a, b) =>
+          (a.averageRating || 0) -
+          (b.averageRating || 0)
+        );
+
+        break;
+
+      case 'price-low':
+
+        result.sort((a, b) =>
+          (a.price || 0) -
+          (b.price || 0)
+        );
+
+        break;
+
+      case 'price-high':
+
+        result.sort((a, b) =>
+          (b.price || 0) -
+          (a.price || 0)
+        );
+
+        break;
+
+      default:
+        break;
+    }
+
+    this.filteredApplications = result;
   }
 
   onSearch(event: Event): void {
+
     const input =
       event.target as HTMLInputElement;
 
@@ -180,7 +309,19 @@ export class AppListComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
+  onCategoryChange(event: Event): void {
+
+    const select =
+      event.target as HTMLSelectElement;
+
+    this.selectedCategoryId =
+      select.value || '';
+
+    this.applyFilters();
+  }
+
   onSortChange(event: Event): void {
+
     const select =
       event.target as HTMLSelectElement;
 
@@ -190,131 +331,265 @@ export class AppListComponent implements OnInit, OnDestroy {
     this.applyFilters();
   }
 
-  applyFilters(): void {
-    let result =
-      [...this.allApplications];
-
-    if (this.selectedCategoryId) {
-      result =
-        result.filter(app =>
-          String(app.categoryId) ===
-          String(this.selectedCategoryId)
-        );
-    }
-
-    if (this.searchTerm) {
-      result =
-        result.filter(app => {
-
-          const name =
-            app.name?.toLowerCase() || '';
-
-          const description =
-            app.description?.toLowerCase() || '';
-
-          const tagline =
-            app.tagline?.toLowerCase() || '';
-
-          const developer =
-            app.developerName?.toLowerCase() || '';
-
-          const category =
-            app.categoryName?.toLowerCase() || '';
-
-          const tags =
-            app.tags
-              ?.join(' ')
-              .toLowerCase() || '';
-
-          return (
-            name.includes(this.searchTerm) ||
-            description.includes(this.searchTerm) ||
-            tagline.includes(this.searchTerm) ||
-            developer.includes(this.searchTerm) ||
-            category.includes(this.searchTerm) ||
-            tags.includes(this.searchTerm)
-          );
-        });
-    }
-
-    switch (this.sortOption) {
-
-      case 'name-asc':
-        result.sort((a, b) =>
-          (a.name || '').localeCompare(
-            b.name || ''
-          )
-        );
-        break;
-
-      case 'name-desc':
-        result.sort((a, b) =>
-          (b.name || '').localeCompare(
-            a.name || ''
-          )
-        );
-        break;
-
-      case 'rating-high':
-        result.sort((a, b) =>
-          (b.averageRating || 0) -
-          (a.averageRating || 0)
-        );
-        break;
-
-      case 'rating-low':
-        result.sort((a, b) =>
-          (a.averageRating || 0) -
-          (b.averageRating || 0)
-        );
-        break;
-
-      case 'price-low':
-        result.sort((a, b) =>
-          (a.price || 0) -
-          (b.price || 0)
-        );
-        break;
-
-      case 'price-high':
-        result.sort((a, b) =>
-          (b.price || 0) -
-          (a.price || 0)
-        );
-        break;
-
-      default:
-        break;
-    }
-
-    this.dataSource.data = result;
-
-    if (this.paginator) {
-      this.dataSource.paginator =
-        this.paginator;
-    }
-
-    if (this.sort) {
-      this.dataSource.sort =
-        this.sort;
-    }
-  }
-
   resetFilters(): void {
+
     this.searchTerm = '';
+
     this.selectedCategoryId = '';
+
     this.sortOption = 'default';
 
     this.applyFilters();
   }
 
+  isFreeApplication(
+    app: ApplicationResponse
+  ): boolean {
+
+    return app.monetizationType === 'FREE';
+  }
+
   isPaidApplication(
     app: ApplicationResponse
   ): boolean {
-    return Number(app.price || 0) > 0;
+
+    return (
+      app.monetizationType === 'PAID' ||
+      app.monetizationType === 'SUBSCRIPTION'
+    );
+  }
+
+  hasAccessUrl(
+    app: ApplicationResponse
+  ): boolean {
+
+    return !!app.accessUrl?.trim();
+  }
+
+  accessFreeApplication(
+    app: ApplicationResponse
+  ): void {
+
+    const url =
+      app.accessUrl?.trim();
+
+    if (!url) {
+      return;
+    }
+
+    window.open(
+      url,
+      '_blank',
+      'noopener,noreferrer'
+    );
+  }
+
+  addToCart(
+    applicationId: string
+  ): void {
+
+    if (
+      this.cartLoading[applicationId]
+    ) {
+      return;
+    }
+
+    this.cartLoading[applicationId] =
+      true;
+
+    this.cartService
+      .addToCart({
+        applicationId,
+        quantity: 1
+      })
+      .subscribe({
+
+        next: () => {
+
+          this.cartAppIds.add(
+            applicationId
+          );
+
+          this.cartLoading[applicationId] =
+            false;
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Failed to add item to cart:',
+            error
+          );
+
+          this.cartLoading[applicationId] =
+            false;
+        }
+      });
+  }
+
+  removeFromCart(
+    applicationId: string
+  ): void {
+
+    if (
+      this.cartLoading[applicationId]
+    ) {
+      return;
+    }
+
+    this.cartLoading[applicationId] =
+      true;
+
+    this.cartService
+      .removeItemFromCart(applicationId)
+      .subscribe({
+
+        next: () => {
+
+          this.cartAppIds.delete(
+            applicationId
+          );
+
+          this.cartLoading[applicationId] =
+            false;
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Failed to remove item from cart:',
+            error
+          );
+
+          this.cartLoading[applicationId] =
+            false;
+        }
+      });
+  }
+
+  goToCart(): void {
+
+    this.router.navigate([
+      '/user/cart'
+    ]);
+  }
+
+  loadThumbnail(
+    app: ApplicationResponse
+  ): void {
+
+    this.imageLoading[app.id] = true;
+
+    this.imageLoadFailed[app.id] = false;
+
+    if (!app.thumbnailUrl) {
+
+      this.imageLoading[app.id] = false;
+
+      this.imageLoadFailed[app.id] = true;
+
+      return;
+    }
+
+    const filename =
+      app.thumbnailUrl
+        .split(/[/\\]/)
+        .pop();
+
+    if (!filename) {
+
+      this.imageLoading[app.id] = false;
+
+      this.imageLoadFailed[app.id] = true;
+
+      return;
+    }
+
+    this.applicationService
+      .getImageAsBlob(
+        'thumbnails',
+        filename
+      )
+      .subscribe({
+
+        next: (blob) => {
+
+          if (this.imageUrls[app.id]) {
+            URL.revokeObjectURL(
+              this.imageUrls[app.id]
+            );
+          }
+
+          this.imageUrls[app.id] =
+            URL.createObjectURL(blob);
+
+          this.imageLoading[app.id] =
+            false;
+        },
+
+        error: (error) => {
+
+          console.error(
+            'Failed to load thumbnail:',
+            error
+          );
+
+          this.imageLoading[app.id] =
+            false;
+
+          this.imageLoadFailed[app.id] =
+            true;
+        }
+      });
+  }
+
+  onImageLoaded(
+    appId: string
+  ): void {
+
+    this.imageLoading[appId] =
+      false;
+
+    this.imageLoadFailed[appId] =
+      false;
+  }
+
+  onImageError(
+    appId: string
+  ): void {
+
+    this.imageLoading[appId] =
+      false;
+
+    this.imageLoadFailed[appId] =
+      true;
+
+    const url =
+      this.imageUrls[appId];
+
+    if (url) {
+
+      URL.revokeObjectURL(url);
+
+      delete this.imageUrls[appId];
+    }
+  }
+
+  getCategoryName(): string {
+
+    const category =
+      this.categories.find(
+        category =>
+          `${category.id}` ===
+          `${this.selectedCategoryId}`
+      );
+
+    return category?.name ||
+      'Category';
   }
 
   goToPage(page: number): void {
+
     if (
       page < 0 ||
       page >= this.totalPages
@@ -328,10 +603,12 @@ export class AppListComponent implements OnInit, OnDestroy {
   }
 
   nextPage(): void {
+
     if (
       this.currentPage <
       this.totalPages - 1
     ) {
+
       this.currentPage++;
 
       this.loadApplications();
@@ -339,219 +616,17 @@ export class AppListComponent implements OnInit, OnDestroy {
   }
 
   previousPage(): void {
+
     if (this.currentPage > 0) {
+
       this.currentPage--;
 
       this.loadApplications();
     }
   }
 
-  getThumbnailUrl(
-    path?: string
-  ): string {
-    if (!path) {
-      return '';
-    }
-
-    const filename =
-      path
-        .split(/[/\\]/)
-        .pop();
-
-    if (!filename) {
-      return '';
-    }
-
-    return `http://localhost:9000/api/apps/images/thumbnails/${filename}`;
-  }
-
-  loadThumbnail(
-    app: ApplicationResponse
-  ): void {
-
-    this.imageLoading[app.id] = true;
-    this.imageLoadFailed[app.id] = false;
-
-    if (!app.thumbnailUrl) {
-      this.imageLoading[app.id] = false;
-      this.imageLoadFailed[app.id] = true;
-      return;
-    }
-
-    const filename =
-      app.thumbnailUrl
-        .split(/[/\\]/)
-        .pop();
-
-    if (!filename) {
-      this.imageLoading[app.id] = false;
-      this.imageLoadFailed[app.id] = true;
-      return;
-    }
-
-    this.appService
-      .getImageAsBlob(
-        'thumbnails',
-        filename
-      )
-      .subscribe({
-        next: (blob) => {
-
-          const objectUrl =
-            URL.createObjectURL(blob);
-
-          this.imageUrls[app.id] =
-            objectUrl;
-
-          this.imageLoading[app.id] = false;
-        },
-
-        error: (err) => {
-          console.error(
-            'Failed to load thumbnail:',
-            err
-          );
-
-          this.imageLoading[app.id] = false;
-          this.imageLoadFailed[app.id] = true;
-        }
-      });
-  }
-
-  onImageLoaded(
-    appId: string
-  ): void {
-    this.imageLoading[appId] = false;
-    this.imageLoadFailed[appId] = false;
-  }
-
-  onImageError(
-    appId: string
-  ): void {
-    this.imageLoading[appId] = false;
-    this.imageLoadFailed[appId] = true;
-
-    const url =
-      this.imageUrls[appId];
-
-    if (url) {
-      URL.revokeObjectURL(url);
-      delete this.imageUrls[appId];
-    }
-  }
-
-  loadCart(): void {
-    this.cartService
-      .getCart()
-      .subscribe({
-        next: (cart) => {
-
-          this.cartAppIds.clear();
-
-          cart.items.forEach(item => {
-            this.cartAppIds.add(
-              item.applicationId
-            );
-          });
-        },
-
-        error: (err) => {
-          console.error(
-            'Failed to load cart:',
-            err
-          );
-        }
-      });
-  }
-
-  addToCart(
-    applicationId: string
-  ): void {
-
-    if (this.cartLoading[applicationId]) {
-      return;
-    }
-
-    this.cartLoading[applicationId] = true;
-
-    const payload = {
-      applicationId,
-      quantity: 1
-    };
-
-    this.cartService
-      .addToCart(payload)
-      .subscribe({
-        next: () => {
-
-          this.cartAppIds.add(
-            applicationId
-          );
-
-          this.cartLoading[applicationId] =
-            false;
-        },
-
-        error: (err) => {
-
-          console.error(
-            'Failed to add item to cart:',
-            err
-          );
-
-          this.cartLoading[applicationId] =
-            false;
-        }
-      });
-  }
-
-  getCategoryName(): string {
-    const category = this.categories.find(
-      c => `${c.id}` === `${this.selectedCategoryId}`
-    );
-
-    return category?.name || 'Category';
-  }
-
-  removeFromCart(
-    applicationId: string
-  ): void {
-
-    if (this.cartLoading[applicationId]) {
-      return;
-    }
-
-    this.cartLoading[applicationId] = true;
-
-    this.cartService
-      .removeItemFromCart(
-        applicationId
-      )
-      .subscribe({
-        next: () => {
-
-          this.cartAppIds.delete(
-            applicationId
-          );
-
-          this.cartLoading[applicationId] =
-            false;
-        },
-
-        error: (err) => {
-
-          console.error(
-            'Failed to remove item from cart:',
-            err
-          );
-
-          this.cartLoading[applicationId] =
-            false;
-        }
-      });
-  }
-
   ngOnDestroy(): void {
+
     Object
       .values(this.imageUrls)
       .forEach(url => {

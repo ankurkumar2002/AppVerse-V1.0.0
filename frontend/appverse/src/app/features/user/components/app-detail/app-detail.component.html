@@ -1,734 +1,571 @@
-<!-- ============================================================
-     LOADING
-     ============================================================ -->
+<div class="app-detail-page">
 
-<div
-  *ngIf="isLoading"
-  class="loading-container"
->
-
-  <div class="loading-spinner"></div>
-
-  <p>
-    Loading application details...
-  </p>
-
-</div>
+  <div
+    *ngIf="loading"
+    class="state-container"
+  >
+    <div class="spinner"></div>
+    <p>Loading application details...</p>
+  </div>
 
 
-<!-- ============================================================
-     APPLICATION
-     ============================================================ -->
+  <div
+    *ngIf="!loading && error"
+    class="state-container error-state"
+  >
+    <div class="error-icon">!</div>
 
-<div
-  *ngIf="!isLoading && application"
-  class="app-detail-page"
->
+    <h2>Unable to load application</h2>
 
-  <div class="page-content">
-
-
-    <!-- ========================================================
-         BACK
-         ======================================================== -->
+    <p>{{ error }}</p>
 
     <button
       type="button"
-      class="back-button"
+      class="primary-button"
       (click)="goBack()"
     >
-      <span>←</span>
       Back to Applications
     </button>
+  </div>
 
 
-    <!-- ========================================================
-         HERO
-         ======================================================== -->
+  <ng-container
+    *ngIf="!loading && !error && application as app"
+  >
 
-    <section class="hero-section">
+    <header class="page-header">
 
-
-      <!-- ======================================================
-           THUMBNAIL
-           ====================================================== -->
-
-      <div
-        class="thumbnail-box"
-        [class.clickable]="
-          !!thumbnailUrl
-        "
-        (click)="
-          thumbnailUrl &&
-          openImageViewer(
-            thumbnailUrl,
-            application.name
-          )
-        "
+      <button
+        type="button"
+        class="back-button"
+        (click)="goBack()"
       >
+        <span>←</span>
+        Back to Applications
+      </button>
 
-        <!-- Loading -->
+      <button
+        type="button"
+        class="cart-button"
+        (click)="goToCart()"
+      >
+        <span>🛒</span>
+        Go to Cart
+      </button>
 
-        <div
-          *ngIf="imageLoading"
-          class="image-loading"
-        >
-
-          <div class="loading-spinner"></div>
-
-        </div>
-
-
-        <!-- Image -->
-
-        <img
-          *ngIf="
-            thumbnailUrl &&
-            !imageLoadFailed
-          "
-          [src]="thumbnailUrl"
-          [alt]="application.name"
-          class="hero-image"
-        />
+    </header>
 
 
-        <!-- Error -->
+    <main class="app-content">
 
-        <div
-          *ngIf="imageLoadFailed"
-          class="image-unavailable"
-        >
-          <span>Image unavailable</span>
-        </div>
+      <section class="hero-card">
 
+        <div class="thumbnail-column">
 
-        <!-- Hover -->
+          <div class="thumbnail-wrapper">
 
-        <div
-          *ngIf="
-            thumbnailUrl &&
-            !imageLoadFailed
-          "
-          class="image-hover-overlay"
-        >
-          Click to enlarge
-        </div>
+            <div
+              *ngIf="thumbnailLoading"
+              class="media-loading"
+            >
+              <div class="spinner"></div>
+            </div>
 
-      </div>
+            <div
+              *ngIf="thumbnailError"
+              class="media-error"
+            >
+              <span>Image unavailable</span>
+            </div>
 
-
-      <!-- ======================================================
-           HERO INFORMATION
-           ====================================================== -->
-
-      <div class="hero-info">
-
-        <span class="section-label">
-          APPLICATION
-        </span>
-
-
-        <h1>
-          {{ application.name }}
-        </h1>
-
-
-        <p
-          *ngIf="application.tagline"
-          class="tagline"
-        >
-          {{ application.tagline }}
-        </p>
-
-
-        <p class="developer">
-          Application by Developer
-        </p>
-
-
-        <!-- ====================================================
-             META
-             ==================================================== -->
-
-        <div class="hero-meta">
-
-
-          <!-- PRICE -->
-
-          <span class="price">
-
-            <ng-container
-              [ngSwitch]="
-                application.monetizationType
-              "
+            <img
+              *ngIf="thumbnailUrl && !thumbnailError"
+              [src]="thumbnailUrl"
+              [alt]="app.name"
+              class="main-thumbnail"
+              (click)="openImage(thumbnailUrl, app.name)"
             >
 
+          </div>
+
+          <p
+            *ngIf="thumbnailUrl && !thumbnailError"
+            class="image-hint"
+          >
+            Click to enlarge
+          </p>
+
+        </div>
+
+
+        <div class="hero-information">
+
+          <div class="published-label">
+            Published
+            <span *ngIf="app.version">
+              v{{ app.version }}
+            </span>
+          </div>
+
+          <div class="application-type">
+            APPLICATION
+          </div>
+
+          <h1>
+            {{ app.name }}
+          </h1>
+
+          <p
+            *ngIf="app.tagline"
+            class="tagline"
+          >
+            {{ app.tagline }}
+          </p>
+
+
+          <div
+            *ngIf="app.platforms && app.platforms.length > 0"
+            class="platform-row"
+          >
+
+            <span
+              *ngFor="let platform of app.platforms"
+              class="platform-item"
+            >
+              {{ platform }}
+            </span>
+
+          </div>
+
+
+          <div class="rating-row">
+
+            <div class="stars">
+
               <span
-                *ngSwitchCase="'FREE'"
+                *ngFor="let star of getRatingStars()"
+                [class.filled]="isFilledStar(star)"
               >
-                Free
+                ★
               </span>
 
+            </div>
 
-              <span
-                *ngSwitchCase="'ONE_TIME_PURCHASE'"
+            <span class="rating-value">
+              {{ getRating() }}
+            </span>
+
+            <span class="reviews">
+              {{ getRatingCount() }}
+              {{ getRatingCount() === 1 ? 'review' : 'reviews' }}
+            </span>
+
+          </div>
+
+
+          <div class="price">
+            {{ getPriceLabel() }}
+          </div>
+
+
+          <div class="hero-actions">
+
+            <ng-container
+              *ngIf="isFreeApplication()"
+            >
+
+              <button
+                *ngIf="app.accessUrl"
+                type="button"
+                class="primary-button"
+                (click)="visitApplication()"
               >
-                {{ application.price | currency:'INR' }}
-              </span>
+                Open Application
+              </button>
 
-
-              <span
-                *ngSwitchCase="'SUBSCRIPTION_ONLY'"
+              <div
+                *ngIf="!app.accessUrl"
+                class="warning-message"
               >
-                Subscription
-              </span>
-
-
-              <span
-                *ngSwitchCase="'SUBSCRIPTION'"
-              >
-                Subscription
-              </span>
-
-
-              <span
-                *ngSwitchCase="'ONE_TIME_OR_SUBSCRIPTION'"
-              >
-                {{ application.price | currency:'INR' }}
-              </span>
-
-
-              <span
-                *ngSwitchDefault
-              >
-                {{
-                  application.isFree
-                    ? 'Free'
-                    : (application.price
-                        ? (application.price | currency:'INR')
-                        : 'N/A')
-                }}
-              </span>
+                <span>🔗</span>
+                Access URL Not Available
+              </div>
 
             </ng-container>
 
-          </span>
+
+            <ng-container
+              *ngIf="isPaidApplication()"
+            >
+
+              <button
+                *ngIf="!isInCart"
+                type="button"
+                class="primary-button"
+                [disabled]="cartLoading"
+                (click)="addToCart()"
+              >
+                <span *ngIf="!cartLoading">
+                  Add to Cart
+                </span>
+
+                <span *ngIf="cartLoading">
+                  Adding...
+                </span>
+              </button>
 
 
-          <!-- DEMO RATING -->
+              <ng-container *ngIf="isInCart">
 
-          <span class="rating">
+                <button
+                  type="button"
+                  class="danger-button"
+                  [disabled]="cartLoading"
+                  (click)="removeFromCart()"
+                >
+                  <span *ngIf="!cartLoading">
+                    Remove from Cart
+                  </span>
 
-            <span class="star">
-              ★
-            </span>
+                  <span *ngIf="cartLoading">
+                    Removing...
+                  </span>
+                </button>
 
-            {{ demoRating }}
+                <button
+                  type="button"
+                  class="secondary-button"
+                  (click)="goToCart()"
+                >
+                  Go to Cart
+                </button>
 
-            <span class="demo-badge">
-              DEMO
-            </span>
+              </ng-container>
 
-          </span>
+            </ng-container>
 
-        </div>
-
-
-        <!-- ====================================================
-             ACTIONS
-             ==================================================== -->
-
-        <div class="hero-actions">
-
-
-          <!-- ADD TO CART -->
-
-          <button
-            *ngIf="!isInCart"
-            type="button"
-            class="primary-button"
-            [disabled]="cartLoading"
-            (click)="addToCart()"
-          >
-
-            {{
-              cartLoading
-                ? 'Adding...'
-                : 'Add to Cart'
-            }}
-
-          </button>
-
-
-          <!-- REMOVE FROM CART -->
-
-          <button
-            *ngIf="isInCart"
-            type="button"
-            class="remove-button"
-            [disabled]="cartLoading"
-            (click)="removeFromCart()"
-          >
-
-            {{
-              cartLoading
-                ? 'Removing...'
-                : 'Remove from Cart'
-            }}
-
-          </button>
-
-
-          <!-- VISIT APPLICATION -->
-
-          <button
-            *ngIf="application.accessUrl"
-            type="button"
-            class="secondary-button"
-            (click)="visitApplication()"
-          >
-            Open Application
-          </button>
-
-
-          <!-- WEBSITE -->
-
-          <button
-            *ngIf="application.websiteUrl"
-            type="button"
-            class="secondary-button"
-            (click)="visitWebsite()"
-          >
-            Website
-          </button>
+          </div>
 
         </div>
 
-      </div>
-
-    </section>
+      </section>
 
 
-    <!-- ========================================================
-         CONTENT
-         ======================================================== -->
+      <section class="content-card">
 
-    <div class="details-layout">
+        <div class="section">
 
-
-      <!-- ======================================================
-           MAIN
-           ====================================================== -->
-
-      <main>
-
-
-        <!-- ====================================================
-             ABOUT
-             ==================================================== -->
-
-        <section class="section-card">
-
-          <span class="section-label">
-            ABOUT
-          </span>
-
+          <div class="section-label">
+            DESCRIPTION
+          </div>
 
           <h2>
             About this application
           </h2>
 
-
-          <p
-            *ngIf="application.description"
-            class="description"
-          >
-            {{ application.description }}
+          <p class="description">
+            {{ app.description || 'No description provided.' }}
           </p>
 
-
-          <p
-            *ngIf="!application.description"
-            class="empty-text"
-          >
-            No description available.
-          </p>
-
-        </section>
+        </div>
 
 
-        <!-- ====================================================
-             SCREENSHOTS
-             ==================================================== -->
+        <div class="section">
 
-        <section
-          *ngIf="
-            application.screenshots &&
-            application.screenshots.length > 0
-          "
-          class="section-card screenshots-section"
-        >
+          <div class="section-label">
+            INFORMATION
+          </div>
+
+          <h2>
+            Application Details
+          </h2>
 
 
-          <div class="section-header">
+          <div class="details-grid">
 
-            <div>
+            <div class="detail-item">
 
-              <span class="section-label">
-                SCREENSHOTS
+              <span class="detail-label">
+                Developer
               </span>
 
-              <h2>
-                See it in action
-              </h2>
+              <span class="detail-value">
+                {{ getDeveloperName() }}
+              </span>
 
             </div>
 
 
-            <span class="screenshot-count">
-              {{ application.screenshots.length }}
+            <div class="detail-item">
+
+              <span class="detail-label">
+                Category
+              </span>
+
+              <span class="detail-value">
+                {{ getCategoryName() }}
+              </span>
+
+            </div>
+
+
+            <div class="detail-item">
+
+              <span class="detail-label">
+                Version
+              </span>
+
+              <span class="detail-value">
+                {{ getVersion() }}
+              </span>
+
+            </div>
+
+
+            <div class="detail-item">
+
+              <span class="detail-label">
+                Monetization
+              </span>
+
+              <span class="detail-value">
+                {{ getMonetizationLabel() }}
+              </span>
+
+            </div>
+
+
+            <div class="detail-item">
+
+              <span class="detail-label">
+                Rating
+              </span>
+
+              <span class="detail-value">
+                {{ getRating() }}
+              </span>
+
+            </div>
+
+
+            <div class="detail-item">
+
+              <span class="detail-label">
+                Reviews
+              </span>
+
+              <span class="detail-value">
+                {{ getRatingCount() }}
+              </span>
+
+            </div>
+
+          </div>
+
+        </div>
+
+
+        <div
+          *ngIf="app.platforms && app.platforms.length > 0"
+          class="section"
+        >
+
+          <div class="section-label">
+            COMPATIBILITY
+          </div>
+
+          <h2>
+            Platforms
+          </h2>
+
+          <div class="chips">
+
+            <span
+              *ngFor="let platform of app.platforms"
+              class="chip"
+            >
+              {{ platform }}
             </span>
 
           </div>
 
+        </div>
 
-          <div class="screenshots-grid">
 
+        <div
+          *ngIf="app.tags && app.tags.length > 0"
+          class="section"
+        >
 
-            <div
-              *ngFor="
-                let screenshot of application.screenshots;
-                let i = index
-              "
-              class="screenshot-card"
+          <div class="section-label">
+            CATEGORIES
+          </div>
+
+          <h2>
+            Tags
+          </h2>
+
+          <div class="chips">
+
+            <span
+              *ngFor="let tag of app.tags"
+              class="chip"
             >
-
-
-              <!-- =================================================
-                   LOADING
-                   ================================================= -->
-
-              <div
-                *ngIf="
-                  screenshotLoading[i]
-                "
-                class="screenshot-image-box"
-              >
-
-                <div class="loading-spinner"></div>
-
-              </div>
-
-
-              <!-- =================================================
-                   IMAGE
-                   ================================================= -->
-
-              <div
-                *ngIf="
-                  screenshotUrls[i] &&
-                  !screenshotFailed[i] &&
-                  !screenshotLoading[i]
-                "
-                class="screenshot-image-box"
-                (click)="
-                  openImageViewer(
-                    screenshotUrls[i],
-                    screenshot.caption ||
-                    application.name
-                  )
-                "
-              >
-
-                <img
-                  [src]="screenshotUrls[i]"
-                  [alt]="
-                    screenshot.caption ||
-                    application.name
-                  "
-                  class="screenshot-image"
-                />
-
-
-                <div class="screenshot-hover">
-                  <span>Click to enlarge</span>
-                </div>
-
-              </div>
-
-
-              <!-- =================================================
-                   ERROR
-                   ================================================= -->
-
-              <div
-                *ngIf="
-                  screenshotFailed[i]
-                "
-                class="
-                  screenshot-image-box
-                  image-error
-                "
-              >
-
-                <span class="unavailable-icon">
-                  ⛶
-                </span>
-
-                <span>
-                  Image unavailable
-                </span>
-
-              </div>
-
-
-              <!-- =================================================
-                   CAPTION
-                   ================================================= -->
-
-              <p
-                *ngIf="screenshot.caption"
-                class="screenshot-caption"
-              >
-                {{ screenshot.caption }}
-              </p>
-
-            </div>
+              #{{ tag }}
+            </span>
 
           </div>
 
-        </section>
+        </div>
 
 
-        <!-- ====================================================
-             NO SCREENSHOTS
-             ==================================================== -->
-
-        <section
-          *ngIf="
-            !application.screenshots ||
-            application.screenshots.length === 0
-          "
-          class="section-card"
+        <div
+          *ngIf="app.websiteUrl || app.supportUrl"
+          class="section"
         >
 
-          <span class="section-label">
-            SCREENSHOTS
-          </span>
+          <div class="section-label">
+            LINKS
+          </div>
+
+          <h2>
+            Useful Links
+          </h2>
+
+          <div class="link-actions">
+
+            <button
+              *ngIf="app.websiteUrl"
+              type="button"
+              class="secondary-button"
+              (click)="visitWebsite()"
+            >
+              Visit Website
+            </button>
+
+            <button
+              *ngIf="app.supportUrl"
+              type="button"
+              class="secondary-button"
+              (click)="visitSupport()"
+            >
+              Support
+            </button>
+
+          </div>
+
+        </div>
+
+
+        <div
+          *ngIf="screenshots.length > 0"
+          class="section screenshots-section"
+        >
+
+          <div class="section-label">
+            VISUALS
+          </div>
 
           <h2>
             Screenshots
           </h2>
 
-          <p class="empty-text">
-            No screenshots are available for this application.
+          <p class="section-description">
+            Explore the application interface.
           </p>
 
-        </section>
 
-      </main>
+          <div class="screenshots-grid">
 
-
-      <!-- ======================================================
-           SIDEBAR
-           ====================================================== -->
-
-      <aside class="sidebar-card">
-
-
-        <!-- PRICE -->
-
-        <div class="sidebar-item">
-
-          <span>
-            PRICE
-          </span>
-
-          <strong>
-
-            <ng-container
-              [ngSwitch]="
-                application.monetizationType
-              "
+            <div
+              *ngFor="let screenshot of screenshots"
+              class="screenshot-card"
             >
 
-              <span
-                *ngSwitchCase="'FREE'"
-              >
-                Free
-              </span>
+              <div class="screenshot-wrapper">
 
-              <span
-                *ngSwitchCase="'SUBSCRIPTION'"
-              >
-                Subscription
-              </span>
+                <div
+                  *ngIf="screenshot.loading"
+                  class="media-loading"
+                >
+                  <div class="spinner"></div>
+                </div>
 
-              <span
-                *ngSwitchCase="'SUBSCRIPTION_ONLY'"
-              >
-                Subscription
-              </span>
 
-              <span
-                *ngSwitchDefault
-              >
-                {{
-                  application.isFree
-                    ? 'Free'
-                    : (
-                      application.price
-                        ? (application.price | currency:'INR')
-                        : 'N/A'
+                <div
+                  *ngIf="screenshot.error"
+                  class="media-error"
+                >
+                  <span>
+                    Screenshot unavailable
+                  </span>
+                </div>
+
+
+                <img
+                  *ngIf="
+                    screenshot.imageUrl &&
+                    !screenshot.error
+                  "
+                  [src]="screenshot.imageUrl"
+                  [alt]="screenshot.caption"
+                  class="screenshot-image"
+                  (click)="
+                    openImage(
+                      screenshot.imageUrl,
+                      screenshot.caption
                     )
-                }}
-              </span>
+                  "
+                >
 
-            </ng-container>
-
-          </strong>
-
-        </div>
+              </div>
 
 
-        <!-- VERSION -->
+              <div class="screenshot-caption">
+                {{ screenshot.caption }}
+              </div>
 
-        <div class="sidebar-item">
+            </div>
 
-          <span>
-            VERSION
-          </span>
-
-          <strong>
-            {{ application.version || 'N/A' }}
-          </strong>
+          </div>
 
         </div>
 
+      </section>
 
-        <!-- RATING -->
+    </main>
 
-        <div class="sidebar-item">
-
-          <span>
-            RATING
-          </span>
-
-          <strong class="sidebar-rating">
-
-            <span class="star">
-              ★
-            </span>
-
-            {{ demoRating }} / 5
-
-            <span class="demo-badge">
-              DEMO
-            </span>
-
-          </strong>
-
-        </div>
-
-
-        <!-- MONETIZATION -->
-
-        <div class="sidebar-item">
-
-          <span>
-            TYPE
-          </span>
-
-          <strong>
-            {{
-              application.monetizationType ||
-              (application.isFree
-                ? 'Free'
-                : 'Paid')
-            }}
-          </strong>
-
-        </div>
-
-
-        <!-- WEBSITE -->
-
-        <div
-          *ngIf="application.websiteUrl"
-          class="sidebar-link"
-          (click)="visitWebsite()"
-        >
-          Visit application website →
-        </div>
-
-
-        <!-- SUPPORT -->
-
-        <div
-          *ngIf="application.supportUrl"
-          class="sidebar-link"
-          (click)="visitSupport()"
-        >
-          Contact support →
-        </div>
-
-      </aside>
-
-    </div>
-
-  </div>
+  </ng-container>
 
 </div>
 
 
-<!-- ============================================================
-     IMAGE LIGHTBOX
-     ============================================================ -->
-
 <div
-  *ngIf="
-    isImageViewerOpen &&
-    selectedImageUrl
-  "
+  *ngIf="imageViewerOpen"
   class="image-viewer"
   (click)="closeImageViewer()"
-  (window:keydown)="
-    onImageViewerKeydown($event)
-  "
 >
-
-
-  <!-- CLOSE -->
-
-  <button
-    type="button"
-    class="image-viewer-close"
-    aria-label="Close image"
-    (click)="closeImageViewer()"
-  >
-    ×
-  </button>
-
-
-  <!-- IMAGE -->
 
   <div
     class="image-viewer-content"
     (click)="$event.stopPropagation()"
   >
 
+    <button
+      type="button"
+      class="close-viewer"
+      aria-label="Close"
+      (click)="closeImageViewer()"
+    >
+      ×
+    </button>
+
     <img
       [src]="selectedImageUrl"
       [alt]="selectedImageAlt"
-    />
+      class="viewer-image"
+    >
 
-  </div>
-
-
-  <!-- HINT -->
-
-  <div class="image-viewer-hint">
-    Click outside or press Esc to close
   </div>
 
 </div>
