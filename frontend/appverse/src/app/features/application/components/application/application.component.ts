@@ -5,7 +5,6 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-
 import { CommonModule } from '@angular/common';
 
 import {
@@ -24,532 +23,261 @@ import {
 } from '@angular/material/sort';
 
 import { MatButtonModule } from '@angular/material/button';
-
 import { MatIconModule } from '@angular/material/icon';
-
 import { MatTooltipModule } from '@angular/material/tooltip';
-
 import { MatProgressBarModule } from '@angular/material/progress-bar';
-
 import { MatFormFieldModule } from '@angular/material/form-field';
-
 import { MatInputModule } from '@angular/material/input';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { FormsModule } from '@angular/forms';
-
 import {
   Router,
   RouterModule
 } from '@angular/router';
 
 import { ApplicationService } from '../../services/application.service';
-
 import { ApplicationResponse } from '../../models/application-response';
-
 import { ApplicationStatus } from '../../models/application-status';
-
 
 @Component({
   selector: 'app-application',
-
   standalone: true,
-
   encapsulation: ViewEncapsulation.None,
-
   imports: [
-
     CommonModule,
-
     RouterModule,
-
     FormsModule,
-
     MatTableModule,
-
     MatPaginatorModule,
-
     MatSortModule,
-
     MatButtonModule,
-
     MatIconModule,
-
     MatTooltipModule,
-
     MatProgressBarModule,
-
     MatFormFieldModule,
-
-    MatInputModule
-
+    MatInputModule,
+    MatProgressSpinnerModule
   ],
-
   templateUrl: './application.component.html',
-
   styleUrls: ['./application.component.scss']
 })
-export class ApplicationComponent
-  implements OnInit, AfterViewInit {
-
-
-  /*
-   * ==========================================================
-   * TABLE
-   * ==========================================================
-   */
+export class ApplicationComponent implements OnInit, AfterViewInit {
 
   displayedColumns: string[] = [
-
     'name',
-
     'tagline',
-
     'status',
-
     'actions'
-
   ];
 
-
-  dataSource =
-    new MatTableDataSource<ApplicationResponse>();
-
-
-
-  /*
-   * ==========================================================
-   * STATE
-   * ==========================================================
-   */
+  dataSource = new MatTableDataSource<ApplicationResponse>();
 
   isLoading = false;
-
   searchTerm = '';
-
-
-
-  /*
-   * ==========================================================
-   * ENUM
-   *
-   * This makes ApplicationStatus available inside HTML.
-   *
-   * Example:
-   *
-   * ApplicationStatus.PUBLISHED
-   *
-   * ==========================================================
-   */
 
   readonly ApplicationStatus = ApplicationStatus;
 
+  isDeleteDialogOpen = false;
+  isDeleting = false;
+  applicationToDelete: ApplicationResponse | null = null;
 
-
-  /*
-   * ==========================================================
-   * VIEW CHILDREN
-   * ==========================================================
-   */
+  errorMessage = '';
 
   @ViewChild(MatPaginator)
   paginator!: MatPaginator;
 
-
   @ViewChild(MatSort)
   sort!: MatSort;
 
-
-
-  /*
-   * ==========================================================
-   * CONSTRUCTOR
-   * ==========================================================
-   */
-
   constructor(
-
-    private applicationService:
-      ApplicationService,
-
+    private applicationService: ApplicationService,
     private router: Router
-
   ) {}
 
-
-
-  /*
-   * ==========================================================
-   * ON INIT
-   * ==========================================================
-   */
-
   ngOnInit(): void {
-
     this.configureFilter();
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * AFTER VIEW INIT
-   *
-   * Paginator and Sort are available here.
-   * ==========================================================
-   */
 
   ngAfterViewInit(): void {
-
-    this.dataSource.paginator =
-      this.paginator;
-
-    this.dataSource.sort =
-      this.sort;
-
+    this.dataSource.paginator = this.paginator;
+    this.dataSource.sort = this.sort;
     this.loadApplications();
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * TABLE FILTER CONFIGURATION
-   * ==========================================================
-   *
-   * Search will check:
-   *
-   * - application name
-   * - tagline
-   * - description
-   * - status
-   *
-   * ==========================================================
-   */
 
   private configureFilter(): void {
+    this.dataSource.filterPredicate = (
+      app: ApplicationResponse,
+      filter: string
+    ): boolean => {
 
-    this.dataSource.filterPredicate =
-      (
-        app: ApplicationResponse,
-        filter: string
-      ): boolean => {
+      const search = filter.trim().toLowerCase();
 
-        const search =
-          filter.trim().toLowerCase();
+      if (!search) {
+        return true;
+      }
 
+      const name = app.name?.toLowerCase() ?? '';
+      const tagline = app.tagline?.toLowerCase() ?? '';
+      const description = app.description?.toLowerCase() ?? '';
+      const status = app.status?.toString().toLowerCase() ?? '';
 
-        if (!search) {
-
-          return true;
-
-        }
-
-
-        const name =
-          app.name?.toLowerCase() ?? '';
-
-
-        const tagline =
-          app.tagline?.toLowerCase() ?? '';
-
-
-        const description =
-          app.description?.toLowerCase() ?? '';
-
-
-        const status =
-          app.status?.toString().toLowerCase() ?? '';
-
-
-        return (
-
-          name.includes(search) ||
-
-          tagline.includes(search) ||
-
-          description.includes(search) ||
-
-          status.includes(search)
-
-        );
-
-      };
-
+      return (
+        name.includes(search) ||
+        tagline.includes(search) ||
+        description.includes(search) ||
+        status.includes(search)
+      );
+    };
   }
 
-
-
-  /*
-   * ==========================================================
-   * LOAD APPLICATIONS
-   * ==========================================================
-   */
-
   loadApplications(): void {
-
     this.isLoading = true;
-
+    this.errorMessage = '';
 
     this.applicationService
       .getMyApplications()
       .subscribe({
-
-        next: (data) => {
-
-          console.log(
-            'Applications:',
-            data
-          );
-
-
+        next: data => {
           this.dataSource.data = data;
 
-
-          /*
-           * Re-attach paginator and sort.
-           * This is useful after refresh.
-           */
-
-          this.dataSource.paginator =
-            this.paginator;
-
-
-          this.dataSource.sort =
-            this.sort;
-
+          this.dataSource.paginator = this.paginator;
+          this.dataSource.sort = this.sort;
 
           this.isLoading = false;
-
         },
+        error: err => {
+          console.error('Failed to load applications:', err);
 
-
-        error: (err) => {
-
-          console.error(
-            'Failed to load applications:',
-            err
-          );
-
-
+          this.dataSource.data = [];
           this.isLoading = false;
-
+          this.errorMessage =
+            err?.error?.message ||
+            'Failed to load your applications.';
         }
-
       });
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * SEARCH
-   * ==========================================================
-   */
 
   applyFilter(event: Event): void {
+    const input = event.target as HTMLInputElement;
 
-    const input =
-      event.target as HTMLInputElement;
+    this.searchTerm = input.value
+      .trim()
+      .toLowerCase();
 
-
-    this.searchTerm =
-      input.value
-        .trim()
-        .toLowerCase();
-
-
-    this.dataSource.filter =
-      this.searchTerm;
-
-
-    /*
-     * Always return to page 1
-     * after searching.
-     */
+    this.dataSource.filter = this.searchTerm;
 
     if (this.dataSource.paginator) {
-
       this.dataSource.paginator.firstPage();
-
     }
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * CLEAR SEARCH
-   * ==========================================================
-   */
 
   clearSearch(): void {
-
     this.searchTerm = '';
-
     this.dataSource.filter = '';
 
-
     if (this.dataSource.paginator) {
-
       this.dataSource.paginator.firstPage();
-
     }
-
   }
 
-
-
-  /*
-   * ==========================================================
-   * CREATE APPLICATION
-   * ==========================================================
-   */
-
   openCreateDialog(): void {
-
     this.router.navigate([
       '/developer/apps/create'
     ]);
-
   }
 
-
-
-  /*
-   * ==========================================================
-   * DELETE APPLICATION
-   * ==========================================================
-   */
-
-  deleteApplication(
-    id: string
-  ): void {
-
-
-    const confirmed =
-      confirm(
-        'Are you sure you want to delete this application? ' +
-        'This action cannot be undone.'
-      );
-
-
-    if (!confirmed) {
-
+  openDeleteDialog(app: ApplicationResponse): void {
+    if (this.isDeleting) {
       return;
-
     }
 
+    this.applicationToDelete = app;
+    this.isDeleteDialogOpen = true;
+    this.errorMessage = '';
 
-    this.isLoading = true;
+    document.body.style.overflow = 'hidden';
+  }
 
+  closeDeleteDialog(): void {
+    if (this.isDeleting) {
+      return;
+    }
+
+    this.isDeleteDialogOpen = false;
+    this.applicationToDelete = null;
+
+    document.body.style.overflow = '';
+  }
+
+  confirmDeleteApplication(): void {
+    if (!this.applicationToDelete || this.isDeleting) {
+      return;
+    }
+
+    const applicationId = this.applicationToDelete.id;
+
+    this.isDeleting = true;
+    this.errorMessage = '';
 
     this.applicationService
-      .deleteApplication(id)
+      .deleteApplication(applicationId)
       .subscribe({
-
         next: () => {
+          this.isDeleting = false;
+          this.isDeleteDialogOpen = false;
+          this.applicationToDelete = null;
+
+          document.body.style.overflow = '';
 
           this.loadApplications();
-
         },
 
-
-        error: (err) => {
-
+        error: err => {
           console.error(
             'Error deleting application:',
             err
           );
 
+          this.isDeleting = false;
 
-          this.isLoading = false;
+          this.errorMessage =
+            err?.error?.message ||
+            'Failed to delete the application. Please try again.';
 
+          this.isDeleteDialogOpen = false;
+          this.applicationToDelete = null;
 
-          alert(
-            'Failed to delete application. Please try again.'
-          );
-
+          document.body.style.overflow = '';
         }
-
       });
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * UPDATE APPLICATION STATUS
-   * ==========================================================
-   */
 
   updateApplicationStatus(
     event: Event,
     app: ApplicationResponse
   ): void {
 
-
     const selectElement =
       event.target as HTMLSelectElement;
 
-
-    const previousStatus =
-      app.status;
-
+    const previousStatus = app.status;
 
     const newStatus =
       selectElement.value as ApplicationStatus;
 
-
-
-    /*
-     * Nothing changed.
-     */
-
-    if (
-      previousStatus === newStatus
-    ) {
-
+    if (previousStatus === newStatus) {
       return;
-
     }
 
-
-
-    /*
-     * Confirmation
-     */
-
-    const confirmed =
-      confirm(
-        `Are you sure you want to change "${app.name}" ` +
-        `status to ${this.getStatusLabel(newStatus)}?`
-      );
-
-
-
-    /*
-     * User cancelled.
-     */
+    const confirmed = confirm(
+      `Are you sure you want to change "${app.name}" status to ${this.getStatusLabel(newStatus)}?`
+    );
 
     if (!confirmed) {
-
-      selectElement.value =
-        previousStatus;
-
+      selectElement.value = previousStatus;
       return;
-
     }
-
-
-
-    /*
-     * Call backend.
-     */
 
     this.applicationService
       .updateAppStatus(
@@ -557,169 +285,84 @@ export class ApplicationComponent
         newStatus
       )
       .subscribe({
-
         next: () => {
-
-          /*
-           * Update UI immediately.
-           */
-
-          app.status =
-            newStatus;
-
+          app.status = newStatus;
         },
 
-
-        error: (err) => {
-
+        error: err => {
           console.error(
             'Error updating application status:',
             err
           );
 
+          selectElement.value = previousStatus;
 
-          alert(
-            'Failed to update application status.'
-          );
-
-
-          /*
-           * Restore old value.
-           */
-
-          selectElement.value =
-            previousStatus;
-
+          this.errorMessage =
+            err?.error?.message ||
+            'Failed to update application status.';
         }
-
       });
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * STATUS LABEL
-   * ==========================================================
-   */
 
   getStatusLabel(
     status:
-      ApplicationStatus |
-      string |
-      null |
-      undefined
+      | ApplicationStatus
+      | string
+      | null
+      | undefined
   ): string {
 
-
     if (!status) {
-
       return 'Unknown';
-
     }
-
 
     switch (status) {
-
-
       case 'PUBLISHED':
-
         return 'Published';
 
-
-
       case 'UNPUBLISHED':
-
         return 'Unpublished';
 
-
-
       case 'ARCHIVED':
-
         return 'Archived';
 
-
-
       case 'DRAFT':
-
         return 'Draft';
 
-
-
       case 'REJECTED':
-
         return 'Rejected';
 
-
-
       default:
-
         return status;
-
     }
-
   }
-
-
-
-  /*
-   * ==========================================================
-   * STATUS ICON
-   *
-   * Kept here because you may want to use it later.
-   * The current HTML does not need it.
-   * ==========================================================
-   */
 
   getStatusIcon(
     status:
-      ApplicationStatus |
-      string |
-      null |
-      undefined
+      | ApplicationStatus
+      | string
+      | null
+      | undefined
   ): string {
 
-
     switch (status) {
-
-
       case 'PUBLISHED':
-
         return 'check_circle';
 
-
-
       case 'UNPUBLISHED':
-
         return 'visibility_off';
 
-
-
       case 'ARCHIVED':
-
         return 'inventory_2';
 
-
-
       case 'DRAFT':
-
         return 'edit_note';
 
-
-
       case 'REJECTED':
-
         return 'cancel';
 
-
-
       default:
-
         return 'help_outline';
-
     }
-
   }
-
 }
