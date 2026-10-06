@@ -1,9 +1,5 @@
 <div class="application-container">
 
-  <!-- =========================================================
-       PAGE HEADER
-       ========================================================= -->
-
   <div class="page-header">
 
     <div class="page-header-left">
@@ -15,49 +11,39 @@
         </div>
 
         <div class="page-title-content">
-
           <h1>My Applications</h1>
 
           <p>
             Manage, update and monitor your applications.
           </p>
-
         </div>
 
       </div>
 
     </div>
 
-
     <div class="page-header-actions">
 
-      <!-- Refresh -->
       <button
         mat-stroked-button
         class="refresh-button"
+        type="button"
         (click)="loadApplications()"
         [disabled]="isLoading"
         matTooltip="Refresh applications"
       >
-
         <mat-icon>refresh</mat-icon>
-
         <span>Refresh</span>
-
       </button>
 
-
-      <!-- Create -->
       <button
         mat-flat-button
         class="create-app-button"
-        routerLink="/developer/apps/create"
+        type="button"
+        (click)="openCreateDialog()"
       >
-
         <mat-icon>add</mat-icon>
-
         <span>Create App</span>
-
       </button>
 
     </div>
@@ -65,22 +51,36 @@
   </div>
 
 
+  <div
+    *ngIf="errorMessage"
+    class="error-banner"
+  >
 
-  <!-- =========================================================
-       APPLICATION CARD
-       ========================================================= -->
+    <div class="error-banner-icon">
+      <mat-icon>error_outline</mat-icon>
+    </div>
+
+    <div class="error-banner-content">
+      <strong>Something went wrong</strong>
+      <span>{{ errorMessage }}</span>
+    </div>
+
+    <button
+      type="button"
+      class="error-close"
+      (click)="errorMessage = ''"
+      aria-label="Close error"
+    >
+      <mat-icon>close</mat-icon>
+    </button>
+
+  </div>
+
 
   <div class="applications-card">
 
-
-    <!-- =======================================================
-         TOOLBAR
-         ======================================================= -->
-
     <div class="applications-toolbar">
 
-
-      <!-- Search -->
       <div class="toolbar-left">
 
         <div class="search-box">
@@ -88,7 +88,6 @@
           <mat-icon class="search-icon">
             search
           </mat-icon>
-
 
           <input
             type="text"
@@ -98,33 +97,22 @@
             aria-label="Search applications"
           />
 
-
-          @if (searchTerm) {
-
-            <button
-              mat-icon-button
-              class="clear-search"
-              type="button"
-              (click)="clearSearch()"
-              matTooltip="Clear search"
-              aria-label="Clear search"
-            >
-
-              <mat-icon>
-                close
-              </mat-icon>
-
-            </button>
-
-          }
+          <button
+            *ngIf="searchTerm"
+            mat-icon-button
+            class="clear-search"
+            type="button"
+            (click)="clearSearch()"
+            matTooltip="Clear search"
+            aria-label="Clear search"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
 
         </div>
 
       </div>
 
-
-
-      <!-- Count -->
       <div class="toolbar-right">
 
         <span class="application-count">
@@ -144,28 +132,15 @@
     </div>
 
 
+    <div
+      *ngIf="isLoading"
+      class="loading-container"
+    >
+      <mat-progress-bar
+        mode="indeterminate"
+      ></mat-progress-bar>
+    </div>
 
-    <!-- =======================================================
-         LOADING
-         ======================================================= -->
-
-    @if (isLoading) {
-
-      <div class="loading-container">
-
-        <mat-progress-bar
-          mode="indeterminate"
-        ></mat-progress-bar>
-
-      </div>
-
-    }
-
-
-
-    <!-- =======================================================
-         TABLE
-         ======================================================= -->
 
     <div class="table-wrapper">
 
@@ -175,11 +150,6 @@
         matSort
         class="applications-table"
       >
-
-
-        <!-- ===================================================
-             APPLICATION NAME
-             =================================================== -->
 
         <ng-container matColumnDef="name">
 
@@ -191,7 +161,6 @@
             Application
           </th>
 
-
           <td
             mat-cell
             *matCellDef="let app"
@@ -200,18 +169,17 @@
             <div class="application-name">
 
               <div class="application-icon">
-
-                <mat-icon>
-                  apps
-                </mat-icon>
-
+                <mat-icon>apps</mat-icon>
               </div>
-
 
               <div class="application-name-content">
 
                 <span class="application-name-text">
                   {{ app.name }}
+                </span>
+
+                <span class="application-version">
+                  v{{ app.version || '1.0.0' }}
                 </span>
 
               </div>
@@ -223,11 +191,6 @@
         </ng-container>
 
 
-
-        <!-- ===================================================
-             DESCRIPTION
-             =================================================== -->
-
         <ng-container matColumnDef="tagline">
 
           <th
@@ -236,7 +199,6 @@
           >
             Description
           </th>
-
 
           <td
             mat-cell
@@ -247,23 +209,16 @@
             <span
               [class.no-description]="!app.tagline"
             >
-
               {{
                 app.tagline ||
                 'No description available'
               }}
-
             </span>
 
           </td>
 
         </ng-container>
 
-
-
-        <!-- ===================================================
-             STATUS
-             =================================================== -->
 
         <ng-container matColumnDef="status">
 
@@ -274,16 +229,12 @@
             Status
           </th>
 
-
           <td
             mat-cell
             *matCellDef="let app"
           >
 
             <div class="status-cell">
-
-
-              <!-- ================= CURRENT STATUS ================= -->
 
               <div class="current-status">
 
@@ -306,15 +257,11 @@
               </div>
 
 
-
-              <!-- ================= CHANGE STATUS ================= -->
-
               <div class="change-status">
 
                 <span class="change-status-label">
                   Change
                 </span>
-
 
                 <select
                   class="status-select"
@@ -331,7 +278,6 @@
                     Draft
                   </option>
 
-
                   <option
                     value="PUBLISHED"
                     [disabled]="app.status === 'PUBLISHED'"
@@ -339,14 +285,12 @@
                     Published
                   </option>
 
-
                   <option
                     value="UNPUBLISHED"
                     [disabled]="app.status === 'UNPUBLISHED'"
                   >
                     Unpublished
                   </option>
-
 
                   <option
                     value="ARCHIVED"
@@ -366,11 +310,6 @@
         </ng-container>
 
 
-
-        <!-- ===================================================
-             ACTIONS
-             =================================================== -->
-
         <ng-container matColumnDef="actions">
 
           <th
@@ -381,18 +320,16 @@
             Actions
           </th>
 
-
           <td
             mat-cell
             *matCellDef="let app"
             class="actions-cell"
           >
 
-
-            <!-- View -->
             <button
               mat-icon-button
               class="action-button view-button"
+              type="button"
               [routerLink]="[
                 '/developer/apps',
                 app.id
@@ -400,19 +337,16 @@
               matTooltip="View application"
               aria-label="View application"
             >
-
               <mat-icon>
                 visibility
               </mat-icon>
-
             </button>
 
 
-
-            <!-- Edit -->
             <button
               mat-icon-button
               class="action-button edit-button"
+              type="button"
               [routerLink]="[
                 '/developer/apps',
                 app.id,
@@ -421,29 +355,23 @@
               matTooltip="Edit application"
               aria-label="Edit application"
             >
-
               <mat-icon>
                 edit
               </mat-icon>
-
             </button>
 
 
-
-            <!-- Delete -->
             <button
               mat-icon-button
               class="action-button delete-button"
               type="button"
-              (click)="deleteApplication(app.id)"
+              (click)="openDeleteDialog(app)"
               matTooltip="Delete application"
               aria-label="Delete application"
             >
-
               <mat-icon>
                 delete_outline
               </mat-icon>
-
             </button>
 
           </td>
@@ -451,21 +379,11 @@
         </ng-container>
 
 
-
-        <!-- ===================================================
-             HEADER ROW
-             =================================================== -->
-
         <tr
           mat-header-row
           *matHeaderRowDef="displayedColumns"
         ></tr>
 
-
-
-        <!-- ===================================================
-             DATA ROW
-             =================================================== -->
 
         <tr
           mat-row
@@ -475,11 +393,6 @@
           "
         ></tr>
 
-
-
-        <!-- ===================================================
-             NO DATA
-             =================================================== -->
 
         <tr
           class="mat-row no-results-row"
@@ -493,68 +406,49 @@
 
             <div class="no-results">
 
-
               <div class="no-results-icon">
-
                 <mat-icon>
                   search_off
                 </mat-icon>
-
               </div>
-
 
               <h3>
                 No applications found
               </h3>
 
-
               <p>
-
-                @if (searchTerm) {
-
+                <ng-container *ngIf="searchTerm; else noAppsText">
                   No applications match
                   "{{ searchTerm }}".
+                </ng-container>
 
-                } @else {
-
-                  You haven't created any
-                  applications yet.
-
-                }
-
+                <ng-template #noAppsText>
+                  You haven't created any applications yet.
+                </ng-template>
               </p>
 
 
-              @if (!searchTerm) {
+              <button
+                *ngIf="!searchTerm"
+                mat-flat-button
+                class="create-first-button"
+                type="button"
+                (click)="openCreateDialog()"
+              >
+                <mat-icon>add</mat-icon>
+                Create Your First App
+              </button>
 
-                <button
-                  mat-flat-button
-                  class="create-first-button"
-                  routerLink="/developer/apps/create"
-                >
 
-                  <mat-icon>
-                    add
-                  </mat-icon>
-
-                  Create Your First App
-
-                </button>
-
-              } @else {
-
-                <button
-                  mat-stroked-button
-                  class="clear-filter-button"
-                  type="button"
-                  (click)="clearSearch()"
-                >
-
-                  Clear Search
-
-                </button>
-
-              }
+              <button
+                *ngIf="searchTerm"
+                mat-stroked-button
+                class="clear-filter-button"
+                type="button"
+                (click)="clearSearch()"
+              >
+                Clear Search
+              </button>
 
             </div>
 
@@ -567,11 +461,6 @@
     </div>
 
 
-
-    <!-- =======================================================
-         PAGINATOR
-         ======================================================= -->
-
     <div class="paginator-container">
 
       <mat-paginator
@@ -581,6 +470,98 @@
         aria-label="Select page of applications"
       >
       </mat-paginator>
+
+    </div>
+
+  </div>
+
+</div>
+
+
+<div
+  *ngIf="isDeleteDialogOpen"
+  class="delete-dialog-backdrop"
+  (click)="closeDeleteDialog()"
+>
+
+  <div
+    class="delete-dialog"
+    (click)="$event.stopPropagation()"
+  >
+
+    <div class="delete-dialog-icon">
+
+      <mat-icon>
+        delete_forever
+      </mat-icon>
+
+    </div>
+
+
+    <div class="delete-dialog-content">
+
+      <span class="delete-dialog-label">
+        DELETE APPLICATION
+      </span>
+
+      <h2>
+        Delete application?
+      </h2>
+
+      <p>
+        You are about to permanently delete
+        <strong>
+          "{{ applicationToDelete?.name }}"
+        </strong>.
+      </p>
+
+      <p class="delete-dialog-warning">
+        This action cannot be undone.
+      </p>
+
+    </div>
+
+
+    <div class="delete-dialog-actions">
+
+      <button
+        type="button"
+        class="delete-cancel-button"
+        [disabled]="isDeleting"
+        (click)="closeDeleteDialog()"
+      >
+        Cancel
+      </button>
+
+
+      <button
+        type="button"
+        class="delete-confirm-button"
+        [disabled]="isDeleting"
+        (click)="confirmDeleteApplication()"
+      >
+
+        <span
+          *ngIf="!isDeleting"
+          class="delete-confirm-content"
+        >
+          <mat-icon>
+            delete_forever
+          </mat-icon>
+
+          Delete Application
+        </span>
+
+
+        <span
+          *ngIf="isDeleting"
+          class="delete-confirm-content"
+        >
+          <span class="delete-spinner"></span>
+          Deleting...
+        </span>
+
+      </button>
 
     </div>
 

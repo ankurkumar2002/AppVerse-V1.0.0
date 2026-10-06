@@ -1,84 +1,586 @@
-<div class="update-container">
-  <div *ngIf="isLoading" class="loading-state">
-    <mat-spinner diameter="50"></mat-spinner>
-    <p>Loading Application Data...</p>
+<div class="update-page">
+
+  <div class="page-header">
+    <div class="header-content">
+      <button
+        type="button"
+        class="back-button"
+        (click)="onCancel()">
+        <span class="back-icon">←</span>
+        <span>Back to Application</span>
+      </button>
+
+      <div class="header-title">
+        <div class="title-icon">
+          <span>✎</span>
+        </div>
+
+        <div>
+          <h1>Update Application</h1>
+          <p>Update your application information and promotional media.</p>
+        </div>
+      </div>
+    </div>
   </div>
 
-  <div *ngIf="errorMessage" class="error-banner">
-    <p>{{ errorMessage }}</p>
+  <div
+    *ngIf="errorMessage"
+    class="error-banner">
+    <div class="error-icon">!</div>
+    <div class="error-content">
+      <strong>Something went wrong</strong>
+      <span>{{ errorMessage }}</span>
+    </div>
   </div>
 
-  <form [formGroup]="updateForm" (ngSubmit)="onSubmit()" *ngIf="!isLoading" novalidate>
-    <header class="form-header">
-      <h1>Update Application</h1>
-      <p>Editing: <strong>{{ originalApplicationData.name }}</strong></p>
-    </header>
+  <div
+    *ngIf="isLoading"
+    class="loading-container">
+    <mat-spinner diameter="42"></mat-spinner>
+    <p>Loading application details...</p>
+  </div>
 
-    <!-- General Information Section -->
-    <section class="form-section">
-      <div class="mb-4">
-        <label for="name" class="form-label">Application Name</label>
-        <input type="text" id="name" class="form-control" formControlName="name">
-        <div *ngIf="updateForm.get('name')?.invalid && updateForm.get('name')?.touched" class="validation-error">
-          Name is required.
-        </div>
-      </div>
+  <form
+    *ngIf="!isLoading"
+    [formGroup]="updateForm"
+    (ngSubmit)="onSubmit()"
+    class="update-form">
 
-      <div class="mb-4">
-        <label for="tagline" class="form-label">Tagline</label>
-        <input type="text" id="tagline" class="form-control" formControlName="tagline">
-      </div>
+    <div class="content-grid">
 
-      <div class="mb-4">
-        <label for="description" class="form-label">Description</label>
-        <textarea id="description" class="form-control" formControlName="description" rows="5"></textarea>
-      </div>
+      <main class="main-content">
 
-       <div class="row">
-        <div class="col-md-6 mb-4">
-            <label for="version" class="form-label">Version</label>
-            <input type="text" id="version" class="form-control" formControlName="version">
-        </div>
-        <div class="col-md-6 mb-4">
-            <label for="categoryId" class="form-label">Category ID</label>
-            <input type="text" id="categoryId" class="form-control" formControlName="categoryId">
-        </div>
-      </div>
-    </section>
+        <section class="form-card">
 
-    <!-- Image Upload Section -->
-    <section class="form-section">
-      <h2>Media Assets</h2>
-      <p class="section-description">Uploading new files below will replace all existing ones.</p>
-
-      <!-- Thumbnail -->
-      <div class="mb-5">
-        <label for="thumbnail" class="form-label">Thumbnail Image</label>
-        <div class="image-preview mb-3" *ngIf="thumbnailPreviewUrl">
-          <img [src]="thumbnailPreviewUrl" alt="Thumbnail Preview">
-        </div>
-        <input type="file" id="thumbnail" class="form-control" (change)="onThumbnailSelect($event)" accept="image/png, image/jpeg, image/webp">
-      </div>
-
-      <!-- Screenshots -->
-      <div>
-        <label for="screenshots" class="form-label">Screenshots</label>
-         <div class="screenshots-grid mb-3" *ngIf="screenshotPreviewUrls.length > 0">
-            <div *ngFor="let url of screenshotPreviewUrls" class="image-preview">
-                <img [src]="url" alt="Screenshot Preview">
+          <div class="section-header">
+            <div class="section-icon">
+              <span>▣</span>
             </div>
-        </div>
-        <input type="file" id="screenshots" class="form-control" (change)="onScreenshotsSelect($event)" accept="image/png, image/jpeg, image/webp" multiple>
-      </div>
-    </section>
 
-    <!-- Submission Area -->
-    <footer class="form-footer">
-        <button type="submit" class="submit-btn" [disabled]="isSubmitting">
-            <span *ngIf="!isSubmitting">Save Changes</span>
-            <mat-spinner *ngIf="isSubmitting" diameter="20" class="spinner-small"></mat-spinner>
-        </button>
-        <button type="button" class="cancel-btn" (click)="onCancel()" [disabled]="isSubmitting">Cancel</button>
-    </footer>
+            <div>
+              <h2>Application Information</h2>
+              <p>Update the basic information displayed for your application.</p>
+            </div>
+          </div>
+
+          <div class="form-grid">
+
+            <div class="form-group full-width">
+              <label for="name">
+                Application Name
+                <span class="required">*</span>
+              </label>
+
+              <input
+                id="name"
+                type="text"
+                formControlName="name"
+                placeholder="Enter application name"
+                maxlength="100" />
+
+              <div
+                *ngIf="updateForm.get('name')?.invalid && updateForm.get('name')?.touched"
+                class="field-error">
+                Application name is required.
+              </div>
+            </div>
+
+            <div class="form-group full-width">
+              <label for="tagline">
+                Tagline
+              </label>
+
+              <input
+                id="tagline"
+                type="text"
+                formControlName="tagline"
+                placeholder="A short description of your application"
+                maxlength="180" />
+            </div>
+
+            <div class="form-group full-width">
+              <label for="description">
+                Description
+                <span class="required">*</span>
+              </label>
+
+              <textarea
+                id="description"
+                formControlName="description"
+                placeholder="Describe your application..."
+                rows="7"></textarea>
+
+              <div
+                *ngIf="updateForm.get('description')?.invalid && updateForm.get('description')?.touched"
+                class="field-error">
+                Description is required.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="version">
+                Version
+                <span class="required">*</span>
+              </label>
+
+              <input
+                id="version"
+                type="text"
+                formControlName="version"
+                placeholder="e.g. 1.0.0" />
+
+              <div
+                *ngIf="updateForm.get('version')?.invalid && updateForm.get('version')?.touched"
+                class="field-error">
+                Version is required.
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="categoryId">
+                Category
+                <span class="required">*</span>
+              </label>
+
+              <input
+                id="categoryId"
+                type="text"
+                formControlName="categoryId"
+                placeholder="Enter category ID" />
+
+              <div
+                *ngIf="updateForm.get('categoryId')?.invalid && updateForm.get('categoryId')?.touched"
+                class="field-error">
+                Category is required.
+              </div>
+            </div>
+
+          </div>
+        </section>
+
+        <section class="form-card">
+
+          <div class="section-header">
+            <div class="section-icon">
+              <span>◈</span>
+            </div>
+
+            <div>
+              <h2>Application Configuration</h2>
+              <p>Current configuration and application metadata.</p>
+            </div>
+          </div>
+
+          <div class="info-grid">
+
+            <div class="info-item">
+              <span class="info-label">Monetization</span>
+              <span class="info-value">
+                {{ originalApplicationData?.monetizationType || 'Not specified' }}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">Price</span>
+              <span class="info-value">
+                {{ originalApplicationData?.price || '0' }}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">Free Application</span>
+              <span
+                class="status-pill"
+                [class.free]="originalApplicationData?.isFree"
+                [class.paid]="!originalApplicationData?.isFree">
+                {{ originalApplicationData?.isFree ? 'Yes' : 'No' }}
+              </span>
+            </div>
+
+            <div class="info-item">
+              <span class="info-label">Developer ID</span>
+              <span class="info-value developer-id">
+                {{ originalApplicationData?.developerId || 'Not available' }}
+              </span>
+            </div>
+
+            <div class="info-item full-width">
+              <span class="info-label">Website</span>
+
+              <a
+                *ngIf="originalApplicationData?.websiteUrl"
+                [href]="originalApplicationData.websiteUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="website-link">
+                {{ originalApplicationData.websiteUrl }}
+              </a>
+
+              <span
+                *ngIf="!originalApplicationData?.websiteUrl"
+                class="info-value">
+                No website configured
+              </span>
+            </div>
+
+          </div>
+
+          <div class="readonly-note">
+            <span class="note-icon">i</span>
+            <span>
+              Monetization, developer ownership and other application metadata
+              are preserved from the existing application during this update.
+            </span>
+          </div>
+
+        </section>
+
+        <section class="form-card">
+
+          <div class="section-header">
+            <div class="section-icon">
+              <span>▧</span>
+            </div>
+
+            <div>
+              <h2>Promotional Media</h2>
+              <p>Update the thumbnail and screenshots shown on your application page.</p>
+            </div>
+          </div>
+
+          <div class="media-section">
+
+            <div class="media-block thumbnail-block">
+
+              <div class="media-heading">
+                <div>
+                  <h3>Application Thumbnail</h3>
+                  <p>Main image displayed for your application.</p>
+                </div>
+
+                <span class="media-badge">Thumbnail</span>
+              </div>
+
+              <div
+                class="thumbnail-upload"
+                [class.has-image]="thumbnailPreviewUrl"
+                (click)="thumbnailInput.click()"
+                tabindex="0"
+                role="button">
+
+                <ng-container *ngIf="thumbnailPreviewUrl; else thumbnailPlaceholder">
+
+                  <img
+                    [src]="thumbnailPreviewUrl"
+                    alt="Application thumbnail preview" />
+
+                  <div class="thumbnail-overlay">
+                    <span class="overlay-icon">✎</span>
+                    <span>Change Image</span>
+                  </div>
+
+                </ng-container>
+
+                <ng-template #thumbnailPlaceholder>
+
+                  <div class="upload-placeholder">
+                    <div class="upload-icon">↑</div>
+                    <strong>Upload Thumbnail</strong>
+                    <span>PNG, JPG or JPEG</span>
+                    <small>Click to choose an image</small>
+                  </div>
+
+                </ng-template>
+
+              </div>
+
+              <input
+                #thumbnailInput
+                type="file"
+                hidden
+                accept="image/png,image/jpeg,image/jpg"
+                (change)="onThumbnailSelect($event)" />
+
+            </div>
+
+            <div class="media-block screenshots-block">
+
+              <div class="media-heading">
+                <div>
+                  <h3>Application Screenshots</h3>
+                  <p>Add screenshots showing your application.</p>
+                </div>
+
+                <span class="media-badge">
+                  {{ selectedScreenshots.length || originalApplicationData?.screenshots?.length || 0 }}
+                  images
+                </span>
+              </div>
+
+              <div
+                class="screenshots-upload"
+                (click)="screenshotsInput.click()"
+                tabindex="0"
+                role="button">
+
+                <div class="upload-icon">↑</div>
+
+                <strong>
+                  Upload Screenshots
+                </strong>
+
+                <span>
+                  Select one or more images
+                </span>
+
+                <small>
+                  PNG, JPG or JPEG
+                </small>
+
+              </div>
+
+              <input
+                #screenshotsInput
+                type="file"
+                hidden
+                multiple
+                accept="image/png,image/jpeg,image/jpg"
+                (change)="onScreenshotsSelect($event)" />
+
+              <div
+                *ngIf="screenshotPreviewUrls.length > 0"
+                class="screenshot-preview-grid">
+
+                <div
+                  *ngFor="let image of screenshotPreviewUrls; let i = index"
+                  class="screenshot-preview">
+
+                  <img
+                    [src]="image"
+                    [alt]="'Screenshot ' + (i + 1)" />
+
+                  <div class="preview-number">
+                    {{ i + 1 }}
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div
+                *ngIf="screenshotPreviewUrls.length === 0 && originalApplicationData?.screenshots?.length"
+                class="existing-screenshots">
+
+                <div
+                  *ngFor="let screenshot of originalApplicationData.screenshots; let i = index"
+                  class="existing-screenshot">
+
+                  <div class="existing-image-placeholder">
+                    <span>{{ i + 1 }}</span>
+                  </div>
+
+                  <div class="existing-screenshot-info">
+                    <strong>
+                      {{ screenshot.caption || 'Screenshot ' + (i + 1) }}
+                    </strong>
+
+                    <span>
+                      Existing screenshot
+                    </span>
+                  </div>
+
+                </div>
+
+              </div>
+
+              <div
+                *ngIf="selectedScreenshots.length > 0"
+                class="upload-notice">
+
+                <span class="notice-icon">i</span>
+
+                <span>
+                  Selecting new screenshots will replace the current screenshot
+                  set when the application is updated.
+                </span>
+
+              </div>
+
+            </div>
+
+          </div>
+
+        </section>
+
+      </main>
+
+      <aside class="sidebar">
+
+        <section class="side-card">
+
+          <div class="side-card-header">
+            <span class="side-icon">✓</span>
+
+            <div>
+              <h3>Update Checklist</h3>
+              <p>Review before saving.</p>
+            </div>
+          </div>
+
+          <div class="checklist">
+
+            <div
+              class="check-item"
+              [class.completed]="updateForm.get('name')?.valid">
+              <span class="check">
+                {{ updateForm.get('name')?.valid ? '✓' : '○' }}
+              </span>
+              <span>Application name</span>
+            </div>
+
+            <div
+              class="check-item"
+              [class.completed]="updateForm.get('description')?.valid">
+              <span class="check">
+                {{ updateForm.get('description')?.valid ? '✓' : '○' }}
+              </span>
+              <span>Description</span>
+            </div>
+
+            <div
+              class="check-item"
+              [class.completed]="updateForm.get('version')?.valid">
+              <span class="check">
+                {{ updateForm.get('version')?.valid ? '✓' : '○' }}
+              </span>
+              <span>Version</span>
+            </div>
+
+            <div
+              class="check-item"
+              [class.completed]="updateForm.get('categoryId')?.valid">
+              <span class="check">
+                {{ updateForm.get('categoryId')?.valid ? '✓' : '○' }}
+              </span>
+              <span>Category</span>
+            </div>
+
+            <div
+              class="check-item"
+              [class.completed]="thumbnailPreviewUrl">
+              <span class="check">
+                {{ thumbnailPreviewUrl ? '✓' : '○' }}
+              </span>
+              <span>Thumbnail</span>
+            </div>
+
+          </div>
+
+        </section>
+
+        <section class="side-card application-summary">
+
+          <div class="side-card-header">
+            <span class="side-icon">▣</span>
+
+            <div>
+              <h3>Application</h3>
+              <p>Current application details.</p>
+            </div>
+          </div>
+
+          <div class="summary-content">
+
+            <div class="summary-name">
+              {{ originalApplicationData?.name }}
+            </div>
+
+            <div class="summary-row">
+              <span>Version</span>
+              <strong>
+                {{ originalApplicationData?.version || '—' }}
+              </strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Type</span>
+              <strong>
+                {{ originalApplicationData?.monetizationType || '—' }}
+              </strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Price</span>
+              <strong>
+                {{ originalApplicationData?.price || '0' }}
+              </strong>
+            </div>
+
+            <div class="summary-row">
+              <span>Screenshots</span>
+              <strong>
+                {{ originalApplicationData?.screenshots?.length || 0 }}
+              </strong>
+            </div>
+
+          </div>
+
+        </section>
+
+        <section class="side-card help-card">
+
+          <div class="side-card-header">
+            <span class="side-icon">?</span>
+
+            <div>
+              <h3>Need Help?</h3>
+              <p>Application updates</p>
+            </div>
+          </div>
+
+          <p class="help-text">
+            Update the information that you want to change and upload new media
+            if required. Existing application configuration is preserved.
+          </p>
+
+        </section>
+
+      </aside>
+
+    </div>
+
+    <div class="form-footer">
+
+      <button
+        type="button"
+        class="secondary-button"
+        [disabled]="isSubmitting"
+        (click)="onCancel()">
+        Cancel
+      </button>
+
+      <button
+        type="submit"
+        class="primary-button"
+        [disabled]="isSubmitting || updateForm.invalid">
+
+        <mat-spinner
+          *ngIf="isSubmitting"
+          diameter="18">
+        </mat-spinner>
+
+        <span *ngIf="!isSubmitting">
+          Save Changes
+        </span>
+
+        <span *ngIf="isSubmitting">
+          Updating...
+        </span>
+
+      </button>
+
+    </div>
+
   </form>
+
 </div>

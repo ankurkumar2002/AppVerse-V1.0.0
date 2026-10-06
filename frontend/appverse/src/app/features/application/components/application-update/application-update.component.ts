@@ -1,12 +1,22 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ReactiveFormsModule, FormBuilder, FormGroup, Validators } from '@angular/forms';
+import {
+  ReactiveFormsModule,
+  FormBuilder,
+  FormGroup,
+  Validators
+} from '@angular/forms';
 import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 
 import { ApplicationService } from '../../services/application.service';
-import { ApplicationDetail, UpdateApplicationRequest, ScreenshotRequest } from '../../models/application-detail'; // Adjust path as needed
+import {
+  ApplicationDetail,
+  UpdateApplicationRequest,
+  ScreenshotRequest,
+  Screenshot
+} from '../../models/application-detail';
 
 @Component({
   selector: 'app-application-update',
@@ -20,18 +30,19 @@ import { ApplicationDetail, UpdateApplicationRequest, ScreenshotRequest } from '
   templateUrl: './application-update.component.html',
   styleUrls: ['./application-update.component.scss']
 })
-export class ApplicationUpdateComponent implements OnInit {
+export class ApplicationUpdateComponent implements OnInit, OnDestroy {
   updateForm!: FormGroup;
-  appId!: string;
+
+  appId = '';
   originalApplicationData!: ApplicationDetail;
 
-  // For managing new file selections
   selectedThumbnail: File | null = null;
   selectedScreenshots: File[] = [];
 
-  // For securely displaying image previews
   thumbnailPreviewUrl: SafeUrl | null = null;
   screenshotPreviewUrls: SafeUrl[] = [];
+
+  private objectUrls: string[] = [];
 
   isLoading = true;
   isSubmitting = false;
@@ -46,7 +57,8 @@ export class ApplicationUpdateComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.appId = this.route.snapshot.paramMap.get('id')!;
+    this.appId = this.route.snapshot.paramMap.get('id') ?? '';
+
     if (!this.appId) {
       this.errorMessage = 'Application ID not found in URL.';
       this.isLoading = false;
@@ -58,91 +70,140 @@ export class ApplicationUpdateComponent implements OnInit {
       tagline: [''],
       description: ['', Validators.required],
       version: ['', Validators.required],
-      categoryId: ['', Validators.required],
+      categoryId: ['', Validators.required]
     });
 
     this.loadApplicationDetails();
   }
 
+  ngOnDestroy(): void {
+    this.revokeObjectUrls();
+  }
+
   loadApplicationDetails(): void {
+    this.isLoading = true;
+    this.errorMessage = null;
+
     this.applicationService.getApplicationById(this.appId).subscribe({
-      next: (app) => {
+      next: app => {
         this.originalApplicationData = app;
-        
+
         this.updateForm.patchValue({
           name: app.name,
           tagline: app.tagline,
           description: app.description,
           version: app.version,
-          categoryId: app.categoryId,
+          categoryId: app.categoryId
         });
 
         this.loadAndDisplayExistingImages(app);
+
         this.isLoading = false;
       },
-      error: (err) => {
-        this.errorMessage = 'Failed to load application data. Please try again.';
+      error: err => {
+        console.error('Failed to load application:', err);
+
+        this.errorMessage =
+          err?.error?.message ||
+          'Failed to load application data. Please try again.';
+
         this.isLoading = false;
       }
     });
   }
-  
+
   private loadAndDisplayExistingImages(app: ApplicationDetail): void {
+    this.clearPreviewUrls();
+
     if (app.thumbnailUrl) {
-      const filename = this.extractFileName(app.thumbnailUrl);
-      if (filename) {
-        this.applicationService.getImageAsBlob('thumbnails', filename).subscribe({
-          next: (blob) => {
-            const objectURL = URL.createObjectURL(blob);
-            this.thumbnailPreviewUrl = this.sanitizer.bypassSecurityTrustUrl(objectURL);
+      this.applicationService
+        .getImageAsBlob('thumbnails', app.thumbnailUrl)
+        .subscribe({
+          next: blob => {
+            const objectUrl = URL.createObjectURL(blob);
+
+            this.objectUrls.push(objectUrl);
+
+            this.thumbnailPreviewUrl =
+              this.sanitizer.bypassSecurityTrustUrl(objectUrl);
           },
-          error: (err) => console.error(`Error fetching thumbnail '${filename}':`, err)
+          error: err => {
+            console.error('Failed to load thumbnail:', err);
+          }
         });
-      }
     }
 
     this.screenshotPreviewUrls = [];
+
     (app.screenshots || []).forEach(screenshot => {
-      const filename = this.extractFileName(screenshot.imageUrl);
-      if (filename) {
-        this.applicationService.getImageAsBlob('screenshots', filename).subscribe({
-          next: (blob) => {
-            const objectURL = URL.createObjectURL(blob);
-            this.screenshotPreviewUrls.push(this.sanitizer.bypassSecurityTrustUrl(objectURL));
-          },
-          error: (err) => console.error(`Error fetching screenshot '${filename}':`, err)
-        });
+      const imagePath = this.getScreenshotImagePath(screenshot);
+
+      if (!imagePath) {
+        return;
       }
+
+      this.applicationService
+        .getImageAsBlob('screenshots', imagePath)
+        .subscribe({
+          next: blob => {
+            const objectUrl = URL.createObjectURL(blob);
+
+            this.objectUrls.push(objectUrl);
+
+            this.screenshotPreviewUrls.push(
+              this.sanitizer.bypassSecurityTrustUrl(objectUrl)
+            );
+          },
+          error: err => {
+            console.error('Failed to load screenshot:', err);
+          }
+        });
     });
   }
 
-  private extractFileName(fullPath: string): string {
-    if (!fullPath) return '';
-    return fullPath.split('/').pop() || '';
+  private getScreenshotImagePath(screenshot: Screenshot): string {
+    return screenshot.imageUrl || '';
   }
 
   onThumbnailSelect(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files && input.files.length) {
-      this.selectedThumbnail = input.files[0];
-      this.thumbnailPreviewUrl = this.sanitizer.bypassSecurityTrustUrl(
-        URL.createObjectURL(this.selectedThumbnail)
-      );
+
+    if (!input.files || input.files.length === 0) {
+      return;
     }
+
+    const file = input.files[0];
+
+    this.selectedThumbnail = file;
+
+    const objectUrl = URL.createObjectURL(file);
+
+    this.objectUrls.push(objectUrl);
+
+    this.thumbnailPreviewUrl =
+      this.sanitizer.bypassSecurityTrustUrl(objectUrl);
   }
 
   onScreenshotsSelect(event: Event): void {
     const input = event.target as HTMLInputElement;
-    if (input.files) {
-      this.selectedScreenshots = Array.from(input.files);
-      this.screenshotPreviewUrls = this.selectedScreenshots.map(file => 
-        this.sanitizer.bypassSecurityTrustUrl(URL.createObjectURL(file))
-      );
+
+    if (!input.files || input.files.length === 0) {
+      return;
     }
+
+    this.selectedScreenshots = Array.from(input.files);
+
+    this.screenshotPreviewUrls = this.selectedScreenshots.map(file => {
+      const objectUrl = URL.createObjectURL(file);
+
+      this.objectUrls.push(objectUrl);
+
+      return this.sanitizer.bypassSecurityTrustUrl(objectUrl);
+    });
   }
-  
-  public onCancel(): void {
-    this.router.navigate(['/apps', this.appId]);
+
+  onCancel(): void {
+    this.router.navigate(['/developer/apps', this.appId]);
   }
 
   onSubmit(): void {
@@ -150,55 +211,109 @@ export class ApplicationUpdateComponent implements OnInit {
       this.updateForm.markAllAsTouched();
       return;
     }
-    if (this.isSubmitting) return;
+
+    if (this.isSubmitting) {
+      return;
+    }
+
+    if (!this.originalApplicationData) {
+      this.errorMessage = 'Application data is not available.';
+      return;
+    }
 
     this.isSubmitting = true;
     this.errorMessage = null;
 
-    // --- Build Request Payloads with the BUG FIX ---
+    const metadataForUpload: ScreenshotRequest[] =
+      this.selectedScreenshots.length > 0
+        ? this.selectedScreenshots.map((file, index) => ({
+            imageUrl: '',
+            caption: file.name,
+            order: index
+          }))
+        : (this.originalApplicationData.screenshots || []).map(
+            (screenshot, index) => ({
+              imageUrl: screenshot.imageUrl,
+              caption: screenshot.caption || '',
+              order: screenshot.order ?? index
+            })
+          );
 
-    // 1. Start with a safe payload that preserves original data, including screenshots.
     const updateRequestPayload: UpdateApplicationRequest = {
-      ...this.originalApplicationData,
-      ...this.updateForm.value,
+      name: this.updateForm.value.name,
+      description: this.updateForm.value.description,
+      version: this.updateForm.value.version,
+      categoryId: this.updateForm.value.categoryId,
+
+      thumbnailUrl: this.originalApplicationData.thumbnailUrl,
+      developerId: this.originalApplicationData.developerId,
+      status: (this.originalApplicationData as any).status || 'DRAFT',
+
+      screenshots: metadataForUpload,
+
+      price: Number(this.originalApplicationData.price) || 0,
+      currency: (this.originalApplicationData as any).currency || 'INR',
+
+      isFree: this.originalApplicationData.isFree,
+
+      platforms: (this.originalApplicationData as any).platforms || [],
+
+      accessUrl: (this.originalApplicationData as any).accessUrl || '',
+
+      websiteUrl:
+        (this.originalApplicationData as any).websiteUrl ||
+        this.originalApplicationData.websiteUrl ||
+        '',
+
+      supportUrl: (this.originalApplicationData as any).supportUrl || '',
+
+      tags: (this.originalApplicationData as any).tags || [],
+
+      monetizationType:
+        this.originalApplicationData.monetizationType || 'FREE'
     };
-    
-    let metadataForUpload: ScreenshotRequest[] = [];
 
-    // 2. Check if the user has selected NEW screenshot files.
-    if (this.selectedScreenshots.length > 0) {
-      // ONLY if new files are selected, do we prepare to replace the old list.
-      
-      // A. Build the dummy metadata for the new files.
-      metadataForUpload = this.selectedScreenshots.map((file, index) => ({
-        imageUrl: "", // The "lie" to satisfy the backend DTO
-        caption: `Screenshot ${index + 1}`,
-        order: index,
-      }));
+    this.applicationService
+      .updateApplication(
+        this.appId,
+        updateRequestPayload,
+        this.selectedThumbnail,
+        this.selectedScreenshots,
+        metadataForUpload
+      )
+      .subscribe({
+        next: () => {
+          this.isSubmitting = false;
 
-      // B. Overwrite the 'screenshots' property on our payload with this new dummy list.
-      updateRequestPayload.screenshots = metadataForUpload;
-    }
-    // If no new files were selected, we do nothing, and the original screenshot list
-    // from '...this.originalApplicationData' remains on the payload.
+          this.router.navigate([
+            '/developer/apps',
+            this.appId
+          ]);
+        },
+        error: err => {
+          console.error('Failed to update application:', err);
 
-    // 3. Call the service.
-    this.applicationService.updateApplication(
-      this.appId,
-      updateRequestPayload,
-      this.selectedThumbnail,
-      this.selectedScreenshots,
-      metadataForUpload
-    ).subscribe({
-      next: () => {
-        alert('Application updated successfully!');
-        this.isSubmitting = false;
-        this.router.navigate(['/apps', this.appId]);
-      },
-      error: (err) => {
-        this.errorMessage = err.error?.message || 'An unknown error occurred during the update.';
-        this.isSubmitting = false;
-      }
+          this.errorMessage =
+            err?.error?.message ||
+            'An unknown error occurred while updating the application.';
+
+          this.isSubmitting = false;
+        }
+      });
+  }
+
+  private clearPreviewUrls(): void {
+    this.revokeObjectUrls();
+
+    this.thumbnailPreviewUrl = null;
+    this.screenshotPreviewUrls = [];
+  }
+
+  private revokeObjectUrls(): void {
+    this.objectUrls.forEach(url => {
+      URL.revokeObjectURL(url);
     });
+
+    this.objectUrls = [];
   }
 }
