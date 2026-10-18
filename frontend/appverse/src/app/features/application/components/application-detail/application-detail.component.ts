@@ -225,10 +225,10 @@ export class ApplicationDetailComponent
     }
 
     application.screenshots.forEach(
-      (screenshot: Screenshot) => {
+      (screenshot: Screenshot, index: number) => {
 
         const screenshotId =
-          screenshot._id;
+          this.getScreenshotKey(screenshot, index);
 
         if (!screenshot.imageUrl) {
 
@@ -321,6 +321,21 @@ export class ApplicationDetailComponent
    * FILE NAME
    * =========================================================
    */
+
+  /**
+   * Returns a unique key for each screenshot card.
+   * The array index prevents collisions if screenshot _id values are
+   * missing or duplicated in the API response.
+   */
+  getScreenshotKey(
+    screenshot: Screenshot,
+    index: number
+  ): string {
+    const id = screenshot?._id;
+    const imageUrl = screenshot?.imageUrl?.trim();
+
+    return `screenshot-${index}-${id ?? imageUrl ?? 'unknown'}`;
+  }
 
   extractFileName(
     fullPath: string
