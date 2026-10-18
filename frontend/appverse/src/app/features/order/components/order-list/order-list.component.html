@@ -1,0 +1,355 @@
+
+<div class="orders-page">
+
+  <!-- Page Header -->
+  <header class="orders-header">
+    <div class="header-content">
+      <span class="eyebrow">YOUR ACCOUNT</span>
+      <h1>My Orders</h1>
+      <p>Track your purchases and manage your applications.</p>
+    </div>
+
+    <div class="orders-count">
+      <div class="count-icon">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+      <div class="count-content">
+        <strong>{{ orders.length }}</strong>
+        <span>Total Orders</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Search and Filters -->
+  <section class="orders-toolbar">
+
+    <label class="search-box">
+      <mat-icon>search</mat-icon>
+      <input
+        type="text"
+        placeholder="Search order ID or application..."
+        [value]="searchTerm"
+        (input)="onSearch($event)"
+      />
+    </label>
+
+    <label class="status-filter">
+      <mat-icon>filter_list</mat-icon>
+      <select
+        [value]="selectedStatus"
+        (change)="onStatusChange($event)"
+      >
+        <option value="ALL">All statuses</option>
+
+        @for (status of availableStatuses; track status) {
+          <option [value]="status">
+            {{ status }}
+          </option>
+        }
+      </select>
+      <mat-icon class="select-arrow">expand_more</mat-icon>
+    </label>
+
+    <button
+      type="button"
+      class="reset-button"
+      (click)="resetFilters()"
+    >
+      <mat-icon>restart_alt</mat-icon>
+      Reset
+    </button>
+
+    <button
+      type="button"
+      class="refresh-button"
+      [disabled]="isLoading"
+      (click)="loadOrders()"
+    >
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+
+  </section>
+
+  <!-- Results Summary -->
+  <div class="results-heading">
+    <span>
+      Showing
+      <strong>{{ filteredOrders.length }}</strong>
+      {{ filteredOrders.length === 1 ? 'order' : 'orders' }}
+    </span>
+
+    <span class="results-caption">
+      Newest first
+    </span>
+  </div>
+
+  <!-- Loading -->
+  @if (isLoading) {
+    <section class="state-panel">
+      <span class="loading-spinner"></span>
+      <h3>Loading your orders</h3>
+      <p>Please wait while we retrieve your purchases.</p>
+    </section>
+  }
+
+  <!-- Error -->
+  @else if (errorMessage) {
+    <section class="state-panel error-panel">
+      <div class="state-icon error-icon">
+        <mat-icon>cloud_off</mat-icon>
+      </div>
+
+      <h3>Unable to load orders</h3>
+      <p>{{ errorMessage }}</p>
+
+      <button
+        type="button"
+        class="primary-button"
+        (click)="loadOrders()"
+      >
+        <mat-icon>refresh</mat-icon>
+        Try Again
+      </button>
+    </section>
+  }
+
+  <!-- Empty Results -->
+  @else if (filteredOrders.length === 0) {
+    <section class="state-panel">
+      <div class="state-icon">
+        <mat-icon>receipt_long</mat-icon>
+      </div>
+
+      @if (orders.length === 0) {
+        <h3>No orders yet</h3>
+        <p>
+          Your purchases will appear here after you place your first order.
+        </p>
+      } @else {
+        <h3>No matching orders</h3>
+        <p>
+          Try changing your search term or selecting another status.
+        </p>
+
+        <button
+          type="button"
+          class="secondary-button"
+          (click)="resetFilters()"
+        >
+          Clear Filters
+        </button>
+      }
+    </section>
+  }
+
+  <!-- Orders List -->
+  @else {
+    <section class="orders-list">
+
+      @for (
+        order of filteredOrders;
+        track trackByOrderId($index, order)
+      ) {
+
+        <article class="order-card">
+
+          <!-- Order Header -->
+          <div class="order-card-header">
+
+            <div class="order-identity">
+              <div class="order-icon">
+                <mat-icon>receipt_long</mat-icon>
+              </div>
+
+              <div class="order-title">
+                <span class="order-reference">ORDER ID</span>
+
+                <h2>{{ order.id }}</h2>
+
+                <span class="order-date">
+                  <mat-icon>calendar_today</mat-icon>
+                  {{ order.createdAt | date:'dd MMM yyyy, hh:mm a' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="order-badges">
+              <span
+                class="status-badge"
+                [ngClass]="getStatusClass(order.orderStatus)"
+              >
+                {{ order.orderStatus }}
+              </span>
+
+              @if (order.paymentStatus) {
+                <span
+                  class="status-badge payment-badge"
+                  [ngClass]="getStatusClass(order.paymentStatus)"
+                >
+                  <mat-icon>payments</mat-icon>
+                  {{ order.paymentStatus }}
+                </span>
+              }
+            </div>
+
+          </div>
+
+          <!-- Order Summary -->
+          <div class="order-summary">
+
+            <div class="summary-item">
+              <span class="summary-label">ITEMS</span>
+              <strong>
+                {{ order.items.length }}
+                {{ order.items.length === 1 ? 'item' : 'items' }}
+              </strong>
+            </div>
+
+            <div class="summary-item total-summary">
+              <span class="summary-label">ORDER TOTAL</span>
+              <strong class="order-total">
+                {{ order.orderTotal | currency:order.currency:'symbol':'1.2-2' }}
+              </strong>
+            </div>
+
+            <div class="summary-item payment-summary">
+              <span class="summary-label">TRANSACTION</span>
+              <strong class="transaction-value">
+                {{ order.paymentTransactionId || 'Not available' }}
+              </strong>
+            </div>
+
+            <button
+              type="button"
+              class="details-button"
+              [attr.aria-expanded]="isExpanded(order.id)"
+              (click)="toggleOrder(order.id)"
+            >
+              {{ isExpanded(order.id) ? 'Hide Details' : 'View Details' }}
+
+              <mat-icon>
+                {{ isExpanded(order.id) ? 'expand_less' : 'expand_more' }}
+              </mat-icon>
+            </button>
+
+          </div>
+
+          <!-- Expanded Order Details -->
+          @if (isExpanded(order.id)) {
+
+            <div class="order-details">
+
+              <div class="details-heading">
+                <div>
+                  <span class="eyebrow">ORDER BREAKDOWN</span>
+                  <h3>Purchased Applications</h3>
+                </div>
+              </div>
+
+              @if (order.items.length === 0) {
+                <div class="no-items">
+                  <mat-icon>info_outline</mat-icon>
+                  <span>No item details are available for this order.</span>
+                </div>
+              } @else {
+
+                <div class="items-list">
+
+                  @for (item of order.items; track item.id) {
+
+                    <div class="order-item">
+
+                      <div class="item-icon">
+                        <mat-icon>apps</mat-icon>
+                      </div>
+
+                      <div class="item-information">
+                        <h4>{{ item.applicationName }}</h4>
+
+                        <p>
+                          Version {{ item.applicationVersion || 'Not specified' }}
+                        </p>
+
+                        <div class="item-metadata">
+                          <span>{{ item.itemType }}</span>
+                          <span>Quantity: {{ item.quantity }}</span>
+
+                          @if (item.subscriptionPlanId) {
+                            <span>
+                              Plan: {{ item.subscriptionPlanId }}
+                            </span>
+                          }
+                        </div>
+                      </div>
+
+                      <div class="item-pricing">
+                        <strong>
+                          {{ item.totalPrice | currency:item.currency:'symbol':'1.2-2' }}
+                        </strong>
+
+                        <span>
+                          {{ item.unitPrice | currency:item.currency:'symbol':'1.2-2' }}
+                          per unit
+                        </span>
+                      </div>
+
+                      <div class="item-fulfillment">
+                        <span class="summary-label">FULFILLMENT</span>
+
+                        <span
+                          class="status-badge fulfillment-badge"
+                          [ngClass]="getStatusClass(item.fulfillmentStatus)"
+                        >
+                          {{ item.fulfillmentStatus }}
+                        </span>
+                      </div>
+
+                    </div>
+
+                  }
+
+                </div>
+
+              }
+
+              <!-- Order Metadata -->
+              <div class="order-detail-footer">
+
+                <div class="detail-meta">
+                  <span>Order Created</span>
+                  <strong>
+                    {{ order.createdAt | date:'dd MMM yyyy, hh:mm a' }}
+                  </strong>
+                </div>
+
+                <div class="detail-meta">
+                  <span>Last Updated</span>
+                  <strong>
+                    {{ order.updatedAt | date:'dd MMM yyyy, hh:mm a' }}
+                  </strong>
+                </div>
+
+                @if (order.completedAt) {
+                  <div class="detail-meta">
+                    <span>Completed On</span>
+                    <strong>
+                      {{ order.completedAt | date:'dd MMM yyyy, hh:mm a' }}
+                    </strong>
+                  </div>
+                }
+
+              </div>
+
+            </div>
+
+          }
+
+        </article>
+
+      }
+
+    </section>
+  }
+
+</div>

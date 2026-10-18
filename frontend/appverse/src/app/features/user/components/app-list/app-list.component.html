@@ -1,3 +1,4 @@
+
 <div class="app-list-page">
 
   <div class="page-header">
@@ -97,6 +98,20 @@
 
     </div>
 
+    <!-- Added: free-only filter -->
+    <label class="free-filter-control" [class.active]="showFreeOnly">
+      <input
+        type="checkbox"
+        [checked]="showFreeOnly"
+        (change)="onFreeOnlyChange($event)"
+        aria-label="Show free applications only"
+      />
+      <span class="free-filter-text">
+        <strong>Free only</strong>
+        <small>Show free applications</small>
+      </span>
+    </label>
+
     <div class="filter-control">
 
       <mat-icon>
@@ -181,6 +196,13 @@
         {{ getCategoryName() }}
       </span>
 
+    }
+
+    <!-- Added: show active free-only filter -->
+    @if (showFreeOnly) {
+      <span class="filter-pill free-filter-pill">
+        Free applications only
+      </span>
     }
 
   </div>
