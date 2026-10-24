@@ -11,6 +11,7 @@ public record ApplicationResponse(
     String id,
     String name,
     String tagline,
+    
     String description,
     String version,
     String categoryId,

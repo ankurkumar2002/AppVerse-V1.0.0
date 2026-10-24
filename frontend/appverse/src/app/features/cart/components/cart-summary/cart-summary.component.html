@@ -1,11 +1,17 @@
 <div class="summary-card">
-    <h3>Order Summary</h3>
+  <h3>Order Summary</h3>
 
-    <hr>
+  <hr />
 
-    <p>Total Amount</p>
+  <p>Total Amount</p>
 
-    <h2>{{ totalAmount}}</h2>
+  <h2>{{ totalAmount | currency:'INR':'symbol':'1.2-2' }}</h2>
 
-    <button>Proceed to Checkout</button>
+  <button
+    type="button"
+    [disabled]="totalAmount <= 0 || isCheckingOut"
+    (click)="onProceedToCheckout()"
+  >
+    {{ isCheckingOut ? 'Processing...' : 'Proceed to Checkout' }}
+  </button>
 </div>

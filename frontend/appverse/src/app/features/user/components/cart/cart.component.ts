@@ -1,3 +1,4 @@
+
 import {
   Component,
   OnDestroy,
@@ -9,18 +10,14 @@ import {
   DecimalPipe
 } from '@angular/common';
 
-import {
-  HttpClient
-} from '@angular/common/http';
+import { HttpClient } from '@angular/common/http';
 
 import {
   Router,
   RouterModule
 } from '@angular/router';
 
-import {
-  MatIconModule
-} from '@angular/material/icon';
+import { MatIconModule } from '@angular/material/icon';
 
 import {
   MatSnackBar,
@@ -44,6 +41,11 @@ import {
   CartService
 } from '../../../cart/services/cart.service';
 
+import { OrderService } from '../../../order/services/order.service';
+import { CreateOrderRequest } from '../../../order/models/create-order-request';
+
+
+
 interface CartItem {
   applicationId: string;
   quantity?: number;
@@ -57,6 +59,7 @@ interface CartResponse {
 
 interface CartDisplayItem {
   application: ApplicationResponse;
+  quantity: number;
   unitPrice: number;
   imageUrl: string | null;
   imageLoading: boolean;
@@ -84,8 +87,8 @@ export class CartComponent implements OnInit, OnDestroy {
   cartItems: CartDisplayItem[] = [];
 
   isLoading = true;
-
   isClearing = false;
+  isCheckingOut = false;
 
   itemLoading: Record<string, boolean> = {};
 
@@ -98,8 +101,9 @@ export class CartComponent implements OnInit, OnDestroy {
     private applicationService: ApplicationService,
     private http: HttpClient,
     private router: Router,
-    private snackBar: MatSnackBar
-  ) {}
+    private snackBar: MatSnackBar,
+    private orderService: OrderService
+  ) { }
 
   ngOnInit(): void {
     this.loadCart();
@@ -109,96 +113,68 @@ export class CartComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.cartError = false;
 
-    this.cartService
-      .getCart()
-      .subscribe({
-        next: (cart: CartResponse) => {
-
-          if (
-            !cart ||
-            !cart.items ||
-            cart.items.length === 0
-          ) {
-            this.cartItems = [];
-            this.isLoading = false;
-            return;
-          }
-
-          this.loadApplications(cart.items);
-        },
-
-        error: (error: any) => {
-          console.error(
-            'Failed to load cart:',
-            error
-          );
-
+    this.cartService.getCart().subscribe({
+      next: (cart: CartResponse) => {
+        if (!cart?.items?.length) {
           this.cartItems = [];
-          this.cartError = true;
           this.isLoading = false;
-
-          this.showMessage(
-            'Unable to load your cart'
-          );
+          return;
         }
-      });
+
+        this.loadApplications(cart.items);
+      },
+
+      error: (error: any) => {
+        console.error('Failed to load cart:', error);
+
+        this.cartItems = [];
+        this.cartError = true;
+        this.isLoading = false;
+
+        this.showMessage('Unable to load your cart');
+      }
+    });
   }
 
-  private loadApplications(
-    items: CartItem[]
-  ): void {
-
+  private loadApplications(items: CartItem[]): void {
     const requests: Observable<ApplicationResponse>[] =
       items.map(item =>
-        this.applicationService
-          .getPublishedApplicationById(
-            item.applicationId
-          )
+        this.applicationService.getPublishedApplicationById(
+          item.applicationId
+        )
       );
 
-    forkJoin(requests)
-      .subscribe({
-        next: (
-          applications: ApplicationResponse[]
-        ) => {
+    forkJoin(requests).subscribe({
+      next: (applications: ApplicationResponse[]) => {
+        this.cartItems = applications.map((application, index) => ({
+          application,
+          quantity: Math.max(1, items[index].quantity ?? 1),
+          unitPrice: this.getUnitPrice(application),
+          imageUrl: null,
+          imageLoading: false,
+          imageFailed: false
+        }));
 
-          this.cartItems =
-            applications.map(application => ({
-              application,
-              unitPrice: this.getUnitPrice(application),
-              imageUrl: null,
-              imageLoading: false,
-              imageFailed: false
-            }));
+        this.cartItems.forEach(item => this.loadThumbnail(item));
 
-          this.cartItems.forEach(item =>
-            this.loadThumbnail(item)
-          );
+        this.isLoading = false;
+      },
 
-          this.isLoading = false;
-        },
+      error: (error) => {
+        console.error('Failed to load cart applications:', error);
 
-        error: (error) => {
-          console.error(
-            'Failed to load cart applications:',
-            error
-          );
+        this.cartItems = [];
+        this.cartError = true;
+        this.isLoading = false;
 
-          this.cartItems = [];
-          this.cartError = true;
-          this.isLoading = false;
-
-          this.showMessage(
-            'Some applications in your cart could not be loaded'
-          );
-        }
-      });
+        this.showMessage(
+          'Some applications in your cart could not be loaded'
+        );
+      }
+    });
   }
 
-  private getUnitPrice(
-    application: ApplicationResponse
-  ): number {
-
+  private getUnitPrice(application: ApplicationResponse): number {
     if (
       application.monetizationType === 'FREE' ||
       application.isFree
@@ -206,17 +182,11 @@ export class CartComponent implements OnInit, OnDestroy {
       return 0;
     }
 
-    return Number(
-      application.price || 0
-    );
+    return Number(application.price || 0);
   }
 
-  loadThumbnail(
-    item: CartDisplayItem
-  ): void {
-
-    const application =
-      item.application;
+  loadThumbnail(item: CartDisplayItem): void {
+    const application = item.application;
 
     if (!application.thumbnailUrl) {
       item.imageFailed = true;
@@ -227,31 +197,19 @@ export class CartComponent implements OnInit, OnDestroy {
     item.imageFailed = false;
 
     this.applicationService
-      .getImageAsBlob(
-        'thumbnails',
-        application.thumbnailUrl
-      )
+      .getImageAsBlob('thumbnails', application.thumbnailUrl)
       .subscribe({
         next: (blob: Blob) => {
-
           if (item.imageUrl) {
-            URL.revokeObjectURL(
-              item.imageUrl
-            );
+            URL.revokeObjectURL(item.imageUrl);
           }
 
-          item.imageUrl =
-            URL.createObjectURL(blob);
-
+          item.imageUrl = URL.createObjectURL(blob);
           item.imageLoading = false;
         },
 
         error: (error) => {
-
-          console.error(
-            'Failed to load cart thumbnail:',
-            error
-          );
+          console.error('Failed to load cart thumbnail:', error);
 
           item.imageLoading = false;
           item.imageFailed = true;
@@ -259,71 +217,44 @@ export class CartComponent implements OnInit, OnDestroy {
       });
   }
 
-  removeItem(
-    item: CartDisplayItem
-  ): void {
+  removeItem(item: CartDisplayItem): void {
+    const applicationId = item.application.id;
 
-    const applicationId =
-      item.application.id;
-
-    if (
-      this.itemLoading[applicationId]
-    ) {
+    if (this.itemLoading[applicationId]) {
       return;
     }
 
     this.itemLoading[applicationId] = true;
 
-    this.cartService
-      .removeItemFromCart(
-        applicationId
-      )
-      .subscribe({
-        next: () => {
+    this.cartService.removeItemFromCart(applicationId).subscribe({
+      next: () => {
+        this.cartItems = this.cartItems.filter(
+          current => current.application.id !== applicationId
+        );
 
-          this.cartItems =
-            this.cartItems.filter(
-              current =>
-                current.application.id !==
-                applicationId
-            );
+        this.itemLoading[applicationId] = false;
 
-          this.itemLoading[applicationId] = false;
+        this.showMessage('Application removed from cart');
+      },
 
-          this.showMessage(
-            'Application removed from cart'
-          );
-        },
+      error: (error: any) => {
+        console.error('Failed to remove cart item:', error);
 
-        error: (error: any) => {
+        this.itemLoading[applicationId] = false;
 
-          console.error(
-            'Failed to remove cart item:',
-            error
-          );
-
-          this.itemLoading[applicationId] = false;
-
-          this.showMessage(
-            'Unable to remove application'
-          );
-        }
-      });
+        this.showMessage('Unable to remove application');
+      }
+    });
   }
 
   clearCart(): void {
-
-    if (
-      this.isClearing ||
-      this.cartItems.length === 0
-    ) {
+    if (this.isClearing || this.cartItems.length === 0) {
       return;
     }
 
-    const confirmed =
-      window.confirm(
-        'Are you sure you want to remove all applications from your cart?'
-      );
+    const confirmed = window.confirm(
+      'Are you sure you want to remove all applications from your cart?'
+    );
 
     if (!confirmed) {
       return;
@@ -331,74 +262,99 @@ export class CartComponent implements OnInit, OnDestroy {
 
     this.isClearing = true;
 
-    this.http
-      .delete(
-        `${this.baseUrl}/mine`
-      )
-      .subscribe({
-        next: () => {
+    this.http.delete(`${this.baseUrl}/mine`).subscribe({
+      next: () => {
+        this.cartItems = [];
+        this.isClearing = false;
 
-          this.cartItems = [];
-          this.isClearing = false;
+        this.showMessage('Cart cleared successfully');
+      },
 
-          this.showMessage(
-            'Cart cleared successfully'
-          );
-        },
+      error: (error) => {
+        console.error('Failed to clear cart:', error);
 
-        error: (error) => {
+        this.isClearing = false;
 
-          console.error(
-            'Failed to clear cart:',
-            error
-          );
-
-          this.isClearing = false;
-
-          this.showMessage(
-            'Unable to clear cart'
-          );
-        }
-      });
+        this.showMessage('Unable to clear cart');
+      }
+    });
   }
 
   continueShopping(): void {
-    this.router.navigate([
-      '/user/apps'
-    ]);
+    this.router.navigate(['/user/apps']);
   }
 
-  viewApplication(
-    applicationId: string
-  ): void {
-
-    this.router.navigate([
-      '/user/apps',
-      applicationId
-    ]);
+  viewApplication(applicationId: string): void {
+    this.router.navigate(['/user/apps', applicationId]);
   }
 
   checkout(): void {
-
     if (
-      this.cartItems.length === 0
+      this.cartItems.length === 0 ||
+      this.isCheckingOut
     ) {
       return;
     }
 
-    this.showMessage(
-      'Checkout will be available here next'
+    // The order DTO supports paid purchases and subscription
+    // initial purchases, but has no FREE item type.
+    const purchasableItems = this.cartItems.filter(
+      item => !this.isFree(item)
     );
+
+    if (purchasableItems.length === 0) {
+      this.showMessage(
+        'Your cart contains no paid applications to checkout.'
+      );
+      return;
+    }
+
+    const request: CreateOrderRequest = {
+      items: purchasableItems.map(item => ({
+        applicationId: item.application.id,
+        quantity: item.quantity,
+        itemType:
+          item.application.monetizationType === 'SUBSCRIPTION'
+            ? 'SUBSCRIPTION_INITIAL_PURCHASE'
+            : 'ONE_TIME_PURCHASE'
+      }))
+    };
+
+    this.isCheckingOut = true;
+
+    this.orderService.createOrder(request).subscribe({
+      next: (order) => {
+        this.isCheckingOut = false;
+
+        this.showMessage('Order created successfully');
+
+        // Navigate to the order history page.
+        this.router.navigate(['/user/orders']);
+      },
+
+      error: (error) => {
+        console.error('Failed to create order:', error);
+
+        this.isCheckingOut = false;
+
+        this.showMessage(
+          error?.error?.message ||
+          'Unable to create your order. Please try again.'
+        );
+      }
+    });
   }
 
   get itemCount(): number {
-    return this.cartItems.length;
+    return this.cartItems.reduce(
+      (count, item) => count + item.quantity,
+      0
+    );
   }
 
   get subtotal(): number {
     return this.cartItems.reduce(
-      (total, item) =>
-        total + item.unitPrice,
+      (total, item) => total + item.unitPrice * item.quantity,
       0
     );
   }
@@ -412,50 +368,29 @@ export class CartComponent implements OnInit, OnDestroy {
   }
 
   get currency(): string {
-
-    const pricedItem =
-      this.cartItems.find(
-        item =>
-          !item.application.isFree
-      );
-
-    return (
-      pricedItem?.application.currency ||
-      'INR'
+    const pricedItem = this.cartItems.find(
+      item => !item.application.isFree
     );
+
+    return pricedItem?.application.currency || 'INR';
   }
 
-  formatPrice(
-    amount: number
-  ): string {
-
-    return new Intl.NumberFormat(
-      'en-IN',
-      {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      }
-    ).format(amount);
+  formatPrice(amount: number): string {
+    return new Intl.NumberFormat('en-IN', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
+    }).format(amount);
   }
 
-  isFree(
-    item: CartDisplayItem
-  ): boolean {
-
+  isFree(item: CartDisplayItem): boolean {
     return (
       item.application.monetizationType === 'FREE' ||
       item.application.isFree
     );
   }
 
-  getPriceLabel(
-    item: CartDisplayItem
-  ): string {
-
-    if (
-      item.application.monetizationType ===
-      'SUBSCRIPTION'
-    ) {
+  getPriceLabel(item: CartDisplayItem): string {
+    if (item.application.monetizationType === 'SUBSCRIPTION') {
       return 'Subscription';
     }
 
@@ -466,14 +401,8 @@ export class CartComponent implements OnInit, OnDestroy {
     return `${item.application.currency || 'INR'} ${this.formatPrice(item.unitPrice)}`;
   }
 
-  getItemType(
-    item: CartDisplayItem
-  ): string {
-
-    if (
-      item.application.monetizationType ===
-      'SUBSCRIPTION'
-    ) {
+  getItemType(item: CartDisplayItem): string {
+    if (item.application.monetizationType === 'SUBSCRIPTION') {
       return 'SUBSCRIPTION';
     }
 
@@ -488,33 +417,21 @@ export class CartComponent implements OnInit, OnDestroy {
     index: number,
     item: CartDisplayItem
   ): string {
-
     return item.application.id;
   }
 
-  showMessage(
-    message: string
-  ): void {
-
-    this.snackBar.open(
-      message,
-      'Close',
-      {
-        duration: 3000,
-        horizontalPosition: 'right',
-        verticalPosition: 'bottom'
-      }
-    );
+  showMessage(message: string): void {
+    this.snackBar.open(message, 'Close', {
+      duration: 3000,
+      horizontalPosition: 'right',
+      verticalPosition: 'bottom'
+    });
   }
 
   ngOnDestroy(): void {
-
     this.cartItems.forEach(item => {
-
       if (item.imageUrl) {
-        URL.revokeObjectURL(
-          item.imageUrl
-        );
+        URL.revokeObjectURL(item.imageUrl);
       }
     });
   }

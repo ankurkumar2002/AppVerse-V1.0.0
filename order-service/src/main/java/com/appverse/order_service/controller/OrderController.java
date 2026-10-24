@@ -19,7 +19,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 import java.net.URI;
 import java.util.List;
-// No UUID import needed if IDs are String
 
 @RestController
 @RequestMapping("/api/v1/orders")
