@@ -9,7 +9,7 @@ import com.appverse.order_service.dto.AppDetails;
 @FeignClient(name = "app-service", url = "http://localhost:8080")
 public interface AppServiceClient {
 
-    @GetMapping("/api/apps/{id}") 
+    @GetMapping("/api/apps/internal/{id}") 
     AppDetails getAppDetails(@PathVariable("id") String applicationId);
     
 }

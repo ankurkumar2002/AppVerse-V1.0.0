@@ -256,7 +256,7 @@ public class ApplicationController {
     }
 
     @GetMapping("/internal/{id}")
-    @PreAuthorize("hasAuthority('SCOPE_internal')")
+    // @PreAuthorize("hasAuthority('SCOPE_internal')")
     public ResponseEntity<ApplicationResponse> getApplicationInternal(
             @PathVariable String id) {
         log.info("Request is coming and getting processed");
