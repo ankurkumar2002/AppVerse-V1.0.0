@@ -1,109 +1,174 @@
-# AppVerse Project Analysis Summary
+# AppVerse — Project and Architecture Handoff
 
-## 1. PROJECT SUMMARY
+This document is a code-oriented guide for an AI assistant or developer joining the AppVerse repository. It explains the current structure and the responsibilities inferred from the checked-in source. Treat source code and service configuration as authoritative when they disagree with older descriptions or diagrams.
 
-AppVerse is a full-stack, microservices-driven application marketplace platform that democratizes software distribution by empowering developers and organizations to monetize their applications while providing users with a seamless discovery and purchase experience. Built with modern cloud-native technologies, it combines Spring Boot microservices (Java 21) with an Angular 19 frontend and integrates Keycloak for secure OAuth 2.0 authentication, enabling dual-role access (developers and end-users) with granular permission controls. The platform architecture features an intelligent API Gateway that orchestrates 10 specialized backend services, leveraging Apache Kafka for event-driven async communication, Resilience4j for fault tolerance, and polyglot persistence (MySQL for transactional data, MongoDB for flexible catalog metadata) to optimize performance and scalability. Currently operational are core marketplace features including application publishing with file uploads, developer onboarding workflows, comprehensive shopping cart and order management, flexible subscription plan configuration with multiple billing intervals, and payment processing integration—all architected to handle high-throughput transactions and provide exceptional reliability through circuit breakers, load balancing, and automated failover mechanisms. The development roadmap includes advanced payment gateway integrations, developer analytics dashboards, machine learning-powered app recommendations, and mobile app support to expand market reach and user engagement.
+## 1. What the product does
 
----
+AppVerse is a marketplace for software applications. It has two main authenticated personas:
 
-## 2. TECH STACK
+- **Developers** complete a developer profile, publish and maintain app listings, and configure subscription plans.
+- **Users** complete a user profile, browse listings, inspect app details, maintain a cart, and view orders. Subscription and payment backend services are also present.
 
-### Frontend
-- **Angular** 19.2.18 - Modern SPA framework with standalone components
-- **Angular Material** 19.2.18 - Material Design UI components library
-- **PrimeNG** 19.1.3 - Advanced data visualization and UI widgets
-- **RxJS** 7.8.0 - Reactive programming and async state management
-- **TypeScript** 5.8.3 - Type-safe JavaScript superset
-- **Bootstrap** 5.3.8 - Responsive CSS utilities and grid system
-- **Keycloak JS** 26.2.0 - OIDC client library for authentication
+Public pages include the landing page, About, and Contact. The application is a single-page Angular frontend that sends REST requests through the API Gateway. Keycloak handles login and supplies JWT identity/role claims. The backend is divided into Spring Boot services, with MongoDB for app catalog records and MySQL/Flyway for most transactional records. Kafka is used for selected asynchronous domain events.
 
-### Backend - Core Framework
-- **Spring Boot** 3.2.5 - REST API and microservice runtime
-- **Java** 21 (primary), Java 17 (Notification Service) - JVM runtime
-- **Maven** 3.8+ - Build automation and dependency management
-- **Spring Cloud** 2023.0.x - Microservices patterns and tools
+This is an active development codebase. Do not assume every feature described in prose is complete: check its controller, service implementation, route, and frontend caller before making a claim or extending it.
 
-### Backend - Service Communication & Resilience
-- **Spring Cloud Gateway MVC** 4.x - API gateway with routing and load balancing
-- **OpenFeign** 4.x - Declarative HTTP client for inter-service communication
-- **Resilience4j** 2.x - Circuit breaker, bulkhead, retry, timeout patterns
-- **Spring Cloud LoadBalancer** 4.x - Client-side load balancing
+## 2. Repository map
 
-### Security & Identity
-- **Keycloak** 26.2.0 - OpenID Connect (OIDC) and OAuth 2.0 identity provider
-- **Spring Security** 6.2.x - Servlet-based security framework
-- **Spring OAuth 2.0 Resource Server** 6.2.x - JWT validation and authorization
+```text
+AppVerse - V1.0.0/
+├── frontend/appverse/       Angular 19 client
+├── api-gateway/             Public API entry point, routing, security, resilience
+├── app-service/             Application catalog, categories, image upload, MongoDB
+├── developer-service/       Developer profiles and developer-related operations
+├── user-service/            Marketplace user profiles
+├── identity-service/        Keycloak identity/user operations
+├── cart-service/            User cart and cart items
+├── order-service/           Orders and order items
+├── payment-service/         Payment transactions and saved payment methods
+├── subscription-service/    Plans and user subscriptions
+├── notification-service/    Kafka consumers and email notifications
+├── uploads/                 Repository-level upload/media area (also check app-service)
+├── README.md                Setup notes and endpoint overview
+└── PROJECT_ANALYSIS.md      This handoff
+```
 
-### Data Storage - Relational
-- **MySQL** 8.0 - Primary relational database for transactions
-- **Spring Data JPA** 3.2.x - ORM abstraction layer
-- **Flyway** 9.x - Database schema versioning and migrations
+Each Java backend directory is an independent Maven/Spring Boot application, generally with its own `pom.xml`, Maven wrapper, `src/main/java`, `src/main/resources`, and tests. The common Java package structure follows the service name, then layers such as `controller`, `service`, `repository`, `model`, `dto`, `mapper`, `config`, `client`, and `exception`. Not every service has every layer. SQL schema changes live in that service's `src/main/resources/db/migration` and are applied by Flyway. Docker Compose and Docker support files exist in several service directories and under `api-gateway/docker`; there is not one obvious root-level compose file in the repository root.
 
-### Data Storage - Document
-- **MongoDB** 7.x - NoSQL document database for app catalog
-- **Spring Data MongoDB** 4.x - MongoDB ODM abstraction
+## 3. Frontend (Angular)
 
-### Async Communication & Events
-- **Apache Kafka** 3.x - Event streaming platform
-- **Spring Kafka** 3.x - Kafka producer/consumer integration
+### Technology and entry points
 
-### Email & Notifications
-- **JavaMail** 1.6.x - SMTP email sending (javax.mail)
-- **Spring Mail** 6.x - Spring abstraction for mail operations
+The Angular app is in `frontend/appverse`. `package.json` identifies Angular 19.2.18, TypeScript 5.8, RxJS, Keycloak JS, Angular Material, PrimeNG, Bootstrap, and Angular SSR/Express dependencies. `npm start`/`pnpm start` runs `ng serve`; the app is configured around localhost services rather than an environment-specific API config.
 
-### Code Generation & Quality
-- **Lombok** 1.18.40+ - Annotation-based boilerplate reduction (getters, setters, constructors)
-- **MapStruct** 1.5.5 - Type-safe bean mapping and DTO transformation
+- `src/main.ts`: browser bootstrap.
+- `src/app/app.config.ts`: application providers (router, HTTP, auth initialization, and related global services; inspect this when wiring a new app-level provider).
+- `src/app/app.routes.ts`: authoritative route table and guards.
+- `src/app/app.component.*`: root shell.
+- `src/app/core/auth/`: Keycloak initialization and HTTP bearer-token interceptor.
+- `src/app/core/guards/`: authentication, role, and profile-completion route checks.
+- `src/app/core/services/`: cross-feature auth, category, and subscription-plan API helpers.
+- `src/app/features/`: business features grouped by domain.
+- `src/app/layout/`: developer and user authenticated shells/navigation.
+- `src/app/pages/`: public landing, about, and contact pages.
+- `src/styles.scss`: global dark theme tokens, reset, and global overlay styling.
+- Feature components usually have `.component.ts` for behavior, `.component.html` for structure, and `.component.scss` for local visuals. Many have adjacent `.spec.ts` files.
 
-### API Documentation
-- **SpringDoc OpenAPI** 2.5.0 - Auto-generated Swagger/OpenAPI specifications
-- **Swagger UI** 4.x - Interactive API browser and documentation
+### Feature domains
 
-### DevOps & Containerization
-- **Docker** - Container packaging and isolation
-- **Docker Compose** - Local multi-container orchestration
-- **Nginx** - Reverse proxy and load balancing
+- `features/application/`: developer-side application listing/create/detail/edit and the application API service/models. This is the publisher workflow.
+- `features/developer/`: profile onboarding/editing, dashboard, personal details/password, and developer API client/models.
+- `features/user/`: profile completion, user dashboard, catalog list/detail, account editing, cart view, and user-related API code.
+- `features/cart/`: cart page, item, summary, service, and request/response models.
+- `features/order/`: order list/history, service, and order DTO/enums.
+- `features/shared/`: small cross-feature utilities such as password matching validation.
 
-### Databases per Service
-| Service | Database | Purpose |
-|---------|----------|---------|
-| API Gateway | None | Stateless |
-| App Service | MongoDB 27017 | Flexible app metadata |
-| Developer Service | MySQL 3307 | Developer profiles |
-| User Service | MySQL 3308 | User profiles |
-| Cart Service | MySQL 3309 | Cart state & items |
-| Order Service | MySQL 3310 | Order history |
-| Subscription Service | MySQL 3312 | Plans & subscriptions |
-| Payment Service | MySQL 3313 | Transactions & receipts |
-| Notification Service | MySQL | Event logging |
-| Identity Service | Keycloak DB | Identity & roles |
-| Message Queue | Kafka 9092 | Event streaming |
+The route table currently defines:
 
----
+- Public: `/landing`, `/about`, `/contact` (empty path redirects to landing).
+- Developer shell: `/developer`, with profile create/update, dashboard, personal details/password, and `/developer/apps` list/create/detail/edit. Authentication is required for the shell; role checks protect the dashboard and app routes. Onboarding routes intentionally accept a signed-in user before the DEVELOPER role/profile flow is complete.
+- User shell: `/user`, with dashboard, profile completion, app browse/detail, profile/edit/password, cart, and orders. Authentication is required for the shell; role checks protect most user pages and a profile guard participates in profile completion.
 
-## 3. KEY FEATURES
+The Angular route guards improve navigation and UX. Backend gateway/service authorization remains the security boundary; do not treat a frontend guard as sufficient authorization.
 
-1. **Dual-Role OpenID Connect Authentication with Granular Authorization** — Keycloak integration provides industry-standard OIDC/OAuth 2.0 authentication for both developers and end-users with JWT-based stateless verification across all microservices, enabling fine-grained role-based access control (RBAC) that seamlessly enforces permissions at the API Gateway and individual service levels.
+### Frontend API and auth conventions
 
-2. **Flexible Multi-Model Application Monetization** — Developers can publish applications using four distinct monetization strategies (free, one-time purchase, subscription-only, or hybrid models) with support for 4 currencies (USD, EUR, GBP, INR) and dynamic pricing tiers, enabling sophisticated revenue optimization and accommodating diverse business models from freemium to pure SaaS.
+Most API clients use explicit `http://localhost:9000/...` URLs (gateway port 9000). Keycloak is configured at `http://localhost:8181`, realm `appverse`. Feature services call gateway paths such as `/api/apps`, `/api/developers`, `/api/v1/users`, `/api/v1/carts`, and `/api/v1/orders`. The HTTP interceptor is responsible for attaching the current access token; check its implementation and provider registration when adding calls. Some paths are constructed directly inside components, so search the feature before assuming every call lives in a service.
 
-3. **Event-Driven Microservices Architecture with Apache Kafka** — Decoupled services communicate asynchronously through Apache Kafka event streams (payment events, order confirmations, subscription lifecycles, user signups) enabling horizontal scalability, preventing cascading failures, and delivering real-time notifications without blocking I/O or creating tight coupling between services.
+Typescript models mirror API request/response shapes but are manually maintained. When changing an endpoint, update the backend DTO/controller, frontend model, service call, and consuming component together. Watch naming and enum differences across Java and TypeScript.
 
-4. **Resilience Patterns with Resilience4j Circuit Breakers** — Implemented sophisticated circuit breaker, bulkhead isolation, and automatic retry logic at both the API Gateway and inter-service communication layers to detect and gracefully handle service degradation, preventing cascading outages and enabling automatic recovery when downstream services stabilize.
+### Visual theme
 
-5. **Centralized API Aggregation with Spring Cloud Gateway** — Single entry point consolidates 10 independent microservices behind unified routing, cross-cutting concern handling (authentication, logging, rate limiting), automatic load balancing, and aggregated OpenAPI/Swagger documentation for simplified client integration.
+`src/styles.scss` defines a dark interface: near-black page background (`#090a0f`), layered charcoal surfaces, subtle white borders, light primary text, muted secondary text, purple accent (`#7c5cff`), green success, and red error. The global font stack prefers Inter, then system sans-serif. It defines layout tokens for 250px sidebar, collapsed 76px sidebar, and 70px toolbar. It also overrides Angular Material and PrimeNG select/menu overlay surfaces so popups remain opaque and readable against the dark background.
 
-6. **File Upload and Binary Media Management** — Developers upload application thumbnails and screenshots through multipart REST endpoints with local filesystem persistence and HTTP blob streaming, supporting image transformations and responsive rendering across mobile and desktop devices without external CDN dependency.
+When adding UI, follow the relevant layout and neighboring component SCSS rather than inventing a new palette. Global tokens are the shared baseline; many components also have substantial local styling, so inspect their HTML and SCSS for the actual page treatment. Material, PrimeNG, Bootstrap, and hand-written CSS coexist; use the library already used by the surrounding component where practical.
 
-7. **Subscription Management with Configurable Billing Intervals** — Full subscription lifecycle including creation, renewal, and cancellation with flexible billing configurations (daily, weekly, monthly, quarterly, yearly intervals), optional trial periods, automatic renewal orchestration, and subscription-to-application linking for recurring revenue monetization.
+## 4. Backend services and their roles
 
-8. **Polyglot Persistence Strategy** — Strategic database selection optimizes for access patterns: MongoDB provides flexible schema evolution for heterogeneous app metadata and document storage, while MySQL ensures ACID guarantees and complex relational queries for orders, payments, subscriptions, and user data requiring data consistency.
+All services are Spring Boot applications. Most expose REST controllers and use Spring Security as OAuth2 resource servers validating Keycloak JWTs. Internal HTTP clients commonly use OpenFeign/WebClient plus a service-token provider/interceptor. Controllers are the HTTP contract; services contain business logic; repositories own persistence; DTOs separate API representations from persistence models; mappers convert between them; exception handlers translate domain and persistence errors.
 
-9. **Progressive Developer Onboarding Workflow** — Type-safe profile completion flow with mandatory/optional fields, profile completion guards, email verification, developer type classification (individual vs. organization), status tracking, and personalized dashboard analytics for revenue monitoring and application performance metrics.
+| Service | Main responsibility | Persistence / integration |
+|---|---|---|
+| `api-gateway` | Public entry point on port 9000; routes paths to internal services, applies route authorization, CORS, JWT/security and resilience policies, exposes aggregated OpenAPI routes. | No business database. Route definitions are in `routes/Routes.java`; policy/config helpers live under `config/` and `routes/HelperMethods/`. |
+| `app-service` | Application catalog and categories, listing lifecycle, screenshot/media handling. | MongoDB (`app-service` database by default), Kafka producer, multipart upload directory. Main config is `app-service/src/main/resources/application.properties`. |
+| `developer-service` | Developer profile lifecycle and developer account-related API. | MySQL/Flyway; communicates with identity/user services as needed; publishes developer events in code. |
+| `user-service` | User profile creation, lookup, updates, and related user operations. | MySQL/Flyway; Keycloak identity integration. |
+| `identity-service` | Keycloak-facing identity operations such as current identity and user/role administration. | Keycloak Admin/API integration; no app-owned relational domain database apparent from its purpose. |
+| `cart-service` | Per-user cart and item quantity management. | MySQL/Flyway; application-service client for app details; cart event publisher. |
+| `order-service` | Order creation, order state, and order history. | MySQL/Flyway; clients to app/subscription/payment-related APIs and order events. |
+| `payment-service` | Payment transaction initiation/status and stored payment methods. | MySQL/Flyway. A webhook/mock update route is not evidence of a production payment provider integration; inspect gateway implementation before extending payment flows. |
+| `subscription-service` | Subscription plans and user subscription lifecycle. | MySQL/Flyway; payment-service client; event payload classes exist, although README notes some subscription publishing is commented out. |
+| `notification-service` | Consumes selected Kafka events and sends email using templates. | Kafka and SMTP/email configuration; it is event consumer oriented rather than a user-facing CRUD service. |
 
-10. **Shopping Cart and Order State Machine Management** — Type-safe cart session isolation per user with real-time calculation of subtotals, taxes, and shipping; seamless checkout conversion to orders with predictable state transitions (pending → confirmed → shipped → delivered), cancellation workflows, and refund coordination with the Payment Service.
+Common backend locations:
 
-11. **Versioned Database Schema Management with Flyway** — All schema changes version-controlled and automatically deployed via Flyway migrations, ensuring reproducible deployments, zero-downtime updates, audit trails for compliance, and seamless rollback capabilities across all MySQL-backed services.
+- `controller/`: REST paths, parameters, validation, and response status.
+- `service/` and `service/serviceImpl/` (or similar): business logic.
+- `repository/`: Spring Data/JPA or Mongo repositories.
+- `model/`: persisted entities/documents.
+- `dto/`: request/response wire contracts.
+- `mapper/`: DTO/model transformation, often MapStruct.
+- `client/`: downstream service clients and service-to-service auth.
+- `config/`: security, Kafka, cache, observation, client, and framework setup.
+- `exception/`: domain exceptions and `GlobalExceptionHandler` response mapping.
+- `event/`, `publisher/`, `consumer/`: Kafka messages and event boundaries.
+- `src/main/resources/application.properties`: ports, DB URLs, Keycloak issuer, broker, upload locations, observability, and client settings.
+- `src/main/resources/db/migration/`: versioned Flyway schema migrations.
+- `src/test/`: unit/integration tests. `app-service` includes Testcontainers-oriented tests; `cart-service` has controller, repository, and service tests.
 
-12. **Unified Error Handling and Standardized API Responses** — Consistent API response envelopes with status codes, localized error messages, field-level validation errors, and standardized exception mapping through OpenFeign clients, providing predictable error handling patterns and simplifying client integration complexity.
+## 5. Request and event flow
 
+### Synchronous request path
+
+```text
+Angular component -> feature API service (HTTP + bearer token)
+ -> API Gateway :9000 (JWT/route policy/resilience)
+ -> selected Spring service controller
+ -> service/business logic -> repository/database
+ <- DTO/HTTP response returns through gateway to Angular
+```
+
+Gateway route mappings are explicitly declared in `api-gateway/.../routes/Routes.java`. Current mappings include apps/categories to `app-service`, developers to `developer-service`, users to `user-service`, carts to `cart-service`, orders to `order-service`, payments to a configured downstream port, and subscriptions/plans to subscription service. Exact paths, downstream ports, and `RoutePolicy` differ by route; consult this file and `application.properties` before adding a client route. For example, the checked-in gateway route source maps `/api/v1/payments/**` to `localhost:8085`, while some older prose may list a different payment port. Resolve such discrepancies from the service's active config and compose setup before running the full stack.
+
+### Representative user journeys
+
+1. **Sign-in and onboarding:** Angular initializes Keycloak; after authentication, the developer or user completes a profile through the corresponding profile endpoint. Profile creation routes have special gateway policies because the account may not yet have its final marketplace role/profile.
+2. **Developer publishes an app:** developer UI submits listing data and media to app-service through gateway; app-service validates/stores metadata in MongoDB and files in the configured upload directory. It may publish an application event to Kafka; notification-service consumes supported events and sends email.
+3. **User browses and purchases:** user catalog/detail pages use app APIs. Cart and order APIs are separate services and persist their own records. Payment initiation is another service boundary. Follow actual controller and client calls for state transitions; do not assume a distributed transaction across services.
+4. **Subscription:** subscription-plan and user-subscription APIs are handled by subscription-service, with payment-service calls for payment work. Event payloads exist, but check whether a given event publisher is currently enabled before relying on it.
+
+### Kafka
+
+The code/README identify topics including `application-events`, `category-events`, `developer-events`, `cart-events`, `order-events`, and `payment-events`. The documented consumer is notification-service, including application events; topic declarations and actual listeners determine what is active. Kafka messages decouple side effects such as notifications from the REST request. Check event classes, producer, serializer/deserializer configuration, and consumer group together when changing a payload.
+
+## 6. Data and configuration
+
+- `app-service` uses MongoDB because app catalog records contain flexible listing data and screenshot references.
+- Developer, user, cart, order, payment, and subscription services use MySQL with service-local Flyway migrations (verify each current `application.properties`). Databases are service-owned logically even if local compose files share one MySQL server.
+- Keycloak issuer is typically `http://localhost:8181/realms/appverse`; gateway is `http://localhost:9000`; Angular dev server is `http://localhost:4200`; MongoDB defaults to 27017; Kafka commonly uses 9092. Service ports should be taken from each service's properties and compose configuration, not copied from stale diagrams.
+- Configuration currently includes machine-specific localhost URLs and may include credentials/client secrets. Do not copy secret values into documentation, prompts, commits, or logs. Prefer environment variables/secrets management when changing deployment configuration.
+- `app-service` sets a Windows-specific upload path in its properties. The API and filesystem path must agree, and uploaded files are distinct from Mongo document records.
+- `management.*`, Micrometer/tracing, and Resilience4j settings provide health/metrics/circuit breaker behavior where enabled. Gateway also has rate-limit/policy-related classes; inspect their wiring before assuming every policy is active.
+
+## 7. Build and local development
+
+README setup assumes infrastructure is available locally: Keycloak realm/clients, MySQL databases, MongoDB, and Kafka. Start the infrastructure first, then individual backend services using their Maven wrapper (`mvnw.cmd spring-boot:run` on Windows), and finally the Angular app from `frontend/appverse` (`npm install`/`pnpm install`, then `npm start`/`pnpm start`). The frontend expects gateway on port 9000 and Keycloak on 8181. API documentation is available from the gateway Swagger UI at `/swagger-ui.html` when the gateway and target services are running; individual Spring services also have their own OpenAPI endpoints.
+
+Useful checks before changing behavior:
+
+1. Read `README.md` for local setup and endpoint overview.
+2. Trace the Angular route -> component -> service -> TypeScript model.
+3. Trace the gateway path and policy in `api-gateway/.../Routes.java` and `RoutePolicy`.
+4. Trace the target controller -> service -> repository/model/DTO -> migration.
+5. Check downstream clients, Kafka producer/consumer, and config if the flow crosses services.
+6. Update tests and any request/response types affected by the contract change.
+
+## 8. Guidance for AI-assisted development
+
+When asked to change this project, first identify the exact user journey and owning service. Keep changes inside the existing service/domain boundaries unless there is a clear reason to change architecture. Preserve API compatibility unless the task explicitly permits a contract change. For a new endpoint, usually update controller, service interface/implementation, DTO/validation, persistence/migration if needed, gateway route/security policy, Angular model/service/component, and tests as applicable. Avoid adding a direct frontend call to a backend service when the established flow uses the gateway.
+
+Before relying on a feature claim, verify the implementation. In particular, this repository has multiple services and evolving integrations: documentation may be aspirational or stale, route ports can disagree, some event publishers may be disabled, and a mock/webhook endpoint does not prove a live provider integration. Explain uncertainty instead of filling gaps with assumptions. Never expose secrets from local properties files.
+
+## 9. Source-of-truth and known caveats
+
+This handoff summarizes the repository structure and selected configuration as checked in, but it is not a substitute for tracing a specific feature end to end. `README.md` is useful for setup and endpoint discovery; code is authoritative for implementation. Port maps and feature claims have shown inconsistencies between prose and code. The service count is nine domain/identity services plus the gateway. The Angular app includes SSR dependencies, but its primary application structure is a client-side routed SPA; do not assume the server-rendered deployment path is the standard local workflow.

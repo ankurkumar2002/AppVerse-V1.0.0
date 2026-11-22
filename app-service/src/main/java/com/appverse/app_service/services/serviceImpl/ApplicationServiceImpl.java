@@ -319,6 +319,7 @@ public class ApplicationServiceImpl implements ApplicationService {
     // @Cacheable(value = "applicationById", key = "#id")
     @Transactional(readOnly = true)
     public ApplicationResponse getApplicationById(String id) {
+        System.out.println("Order Service request is comming here.");
         log.debug("Fetching application by ID: {}", id);
         Application application = applicationRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Application not found with ID: " + id));
