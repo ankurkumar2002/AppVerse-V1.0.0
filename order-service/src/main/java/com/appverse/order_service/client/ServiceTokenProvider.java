@@ -12,10 +12,13 @@ import org.springframework.util.MultiValueMap;
 import com.appverse.order_service.dto.CachedToken;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import lombok.extern.slf4j.Slf4j;
+
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @Component
+@Slf4j
 public class ServiceTokenProvider {
 
     private final WebClient webClient;
@@ -48,8 +51,14 @@ public class ServiceTokenProvider {
             if (current != null && !current.isExpired()) {
                 return current.token();
             }
+            CachedToken newToken;
+            try {
+                newToken = fetchNewToken();
 
-            CachedToken newToken = fetchNewToken();
+            } catch (Exception e) {
+                log.error("Failed to fetch service token from Keycloak", e);
+                throw new IllegalArgumentException("Failed to obtain token from the webclient", e);
+            }
             cachedToken.set(newToken);
             return newToken.token();
         }
@@ -62,6 +71,7 @@ public class ServiceTokenProvider {
         formData.add("client_id", clientId);
         formData.add("client_secret", clientSecret);
 
+        log.info("getting new token from webclient in next line.");
         JsonNode body = webClient.post()
                 .uri(tokenUri)
                 .contentType(MediaType.APPLICATION_FORM_URLENCODED)
@@ -69,6 +79,7 @@ public class ServiceTokenProvider {
                 .retrieve()
                 .bodyToMono(JsonNode.class)
                 .block();
+        log.info("Token is already generated here it is : " + body);
 
         if (body == null || !body.has("access_token")) {
             throw new IllegalStateException("Failed to obtain service token from keycloak");
